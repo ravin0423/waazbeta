@@ -17,6 +17,7 @@ import AdminPurchaseOrders from "./pages/admin/AdminPurchaseOrders";
 import AdminServices from "./pages/admin/AdminServices";
 import AdminPartners from "./pages/admin/AdminPartners";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminFraudMonitoring from "./pages/admin/AdminFraudMonitoring";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
@@ -56,6 +57,7 @@ const AppRoutes = () => {
       <Route path="/admin/services" element={<ProtectedRoute role="admin"><AdminServices /></ProtectedRoute>} />
       <Route path="/admin/partners" element={<ProtectedRoute role="admin"><AdminPartners /></ProtectedRoute>} />
       <Route path="/admin/analytics" element={<ProtectedRoute role="admin"><AdminAnalytics /></ProtectedRoute>} />
+      <Route path="/admin/fraud-monitoring" element={<ProtectedRoute role="admin"><AdminFraudMonitoring /></ProtectedRoute>} />
 
       {/* Partner routes */}
       <Route path="/partner" element={<ProtectedRoute role="partner"><PartnerDashboard /></ProtectedRoute>} />

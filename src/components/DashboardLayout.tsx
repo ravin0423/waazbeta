@@ -30,6 +30,7 @@ const adminNav: NavItem[] = [
   { label: 'Service Bookings', path: '/admin/services', icon: <Wrench size={20} /> },
   { label: 'Repair Partners', path: '/admin/partners', icon: <Users size={20} /> },
   { label: 'Analytics', path: '/admin/analytics', icon: <TrendingUp size={20} /> },
+  { label: 'Fraud Monitor', path: '/admin/fraud-monitoring', icon: <Shield size={20} /> },
 ];
 
 const partnerNav: NavItem[] = [
