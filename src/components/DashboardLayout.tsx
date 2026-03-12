@@ -3,7 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Shield, FileText, Ticket, User, LogOut, Package, Receipt,
-  Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu
+  Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +31,7 @@ const adminNav: NavItem[] = [
   { label: 'Repair Partners', path: '/admin/partners', icon: <Users size={20} /> },
   { label: 'Analytics', path: '/admin/analytics', icon: <TrendingUp size={20} /> },
   { label: 'Fraud Monitor', path: '/admin/fraud-monitoring', icon: <Shield size={20} /> },
+  { label: 'Device Verification', path: '/admin/device-verification', icon: <Smartphone size={20} /> },
 ];
 
 const partnerNav: NavItem[] = [

@@ -18,6 +18,7 @@ import AdminServices from "./pages/admin/AdminServices";
 import AdminPartners from "./pages/admin/AdminPartners";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminFraudMonitoring from "./pages/admin/AdminFraudMonitoring";
+import AdminDeviceVerification from "./pages/admin/AdminDeviceVerification";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
@@ -58,6 +59,7 @@ const AppRoutes = () => {
       <Route path="/admin/partners" element={<ProtectedRoute role="admin"><AdminPartners /></ProtectedRoute>} />
       <Route path="/admin/analytics" element={<ProtectedRoute role="admin"><AdminAnalytics /></ProtectedRoute>} />
       <Route path="/admin/fraud-monitoring" element={<ProtectedRoute role="admin"><AdminFraudMonitoring /></ProtectedRoute>} />
+      <Route path="/admin/device-verification" element={<ProtectedRoute role="admin"><AdminDeviceVerification /></ProtectedRoute>} />
 
       {/* Partner routes */}
       <Route path="/partner" element={<ProtectedRoute role="partner"><PartnerDashboard /></ProtectedRoute>} />
