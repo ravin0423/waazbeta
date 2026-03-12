@@ -58,7 +58,7 @@ const whyWaaz = [
 
 const testimonials = [
   { name: 'Arjun Mehta', role: 'Software Engineer, Bengaluru', text: 'My MacBook Pro had a logic board failure 14 months after purchase. Apple quoted ₹45,000 — WaaZ covered it completely. Repaired and returned in 4 days. Absolutely worth every rupee.', rating: 5 },
-  { name: 'Priya Sharma', role: 'Photography Studio Owner, Delhi', text: 'I insure all my Canon DSLRs with WaaZ Complete. When my 5D Mark IV shutter mechanism failed during a wedding shoot, they arranged a loaner camera within 24 hours. Lifesaver!', rating: 5 },
+  { name: 'Priya Sharma', role: 'Photography Studio Owner, Delhi', text: 'I protect all my Canon DSLRs with WaaZ Complete. When my 5D Mark IV shutter mechanism failed during a wedding shoot, they arranged a loaner camera within 24 hours. Lifesaver!', rating: 5 },
   { name: 'Rahul Krishnan', role: 'IT Manager, Chennai', text: 'We enrolled 200+ company laptops under WaaZ. The bulk dashboard, claim tracking, and priority turnaround have saved us lakhs in repair costs. The partner portal is excellent.', rating: 5 },
   { name: 'Sneha Patel', role: 'Content Creator, Mumbai', text: 'Dropped my iPhone in water at a pool party. Thought it was gone forever. Filed a claim on WaaZ app, got doorstep pickup next morning. Phone came back good as new in 3 days!', rating: 5 },
 ];
