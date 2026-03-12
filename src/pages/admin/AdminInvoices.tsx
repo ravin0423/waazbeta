@@ -1,9 +1,7 @@
 import DashboardLayout from '@/components/DashboardLayout';
-import StatusBadge from '@/components/StatusBadge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { invoices } from '@/data/mockData';
 import { motion } from 'framer-motion';
+import { FileText } from 'lucide-react';
 
 const AdminInvoices = () => {
   return (
@@ -13,31 +11,9 @@ const AdminInvoices = () => {
         <p className="text-muted-foreground mb-6">Manage billing and payment records</p>
 
         <Card className="shadow-card">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map(inv => (
-                  <TableRow key={inv.id}>
-                    <TableCell className="font-mono text-sm">{inv.invoiceNumber}</TableCell>
-                    <TableCell>{inv.customerName}</TableCell>
-                    <TableCell className="font-medium">₹{inv.amount.toLocaleString()}</TableCell>
-                    <TableCell className="text-muted-foreground">{inv.date}</TableCell>
-                    <TableCell className="text-muted-foreground">{inv.dueDate}</TableCell>
-                    <TableCell><StatusBadge status={inv.status} /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent className="p-12 text-center">
+            <FileText size={40} className="text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">No invoices yet. Invoices will appear here once transactions are recorded.</p>
           </CardContent>
         </Card>
       </motion.div>

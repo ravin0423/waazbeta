@@ -1,9 +1,7 @@
 import DashboardLayout from '@/components/DashboardLayout';
-import StatusBadge from '@/components/StatusBadge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { purchaseOrders } from '@/data/mockData';
 import { motion } from 'framer-motion';
+import { ShoppingCart } from 'lucide-react';
 
 const AdminPurchaseOrders = () => {
   return (
@@ -13,31 +11,9 @@ const AdminPurchaseOrders = () => {
         <p className="text-muted-foreground mb-6">Manage parts procurement and vendor orders</p>
 
         <Card className="shadow-card">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>PO #</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {purchaseOrders.map(po => (
-                  <TableRow key={po.id}>
-                    <TableCell className="font-mono text-sm">{po.poNumber}</TableCell>
-                    <TableCell>{po.vendor}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{po.items.join(', ')}</TableCell>
-                    <TableCell className="font-medium">₹{po.amount.toLocaleString()}</TableCell>
-                    <TableCell className="text-muted-foreground">{po.date}</TableCell>
-                    <TableCell><StatusBadge status={po.status} /></TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <CardContent className="p-12 text-center">
+            <ShoppingCart size={40} className="text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">No purchase orders yet. Orders will appear here once created.</p>
           </CardContent>
         </Card>
       </motion.div>

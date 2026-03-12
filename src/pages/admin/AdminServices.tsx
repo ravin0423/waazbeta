@@ -1,9 +1,7 @@
 import DashboardLayout from '@/components/DashboardLayout';
-import StatusBadge from '@/components/StatusBadge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { claims, customerDevices, repairPartners } from '@/data/mockData';
 import { motion } from 'framer-motion';
+import { Wrench } from 'lucide-react';
 
 const AdminServices = () => {
   return (
@@ -13,35 +11,9 @@ const AdminServices = () => {
         <p className="text-muted-foreground mb-6">Track all service and repair bookings</p>
 
         <Card className="shadow-card">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Claim ID</TableHead>
-                  <TableHead>Device</TableHead>
-                  <TableHead>Issue</TableHead>
-                  <TableHead>Repair Partner</TableHead>
-                  <TableHead>TAT (days)</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {claims.map(c => {
-                  const device = customerDevices.find(d => d.id === c.deviceId);
-                  const partner = repairPartners.find(p => p.id === c.repairPartnerId);
-                  return (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-mono text-sm">{c.id.toUpperCase()}</TableCell>
-                      <TableCell>{device?.brand} {device?.model}</TableCell>
-                      <TableCell>{c.issueType}</TableCell>
-                      <TableCell>{partner?.name || '—'}</TableCell>
-                      <TableCell>{c.turnaroundDays || '—'}</TableCell>
-                      <TableCell><StatusBadge status={c.status} /></TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+          <CardContent className="p-12 text-center">
+            <Wrench size={40} className="text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">No service bookings yet. Bookings will appear here once customers submit claims.</p>
           </CardContent>
         </Card>
       </motion.div>
