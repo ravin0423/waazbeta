@@ -1,11 +1,47 @@
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, Smartphone } from 'lucide-react';
+import { Shield, Smartphone, Loader2, Check, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import SubscriptionActivation from '@/components/SubscriptionActivation';
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
+  const [devices, setDevices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchDevices = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('customer_devices')
+      .select('*, gadget_categories(name), subscription_plans(name, annual_price, covers_hardware_failure, covers_battery, covers_motherboard, covers_accidental_damage, covers_liquid_damage)')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    setDevices(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchDevices(); }, [user]);
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center py-20"><Loader2 className="animate-spin text-primary" size={24} /></div>
+      </DashboardLayout>
+    );
+  }
+
+  const hasActiveSubscription = devices.length > 0;
+
+  if (!hasActiveSubscription) {
+    return (
+      <DashboardLayout>
+        <SubscriptionActivation onActivated={fetchDevices} />
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -13,28 +49,43 @@ const CustomerDashboard = () => {
         <h1 className="font-heading text-2xl font-bold mb-1">Welcome back, {user?.fullName || 'User'}</h1>
         <p className="text-muted-foreground mb-6">Here's your device protection overview</p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="shadow-card">
-            <CardHeader className="flex flex-row items-center gap-2 pb-3">
-              <Smartphone size={18} className="text-primary" />
-              <CardTitle className="text-base font-heading">Your Devices</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center py-8">
-              <Smartphone size={40} className="text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground text-sm">No devices registered yet. Contact support to add your devices.</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-card">
-            <CardHeader className="flex flex-row items-center gap-2 pb-3">
-              <Shield size={18} className="text-primary" />
-              <CardTitle className="text-base font-heading">Recent Claims</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center py-8">
-              <Shield size={40} className="text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground text-sm">No claims submitted yet.</p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {devices.map(device => (
+            <Card key={device.id} className="shadow-card">
+              <CardHeader className="flex flex-row items-center gap-2 pb-3">
+                <Smartphone size={18} className="text-primary" />
+                <CardTitle className="text-base font-heading">{device.gadget_categories?.name || device.product_name}</CardTitle>
+                <span className={`ml-auto text-xs px-2 py-0.5 rounded-full font-medium ${
+                  device.status === 'active' ? 'bg-success/10 text-success' :
+                  device.status === 'pending' ? 'bg-warning/10 text-warning' :
+                  'bg-muted text-muted-foreground'
+                }`}>
+                  {device.status}
+                </span>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <p><span className="text-muted-foreground">Plan:</span> {device.subscription_plans?.name || '—'}</p>
+                <p><span className="text-muted-foreground">Serial:</span> {device.serial_number}</p>
+                {device.imei_number && <p><span className="text-muted-foreground">IMEI:</span> {device.imei_number}</p>}
+                <p><span className="text-muted-foreground">Price:</span> ₹{Number(device.subscription_plans?.annual_price || 0).toLocaleString('en-IN')}/yr</p>
+                {device.subscription_plans && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {[
+                      { label: 'Hardware', v: device.subscription_plans.covers_hardware_failure },
+                      { label: 'Battery', v: device.subscription_plans.covers_battery },
+                      { label: 'Motherboard', v: device.subscription_plans.covers_motherboard },
+                      { label: 'Accidental', v: device.subscription_plans.covers_accidental_damage },
+                      { label: 'Liquid', v: device.subscription_plans.covers_liquid_damage },
+                    ].map(f => (
+                      <span key={f.label} className={`inline-flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded ${f.v ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
+                        {f.v ? <Check size={10} /> : <X size={10} />} {f.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </motion.div>
     </DashboardLayout>

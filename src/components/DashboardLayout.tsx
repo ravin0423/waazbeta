@@ -6,8 +6,9 @@ import {
   Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone,
   Layers, MapPin, UserCog
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NavItem {
   label: string;
@@ -15,11 +16,16 @@ interface NavItem {
   icon: React.ReactNode;
 }
 
-const customerNav: NavItem[] = [
+const customerNavFull: NavItem[] = [
   { label: 'Dashboard', path: '/customer', icon: <LayoutDashboard size={20} /> },
   { label: 'Subscriptions', path: '/customer/subscriptions', icon: <Shield size={20} /> },
   { label: 'Claims', path: '/customer/claims', icon: <FileText size={20} /> },
   { label: 'Service Tickets', path: '/customer/tickets', icon: <Ticket size={20} /> },
+  { label: 'Profile', path: '/customer/profile', icon: <User size={20} /> },
+];
+
+const customerNavMinimal: NavItem[] = [
+  { label: 'Activate Subscription', path: '/customer', icon: <Shield size={20} /> },
   { label: 'Profile', path: '/customer/profile', icon: <User size={20} /> },
 ];
 
@@ -54,8 +60,28 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [hasDevices, setHasDevices] = useState<boolean | null>(null);
 
-  const navItems = user?.role === 'admin' ? adminNav : user?.role === 'partner' ? partnerNav : customerNav;
+  useEffect(() => {
+    if (user?.role !== 'customer') { setHasDevices(true); return; }
+    const check = async () => {
+      const { count } = await supabase
+        .from('customer_devices')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+      setHasDevices((count || 0) > 0);
+    };
+    check();
+  }, [user]);
+
+  const getNavItems = () => {
+    if (user?.role === 'admin') return adminNav;
+    if (user?.role === 'partner') return partnerNav;
+    if (hasDevices === false) return customerNavMinimal;
+    return customerNavFull;
+  };
+
+  const navItems = getNavItems();
 
   const handleLogout = () => {
     logout();
