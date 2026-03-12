@@ -14,6 +14,7 @@ import CustomerTickets from "./pages/customer/CustomerTickets";
 import CustomerProfile from "./pages/customer/CustomerProfile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
+import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminPurchaseOrders from "./pages/admin/AdminPurchaseOrders";
 import AdminServices from "./pages/admin/AdminServices";
@@ -63,6 +64,7 @@ const AppRoutes = () => {
       <Route path="/admin/regions" element={<ProtectedRoute role="admin"><AdminRegions /></ProtectedRoute>} />
       <Route path="/admin/partners-manage" element={<ProtectedRoute role="admin"><AdminPartnersManage /></ProtectedRoute>} />
       <Route path="/admin/subscriptions" element={<ProtectedRoute role="admin"><AdminSubscriptions /></ProtectedRoute>} />
+      <Route path="/admin/subscription-plans" element={<ProtectedRoute role="admin"><AdminSubscriptionPlans /></ProtectedRoute>} />
       <Route path="/admin/invoices" element={<ProtectedRoute role="admin"><AdminInvoices /></ProtectedRoute>} />
       <Route path="/admin/purchase-orders" element={<ProtectedRoute role="admin"><AdminPurchaseOrders /></ProtectedRoute>} />
       <Route path="/admin/services" element={<ProtectedRoute role="admin"><AdminServices /></ProtectedRoute>} />

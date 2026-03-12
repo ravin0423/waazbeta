@@ -29,6 +29,7 @@ const adminNav: NavItem[] = [
   { label: 'Regions', path: '/admin/regions', icon: <MapPin size={20} /> },
   { label: 'Partners', path: '/admin/partners-manage', icon: <Users size={20} /> },
   { label: 'Subscriptions', path: '/admin/subscriptions', icon: <Shield size={20} /> },
+  { label: 'Subscription Plans', path: '/admin/subscription-plans', icon: <Package size={20} /> },
   { label: 'Invoices', path: '/admin/invoices', icon: <Receipt size={20} /> },
   { label: 'Purchase Orders', path: '/admin/purchase-orders', icon: <Package size={20} /> },
   { label: 'Service Bookings', path: '/admin/services', icon: <Wrench size={20} /> },
