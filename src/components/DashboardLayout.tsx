@@ -3,7 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Shield, FileText, Ticket, User, LogOut, Package, Receipt,
-  Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone
+  Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone,
+  Layers, MapPin
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
