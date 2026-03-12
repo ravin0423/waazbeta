@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import StatusBadge from '@/components/StatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 
 interface SubscriptionPlan {
   id: string;
@@ -33,6 +33,30 @@ interface GadgetCategory {
   id: string;
   name: string;
 }
+
+// Predefined product plan templates
+const PREDEFINED_PLANS = [
+  { name: 'Mobile Standard Care', code: 'mobile-standard', type: 'Standard' },
+  { name: 'Mobile Complete Care', code: 'mobile-complete', type: 'Complete' },
+  { name: 'Laptop Standard Care', code: 'laptop-standard', type: 'Standard' },
+  { name: 'Laptop Complete Care', code: 'laptop-complete', type: 'Complete' },
+  { name: 'Projector Standard Care', code: 'projector-standard', type: 'Standard' },
+  { name: 'Projector Complete Care', code: 'projector-complete', type: 'Complete' },
+  { name: 'CCTV Standard Care', code: 'cctv-standard', type: 'Standard' },
+  { name: 'CCTV Complete Care', code: 'cctv-complete', type: 'Complete' },
+  { name: 'DSLR Camera Standard Care', code: 'dslr-standard', type: 'Standard' },
+  { name: 'DSLR Camera Complete Care', code: 'dslr-complete', type: 'Complete' },
+  { name: 'Gaming Console Standard Care', code: 'console-standard', type: 'Standard' },
+  { name: 'Gaming Console Complete Care', code: 'console-complete', type: 'Complete' },
+  { name: 'Printer Standard Care', code: 'printer-standard', type: 'Standard' },
+  { name: 'Printer Complete Care', code: 'printer-complete', type: 'Complete' },
+  { name: 'Tablet Standard Care', code: 'tablet-standard', type: 'Standard' },
+  { name: 'Tablet Complete Care', code: 'tablet-complete', type: 'Complete' },
+  { name: 'Smartwatch Standard Care', code: 'smartwatch-standard', type: 'Standard' },
+  { name: 'Smartwatch Complete Care', code: 'smartwatch-complete', type: 'Complete' },
+  { name: 'TV Standard Care', code: 'tv-standard', type: 'Standard' },
+  { name: 'TV Complete Care', code: 'tv-complete', type: 'Complete' },
+];
 
 const emptyPlan = {
   name: '',
@@ -67,9 +91,30 @@ const AdminSubscriptionPlans = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  // Filter out predefined plans that already exist
+  const existingCodes = plans.map(p => p.code);
+  const availablePredefined = PREDEFINED_PLANS.filter(p => !existingCodes.includes(p.code));
+
   const openAdd = () => {
     setEditingPlan(null);
     setForm(emptyPlan);
+    setDialogOpen(true);
+  };
+
+  const openAddPredefined = (predefined: typeof PREDEFINED_PLANS[0]) => {
+    setEditingPlan(null);
+    const isComplete = predefined.type === 'Complete';
+    setForm({
+      name: predefined.name,
+      code: predefined.code,
+      gadget_category_id: '',
+      annual_price: 0,
+      covers_hardware_failure: true,
+      covers_battery: true,
+      covers_motherboard: true,
+      covers_accidental_damage: isComplete,
+      covers_liquid_damage: isComplete,
+    });
     setDialogOpen(true);
   };
 
@@ -140,54 +185,78 @@ const AdminSubscriptionPlans = () => {
             <h1 className="font-heading text-2xl font-bold mb-1">Subscription Plans</h1>
             <p className="text-muted-foreground">Add, edit, or delete warranty plans per gadget category</p>
           </div>
-          <Button onClick={openAdd} className="gap-2"><Plus size={16} /> Add Plan</Button>
+          <Button onClick={openAdd} className="gap-2"><Plus size={16} /> Add Custom Plan</Button>
         </div>
+
+        {/* Predefined Quick-Add Section */}
+        {availablePredefined.length > 0 && (
+          <Card className="shadow-card mb-6">
+            <CardContent className="p-4">
+              <h3 className="font-heading text-sm font-semibold mb-3">Quick Add — Predefined Plans (set your price)</h3>
+              <div className="flex flex-wrap gap-2">
+                {availablePredefined.map(p => (
+                  <Button
+                    key={p.code}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => openAddPredefined(p)}
+                  >
+                    <Plus size={12} className="mr-1" /> {p.name}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="shadow-card">
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Plan Name</TableHead>
-                  <TableHead>Code</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Annual Price (₹)</TableHead>
-                  <TableHead>Coverage</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">Loading…</TableCell></TableRow>
-                ) : plans.length === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No subscription plans yet. Click "Add Plan" to create one.</TableCell></TableRow>
-                ) : plans.map(plan => (
-                  <TableRow key={plan.id}>
-                    <TableCell className="font-medium">{plan.name}</TableCell>
-                    <TableCell className="font-mono text-sm">{plan.code}</TableCell>
-                    <TableCell>{getCategoryName(plan.gadget_category_id)}</TableCell>
-                    <TableCell>₹{Number(plan.annual_price).toLocaleString('en-IN')}</TableCell>
-                    <TableCell>
-                      <div className="flex flex-wrap gap-1">
-                        {plan.covers_hardware_failure && <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">HW</span>}
-                        {plan.covers_battery && <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">Battery</span>}
-                        {plan.covers_motherboard && <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">MB</span>}
-                        {plan.covers_accidental_damage && <span className="text-xs bg-accent/20 text-accent-foreground px-1.5 py-0.5 rounded">Accidental</span>}
-                        {plan.covers_liquid_damage && <span className="text-xs bg-accent/20 text-accent-foreground px-1.5 py-0.5 rounded">Liquid</span>}
-                      </div>
-                    </TableCell>
-                    <TableCell><StatusBadge status={plan.is_active ? 'active' : 'expired'} /></TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openEdit(plan)}><Pencil size={16} /></Button>
-                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(plan.id)}><Trash2 size={16} /></Button>
-                      </div>
-                    </TableCell>
+            {loading ? (
+              <div className="flex items-center justify-center py-12"><Loader2 className="animate-spin text-primary" size={24} /></div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Plan Name</TableHead>
+                    <TableHead>Code</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Annual Price (₹)</TableHead>
+                    <TableHead>Coverage</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {plans.length === 0 ? (
+                    <TableRow><TableCell colSpan={7} className="text-center py-8 text-muted-foreground">No subscription plans yet. Use the quick-add buttons above or click "Add Custom Plan".</TableCell></TableRow>
+                  ) : plans.map(plan => (
+                    <TableRow key={plan.id}>
+                      <TableCell className="font-medium">{plan.name}</TableCell>
+                      <TableCell className="font-mono text-sm">{plan.code}</TableCell>
+                      <TableCell>{getCategoryName(plan.gadget_category_id)}</TableCell>
+                      <TableCell>₹{Number(plan.annual_price).toLocaleString('en-IN')}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {plan.covers_hardware_failure && <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">HW</span>}
+                          {plan.covers_battery && <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">Battery</span>}
+                          {plan.covers_motherboard && <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">MB</span>}
+                          {plan.covers_accidental_damage && <span className="text-xs bg-accent/20 text-accent-foreground px-1.5 py-0.5 rounded">Accidental</span>}
+                          {plan.covers_liquid_damage && <span className="text-xs bg-accent/20 text-accent-foreground px-1.5 py-0.5 rounded">Liquid</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell><StatusBadge status={plan.is_active ? 'active' : 'expired'} /></TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => openEdit(plan)}><Pencil size={16} /></Button>
+                          <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" onClick={() => handleDelete(plan.id)}><Trash2 size={16} /></Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -210,7 +279,7 @@ const AdminSubscriptionPlans = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Gadget Category</Label>
-                  <Select value={form.gadget_category_id} onValueChange={v => setForm(f => ({ ...f, gadget_category_id: v }))}>
+                  <Select value={form.gadget_category_id} onValueChange={v => setForm(f => ({ ...f, gadget_category_id: v === 'all' ? '' : v }))}>
                     <SelectTrigger><SelectValue placeholder="All categories" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All categories</SelectItem>
@@ -220,7 +289,7 @@ const AdminSubscriptionPlans = () => {
                 </div>
                 <div>
                   <Label>Annual Price (₹)</Label>
-                  <Input type="number" value={form.annual_price} onChange={e => setForm(f => ({ ...f, annual_price: Number(e.target.value) }))} />
+                  <Input type="number" value={form.annual_price || ''} onChange={e => setForm(f => ({ ...f, annual_price: Number(e.target.value) }))} placeholder="Enter price" />
                 </div>
               </div>
               <div className="space-y-3">
