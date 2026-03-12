@@ -76,13 +76,11 @@ const verifyIMEI = (imei: string): IMEIVerification => {
   const matchedDevice = customerDevices.find(d => d.imei === imei && d.customerId === 'c1');
 
   if (!matchedDevice) {
-    flags.push('IMEI not found in your registered devices');
-    return { verified: false, status: 'blocked', matchedDevice: null, deviceSpec, flags };
+    flags.push('IMEI not found in your registered devices — you can still proceed but coverage may be limited');
   }
 
-  if (matchedDevice.status === 'expired') {
-    flags.push('Device subscription has expired');
-    return { verified: true, status: 'blocked', matchedDevice, deviceSpec, flags };
+  if (matchedDevice?.status === 'expired') {
+    flags.push('Device subscription has expired — renewal required for full coverage');
   }
 
   const recentClaimOnDevice = Math.random() > 0.7;
