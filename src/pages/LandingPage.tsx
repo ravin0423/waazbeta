@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Smartphone, Laptop, Monitor, Camera, Gamepad2, Tv, Printer, CheckCircle2, ArrowRight, Clock, Users, Award, ChevronRight, Sun, Moon, Zap, HeartHandshake, Wrench, BadgeCheck, Star, HelpCircle, ChevronDown, Globe, ShieldCheck, Headphones } from 'lucide-react';
+import { Shield, Smartphone, Laptop, Monitor, Camera, Gamepad2, Tv, Printer, Projector, CheckCircle2, ArrowRight, Clock, Users, Award, ChevronRight, Sun, Moon, Zap, HeartHandshake, Wrench, BadgeCheck, Star, HelpCircle, ChevronDown, Globe, ShieldCheck, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/ThemeProvider';
 import heroDevices from '@/assets/hero-devices.png';
