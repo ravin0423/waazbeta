@@ -53,7 +53,7 @@ const whyWaaz = [
   { icon: Globe, title: 'Pan-India Coverage', desc: 'From metros to tier-3 cities, our 500+ service partner network ensures your device gets repaired no matter where you are.' },
   { icon: ShieldCheck, title: 'No Fine Print', desc: 'Transparent policies with zero hidden exclusions. What we promise is what we deliver — read our warranty terms in plain English.' },
   { icon: Headphones, title: '24/7 Human Support', desc: 'Real people, real help. Our support team is available round the clock via chat, email, and phone — no bots, no runaround.' },
-  { icon: BadgeCheck, title: 'Certified & Insured', desc: 'WaaZ is backed by leading insurance partners, giving you the financial security and trust that your devices are truly protected.' },
+  { icon: BadgeCheck, title: 'Certified & Verified', desc: 'WaaZ is backed by a rigorous quality assurance process and authorized service partnerships, ensuring your devices are in trusted hands.' },
 ];
 
 const testimonials = [
