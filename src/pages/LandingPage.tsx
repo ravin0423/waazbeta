@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Smartphone, Laptop, Monitor, Camera, Gamepad2, Tv, Printer, CheckCircle2, ArrowRight, Clock, Users, Award, ChevronRight, Sun, Moon, Zap, HeartHandshake, Wrench, BadgeCheck, Star, HelpCircle, ChevronDown, Globe, ShieldCheck, Headphones } from 'lucide-react';
+import { Shield, Smartphone, Laptop, Monitor, Camera, Gamepad2, Tv, Printer, Projector, CheckCircle2, ArrowRight, Clock, Users, Award, ChevronRight, Sun, Moon, Zap, HeartHandshake, Wrench, BadgeCheck, Star, HelpCircle, ChevronDown, Globe, ShieldCheck, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/ThemeProvider';
 import heroDevices from '@/assets/hero-devices.png';
@@ -19,6 +19,7 @@ const deviceCategories = [
   { icon: Camera, label: 'DSLR Cameras', desc: 'Canon, Nikon, Sony mirrorless & DSLRs. Sensor cleaning, shutter mechanism, lens motor repairs.' },
   { icon: Gamepad2, label: 'Gaming Consoles', desc: 'PlayStation, Xbox, Nintendo Switch. Overheating, HDMI port, disc drive and drift repairs.' },
   { icon: Shield, label: 'CCTV Systems', desc: 'IP cameras, DVR/NVR units, PTZ cameras. Night vision, motion sensor, and storage failures.' },
+  { icon: Projector, label: 'Projectors', desc: 'Home theater, office & portable projectors. Lamp, color wheel, HDMI port, and overheating repairs.' },
   { icon: Printer, label: 'Printers & More', desc: 'Inkjet, laser, 3D printers. Print head, roller, connectivity, and firmware issues resolved.' },
 ];
 
@@ -52,12 +53,12 @@ const whyWaaz = [
   { icon: Globe, title: 'Pan-India Coverage', desc: 'From metros to tier-3 cities, our 500+ service partner network ensures your device gets repaired no matter where you are.' },
   { icon: ShieldCheck, title: 'No Fine Print', desc: 'Transparent policies with zero hidden exclusions. What we promise is what we deliver — read our warranty terms in plain English.' },
   { icon: Headphones, title: '24/7 Human Support', desc: 'Real people, real help. Our support team is available round the clock via chat, email, and phone — no bots, no runaround.' },
-  { icon: BadgeCheck, title: 'Certified & Insured', desc: 'WaaZ is backed by leading insurance partners, giving you the financial security and trust that your devices are truly protected.' },
+  { icon: BadgeCheck, title: 'Certified & Verified', desc: 'WaaZ is backed by a rigorous quality assurance process and authorized service partnerships, ensuring your devices are in trusted hands.' },
 ];
 
 const testimonials = [
   { name: 'Arjun Mehta', role: 'Software Engineer, Bengaluru', text: 'My MacBook Pro had a logic board failure 14 months after purchase. Apple quoted ₹45,000 — WaaZ covered it completely. Repaired and returned in 4 days. Absolutely worth every rupee.', rating: 5 },
-  { name: 'Priya Sharma', role: 'Photography Studio Owner, Delhi', text: 'I insure all my Canon DSLRs with WaaZ Complete. When my 5D Mark IV shutter mechanism failed during a wedding shoot, they arranged a loaner camera within 24 hours. Lifesaver!', rating: 5 },
+  { name: 'Priya Sharma', role: 'Photography Studio Owner, Delhi', text: 'I protect all my Canon DSLRs with WaaZ Complete. When my 5D Mark IV shutter mechanism failed during a wedding shoot, they arranged a loaner camera within 24 hours. Lifesaver!', rating: 5 },
   { name: 'Rahul Krishnan', role: 'IT Manager, Chennai', text: 'We enrolled 200+ company laptops under WaaZ. The bulk dashboard, claim tracking, and priority turnaround have saved us lakhs in repair costs. The partner portal is excellent.', rating: 5 },
   { name: 'Sneha Patel', role: 'Content Creator, Mumbai', text: 'Dropped my iPhone in water at a pool party. Thought it was gone forever. Filed a claim on WaaZ app, got doorstep pickup next morning. Phone came back good as new in 3 days!', rating: 5 },
 ];
