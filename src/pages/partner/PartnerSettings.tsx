@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 const PartnerSettings = () => {
   const { user } = useAuth();
-  const [name, setName] = useState(user?.name || '');
+  const [name, setName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [company, setCompany] = useState(user?.company || '');
 

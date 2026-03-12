@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Shield, FileText, Ticket, User, LogOut, Package, Receipt,
   Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone,
-  Layers, MapPin
+  Layers, MapPin, UserCog
 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -36,6 +36,7 @@ const adminNav: NavItem[] = [
   { label: 'Analytics', path: '/admin/analytics', icon: <TrendingUp size={20} /> },
   { label: 'Fraud Monitor', path: '/admin/fraud-monitoring', icon: <Shield size={20} /> },
   { label: 'Device Verification', path: '/admin/device-verification', icon: <Smartphone size={20} /> },
+  { label: 'Users & Roles', path: '/admin/user-roles', icon: <UserCog size={20} /> },
 ];
 
 const partnerNav: NavItem[] = [
@@ -126,10 +127,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
           {!collapsed && (
             <div className="flex items-center gap-3 px-2 mb-3">
               <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
-                {user?.name?.charAt(0)}
+                {user?.fullName?.charAt(0) || user?.email?.charAt(0)}
               </div>
               <div className="overflow-hidden">
-                <p className="text-sm font-medium truncate text-sidebar-foreground">{user?.name}</p>
+                <p className="text-sm font-medium truncate text-sidebar-foreground">{user?.fullName || 'User'}</p>
                 <p className="text-xs text-sidebar-foreground/50 truncate">{user?.email}</p>
               </div>
             </div>

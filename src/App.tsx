@@ -24,6 +24,7 @@ import AdminDeviceVerification from "./pages/admin/AdminDeviceVerification";
 import AdminGadgetCategories from "./pages/admin/AdminGadgetCategories";
 import AdminRegions from "./pages/admin/AdminRegions";
 import AdminPartnersManage from "./pages/admin/AdminPartnersManage";
+import AdminUserRoles from "./pages/admin/AdminUserRoles";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
@@ -34,7 +35,8 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children, role }: { children: React.ReactNode; role?: string }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-background"><div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" /></div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (role && user?.role !== role) return <Navigate to={`/${user?.role}`} replace />;
   return <>{children}</>;
@@ -68,6 +70,7 @@ const AppRoutes = () => {
       <Route path="/admin/analytics" element={<ProtectedRoute role="admin"><AdminAnalytics /></ProtectedRoute>} />
       <Route path="/admin/fraud-monitoring" element={<ProtectedRoute role="admin"><AdminFraudMonitoring /></ProtectedRoute>} />
       <Route path="/admin/device-verification" element={<ProtectedRoute role="admin"><AdminDeviceVerification /></ProtectedRoute>} />
+      <Route path="/admin/user-roles" element={<ProtectedRoute role="admin"><AdminUserRoles /></ProtectedRoute>} />
 
       {/* Partner routes */}
       <Route path="/partner" element={<ProtectedRoute role="partner"><PartnerDashboard /></ProtectedRoute>} />

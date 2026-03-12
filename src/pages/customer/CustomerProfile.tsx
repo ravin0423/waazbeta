@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 const CustomerProfile = () => {
   const { user } = useAuth();
-  const [name, setName] = useState(user?.name || '');
+  const [name, setName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [email] = useState(user?.email || '');
   const [avatar, setAvatar] = useState<string | null>(null);
