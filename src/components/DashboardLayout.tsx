@@ -25,11 +25,14 @@ const customerNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
+  { label: 'Gadget Categories', path: '/admin/gadget-categories', icon: <Layers size={20} /> },
+  { label: 'Regions', path: '/admin/regions', icon: <MapPin size={20} /> },
+  { label: 'Partners', path: '/admin/partners-manage', icon: <Users size={20} /> },
   { label: 'Subscriptions', path: '/admin/subscriptions', icon: <Shield size={20} /> },
   { label: 'Invoices', path: '/admin/invoices', icon: <Receipt size={20} /> },
   { label: 'Purchase Orders', path: '/admin/purchase-orders', icon: <Package size={20} /> },
   { label: 'Service Bookings', path: '/admin/services', icon: <Wrench size={20} /> },
-  { label: 'Repair Partners', path: '/admin/partners', icon: <Users size={20} /> },
+  { label: 'Legacy Partners', path: '/admin/partners', icon: <Users size={20} /> },
   { label: 'Analytics', path: '/admin/analytics', icon: <TrendingUp size={20} /> },
   { label: 'Fraud Monitor', path: '/admin/fraud-monitoring', icon: <Shield size={20} /> },
   { label: 'Device Verification', path: '/admin/device-verification', icon: <Smartphone size={20} /> },
