@@ -41,6 +41,69 @@ export type Database = {
         }
         Relationships: []
       }
+      customer_devices: {
+        Row: {
+          address: string
+          created_at: string
+          gadget_category_id: string | null
+          google_location_pin: string | null
+          id: string
+          imei_number: string | null
+          product_name: string
+          serial_number: string
+          status: string
+          subscription_plan_id: string | null
+          updated_at: string
+          user_id: string
+          whatsapp_number: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          gadget_category_id?: string | null
+          google_location_pin?: string | null
+          id?: string
+          imei_number?: string | null
+          product_name: string
+          serial_number: string
+          status?: string
+          subscription_plan_id?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp_number: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          gadget_category_id?: string | null
+          google_location_pin?: string | null
+          id?: string
+          imei_number?: string | null
+          product_name?: string
+          serial_number?: string
+          status?: string
+          subscription_plan_id?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_devices_gadget_category_id_fkey"
+            columns: ["gadget_category_id"]
+            isOneToOne: false
+            referencedRelation: "gadget_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_devices_subscription_plan_id_fkey"
+            columns: ["subscription_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_permissions: {
         Row: {
           created_at: string
