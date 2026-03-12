@@ -1,20 +1,17 @@
 import { useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import StatusBadge from '@/components/StatusBadge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { serviceTickets } from '@/data/mockData';
-import { Ticket, Plus, Upload, Image, X } from 'lucide-react';
+import { Ticket, Plus, Upload, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 const CustomerTickets = () => {
-  const [tickets, setTickets] = useState(serviceTickets.filter(t => t.customerId === 'c1'));
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
@@ -24,10 +21,7 @@ const CustomerTickets = () => {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (images.length + files.length > 2) {
-      toast.error('Maximum 2 images allowed');
-      return;
-    }
+    if (images.length + files.length > 2) { toast.error('Maximum 2 images allowed'); return; }
     const newImages = [...images, ...files].slice(0, 2);
     setImages(newImages);
     setPreviews(newImages.map(f => URL.createObjectURL(f)));
@@ -40,22 +34,7 @@ const CustomerTickets = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const newTicket = {
-      id: `st${Date.now()}`,
-      customerId: 'c1',
-      subject,
-      description,
-      status: 'open' as const,
-      priority: priority as 'low' | 'medium' | 'high',
-      createdAt: new Date().toISOString().split('T')[0],
-      images: previews,
-    };
-    setTickets(prev => [newTicket, ...prev]);
-    setSubject('');
-    setDescription('');
-    setPriority('medium');
-    setImages([]);
-    setPreviews([]);
+    setSubject(''); setDescription(''); setPriority('medium'); setImages([]); setPreviews([]);
     setOpen(false);
     toast.success('Service ticket created successfully!');
   };
@@ -126,39 +105,12 @@ const CustomerTickets = () => {
           </Dialog>
         </div>
 
-        <div className="space-y-3">
-          {tickets.map(ticket => (
-            <Card key={ticket.id} className="shadow-card">
-              <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
-                    <Ticket size={18} className="text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{ticket.subject}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{ticket.description}</p>
-                    <div className="flex items-center gap-3 mt-2">
-                      <span className="text-xs text-muted-foreground">Created: {ticket.createdAt}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${ticket.priority === 'high' ? 'bg-destructive/10 text-destructive' : ticket.priority === 'medium' ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'}`}>
-                        {ticket.priority}
-                      </span>
-                    </div>
-                    {ticket.images && ticket.images.length > 0 && (
-                      <div className="flex gap-2 mt-2">
-                        {ticket.images.map((img, i) => (
-                          <div key={i} className="h-12 w-12 rounded border border-border overflow-hidden">
-                            <img src={img} alt="" className="h-full w-full object-cover" />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <StatusBadge status={ticket.status} />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Card className="shadow-card">
+          <CardContent className="p-12 text-center">
+            <Ticket size={40} className="text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">No tickets yet. Click "New Ticket" to create one.</p>
+          </CardContent>
+        </Card>
       </motion.div>
     </DashboardLayout>
   );

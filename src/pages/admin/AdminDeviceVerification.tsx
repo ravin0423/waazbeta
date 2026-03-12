@@ -4,26 +4,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { lookupDeviceByIMEI, formatINR, getAllKnownTACs, type DeviceSpec } from '@/data/tacDatabase';
-import { customerDevices } from '@/data/mockData';
 import {
   ShieldCheck, ShieldAlert, ShieldX, Loader2, AlertTriangle,
   CheckCircle2, Smartphone, Cpu, HardDrive, Battery, Camera, Wifi,
   IndianRupee, Calendar, Ruler, Droplets, Fingerprint, Zap, Search,
   Monitor, Database
 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Separator } from '@/components/ui/separator';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { KPIMetric } from '@/types';
-import StatsCard from '@/components/StatsCard';
 
 type FraudRisk = 'clear' | 'warning' | 'blocked';
 
 interface IMEIVerification {
   verified: boolean;
   status: FraudRisk;
-  matchedDevice: typeof customerDevices[0] | null;
   deviceSpec: DeviceSpec | null;
   flags: string[];
 }
@@ -35,7 +31,7 @@ const verifyIMEI = (imei: string): IMEIVerification => {
   const flags: string[] = [];
 
   if (!/^\d{15}$/.test(imei)) {
-    return { verified: false, status: 'blocked', matchedDevice: null, deviceSpec: null, flags: ['Invalid IMEI format — must be exactly 15 digits'] };
+    return { verified: false, status: 'blocked', deviceSpec: null, flags: ['Invalid IMEI format — must be exactly 15 digits'] };
   }
 
   const luhnCheck = (num: string): boolean => {
@@ -53,7 +49,7 @@ const verifyIMEI = (imei: string): IMEIVerification => {
   }
 
   if (BLACKLISTED_IMEIS.includes(imei)) {
-    return { verified: false, status: 'blocked', matchedDevice: null, deviceSpec: null, flags: ['IMEI is blacklisted — reported stolen or lost'] };
+    return { verified: false, status: 'blocked', deviceSpec: null, flags: ['IMEI is blacklisted — reported stolen or lost'] };
   }
 
   if (SUSPICIOUS_PATTERNS.some(p => imei.includes(p))) {
@@ -61,18 +57,9 @@ const verifyIMEI = (imei: string): IMEIVerification => {
   }
 
   const deviceSpec = lookupDeviceByIMEI(imei);
-  const matchedDevice = customerDevices.find(d => d.imei === imei);
-
-  if (!matchedDevice) {
-    flags.push('IMEI not found in registered customer devices');
-  }
-
-  if (matchedDevice?.status === 'expired') {
-    flags.push('Device subscription has expired');
-  }
 
   const status: FraudRisk = flags.length > 0 ? 'warning' : 'clear';
-  return { verified: true, status, matchedDevice, deviceSpec, flags };
+  return { verified: true, status, deviceSpec, flags };
 };
 
 const SpecRow = ({ icon: Icon, label, value }: { icon: typeof Cpu; label: string; value: string }) => (
@@ -92,13 +79,6 @@ const AdminDeviceVerification = () => {
 
   const allTACs = getAllKnownTACs();
   const totalDevicesInDB = Object.keys(allTACs).length;
-  const registeredDevices = customerDevices.length;
-
-  const metrics: KPIMetric[] = [
-    { label: 'Devices in TAC Database', value: totalDevicesInDB, trend: 'up', change: 12 },
-    { label: 'Registered Customer Devices', value: registeredDevices, trend: 'stable', change: 0 },
-    { label: 'Brands Covered', value: [...new Set(Object.values(allTACs).map(d => d.brand))].length, trend: 'up', change: 5 },
-  ];
 
   const handleVerifyIMEI = useCallback(() => {
     setVerifying(true);
@@ -124,11 +104,6 @@ const AdminDeviceVerification = () => {
         <h1 className="font-heading text-2xl font-bold mb-1">Device Verification</h1>
         <p className="text-muted-foreground mb-6">Verify device IMEI, view hardware specifications & Indian market pricing</p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          {metrics.map((m, i) => <StatsCard key={i} metric={m} />)}
-        </div>
-
-        {/* IMEI Lookup Section */}
         <Card className="shadow-card mb-6">
           <CardHeader>
             <CardTitle className="font-heading text-lg flex items-center gap-2">
@@ -152,7 +127,6 @@ const AdminDeviceVerification = () => {
             </div>
             <p className="text-xs text-muted-foreground">Enter the device IMEI to fetch complete hardware specifications, fraud checks, and Indian market valuation.</p>
 
-            {/* Verification Result */}
             <AnimatePresence>
               {verification && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
@@ -164,15 +138,6 @@ const AdminDeviceVerification = () => {
                         <Icon size={18} className={config.color} />
                         <AlertTitle className={`${config.color} font-semibold`}>{config.label}</AlertTitle>
                         <AlertDescription>
-                          {verification.matchedDevice && (
-                            <div className="mt-2 p-3 rounded-lg bg-background/60 text-sm space-y-1">
-                              <p><span className="text-muted-foreground">Registered Device:</span> <span className="font-medium">{verification.matchedDevice.brand} {verification.matchedDevice.model}</span></p>
-                              <p><span className="text-muted-foreground">Customer ID:</span> <span className="font-mono">{verification.matchedDevice.customerId}</span></p>
-                              <p><span className="text-muted-foreground">Plan:</span> {verification.matchedDevice.subscriptionPlanId === 'sp2' ? 'WaaZ+ Complete Care' : 'WaaZ Standard Care'}</p>
-                              <p><span className="text-muted-foreground">Status:</span> <span className={verification.matchedDevice.status === 'active' ? 'text-success font-medium' : 'text-destructive font-medium'}>{verification.matchedDevice.status.toUpperCase()}</span></p>
-                              <p><span className="text-muted-foreground">Subscription:</span> {verification.matchedDevice.subscriptionStart} → {verification.matchedDevice.subscriptionEnd}</p>
-                            </div>
-                          )}
                           {verification.flags.length > 0 && (
                             <div className="mt-2 space-y-1">
                               {verification.flags.map((flag, i) => (
@@ -198,34 +163,25 @@ const AdminDeviceVerification = () => {
           </CardContent>
         </Card>
 
-        {/* Full Device Specifications */}
         <AnimatePresence>
           {spec && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
               <Card className="shadow-card mb-6 border-primary/20">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center">
-                        <Smartphone size={28} className="text-primary" />
-                      </div>
-                      <div>
-                        <CardTitle className="font-heading text-xl">{spec.brand} {spec.marketName}</CardTitle>
-                        <p className="text-sm text-muted-foreground">Model: {spec.model} · {spec.deviceType}</p>
-                      </div>
+                  <div className="flex items-center gap-4">
+                    <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Smartphone size={28} className="text-primary" />
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar size={16} />
-                      <span>Released {new Date(spec.releaseDate).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</span>
+                    <div>
+                      <CardTitle className="font-heading text-xl">{spec.brand} {spec.marketName}</CardTitle>
+                      <p className="text-sm text-muted-foreground">Model: {spec.model} · {spec.deviceType}</p>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Hardware Specifications */}
                   <div>
                     <h3 className="font-heading font-semibold text-sm mb-3 flex items-center gap-2">
-                      <Monitor size={16} className="text-primary" />
-                      Hardware Specifications
+                      <Monitor size={16} className="text-primary" /> Hardware Specifications
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       <SpecRow icon={Cpu} label="Processor" value={spec.specs.processor} />
@@ -243,14 +199,10 @@ const AdminDeviceVerification = () => {
                       {spec.specs.biometrics && <SpecRow icon={Fingerprint} label="Biometrics" value={spec.specs.biometrics} />}
                     </div>
                   </div>
-
                   <Separator />
-
-                  {/* Indian Market Valuation */}
                   <div>
                     <h3 className="font-heading font-semibold text-sm mb-3 flex items-center gap-2">
-                      <IndianRupee size={16} className="text-primary" />
-                      Indian Market Valuation
+                      <IndianRupee size={16} className="text-primary" /> Indian Market Valuation
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                       <div className="rounded-xl bg-muted/40 p-4 text-center border border-border">
@@ -271,34 +223,12 @@ const AdminDeviceVerification = () => {
                       </div>
                     </div>
                   </div>
-
-                  <Separator />
-
-                  {/* Depreciation Info */}
-                  <div className="rounded-xl bg-warning/5 border border-warning/20 p-4">
-                    <h4 className="text-sm font-semibold text-foreground mb-2">Depreciation Summary</h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Price Drop</span>
-                        <p className="font-bold text-foreground">{formatINR(spec.estimatedPriceINR.mrp - spec.estimatedPriceINR.currentMarket)}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Depreciation %</span>
-                        <p className="font-bold text-destructive">{((1 - spec.estimatedPriceINR.currentMarket / spec.estimatedPriceINR.mrp) * 100).toFixed(1)}%</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Coverage Value</span>
-                        <p className="font-bold text-primary">{formatINR(spec.estimatedPriceINR.currentMarket)}</p>
-                      </div>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Device not found in DB */}
         <AnimatePresence>
           {verification && !spec && verification.status !== 'blocked' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -306,14 +236,13 @@ const AdminDeviceVerification = () => {
                 <CardContent className="p-6 text-center">
                   <Database size={40} className="text-muted-foreground mx-auto mb-3" />
                   <h3 className="font-heading font-semibold mb-1">Device Not in TAC Database</h3>
-                  <p className="text-sm text-muted-foreground">This IMEI's TAC prefix ({imei.substring(0, 8)}) is not in the local database. The IMEI format is valid but device specifications are unavailable.</p>
+                  <p className="text-sm text-muted-foreground">This IMEI's TAC prefix ({imei.substring(0, 8)}) is not in the local database.</p>
                 </CardContent>
               </Card>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Known Devices Reference Table */}
         <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="font-heading text-lg flex items-center gap-2">
