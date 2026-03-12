@@ -1,11 +1,15 @@
+import { useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import StatusBadge from '@/components/StatusBadge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ClaimSubmissionForm from '@/components/ClaimSubmissionForm';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { claims, customerDevices } from '@/data/mockData';
-import { FileText, Clock, MapPin } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { FileText, Clock, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const CustomerClaims = () => {
+  const [showForm, setShowForm] = useState(false);
   const userClaims = claims.filter(c => c.customerId === 'c1');
   const totalClaims = userClaims.length;
   const resolvedClaims = userClaims.filter(c => c.status === 'completed').length;
@@ -13,8 +17,23 @@ const CustomerClaims = () => {
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="font-heading text-2xl font-bold mb-1">My Claims</h1>
+        <div className="flex items-center justify-between mb-1">
+          <h1 className="font-heading text-2xl font-bold">My Claims</h1>
+          {!showForm && (
+            <Button onClick={() => setShowForm(true)} size="sm">
+              <Plus size={16} className="mr-1" /> New Claim
+            </Button>
+          )}
+        </div>
         <p className="text-muted-foreground mb-6">Track your service claims and repair status</p>
+
+        <AnimatePresence>
+          {showForm && (
+            <div className="mb-6">
+              <ClaimSubmissionForm onClose={() => setShowForm(false)} onSubmit={() => setShowForm(false)} />
+            </div>
+          )}
+        </AnimatePresence>
 
         <div className="flex gap-4 mb-6">
           <div className="px-4 py-2 rounded-lg bg-primary/10 text-sm font-medium">
