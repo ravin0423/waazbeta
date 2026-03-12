@@ -1,37 +1,51 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Shield, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Shield, Mail, Lock, ArrowRight, User, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const Login = () => {
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const { login, signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = login(email, password);
-    if (success) {
-      const user = email.includes('waaz') ? '/admin' : email.includes('techfix') ? '/partner' : '/customer';
-      navigate(user);
-    } else {
-      setError('Invalid credentials. Try one of the demo accounts below.');
-    }
-  };
+    setSubmitting(true);
 
-  const demoAccounts = [
-    { label: 'Customer', email: 'rajesh@example.com', desc: 'View subscriptions & claims' },
-    { label: 'Admin', email: 'priya@waaz.in', desc: 'Full admin dashboard' },
-    { label: 'Partner', email: 'vikram@techfix.in', desc: 'Reseller & partner portal' },
-  ];
+    if (isSignUp) {
+      const result = await signup(email, password, fullName);
+      if (result.success) {
+        // Auto-confirmed, so login automatically happens via onAuthStateChange
+        // Small delay to let the auth state propagate
+        setTimeout(() => navigate('/customer'), 500);
+      } else {
+        setError(result.error || 'Signup failed');
+      }
+    } else {
+      const result = await login(email, password);
+      if (result.success) {
+        // Role-based redirect will happen from App.tsx
+        // For now, navigate to a temporary route that will redirect
+        setTimeout(() => {
+          // Re-check route after auth state updates
+          window.location.href = '/';
+        }, 500);
+      } else {
+        setError(result.error || 'Invalid credentials');
+      }
+    }
+    setSubmitting(false);
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -53,9 +67,9 @@ const Login = () => {
             </p>
             <div className="mt-10 grid grid-cols-3 gap-6">
               {[
-                { val: '10K+', lab: 'Active Users' },
+                { val: '50K+', lab: 'Devices Protected' },
                 { val: '₹899', lab: 'Starting Plan' },
-                { val: '< 7 days', lab: 'Avg. TAT' },
+                { val: '< 5 days', lab: 'Avg. Repair' },
               ].map(s => (
                 <div key={s.lab}>
                   <p className="font-heading text-2xl font-bold text-accent">{s.val}</p>
@@ -65,7 +79,6 @@ const Login = () => {
             </div>
           </motion.div>
         </div>
-        {/* Decorative circles */}
         <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-primary/10" />
         <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-accent/5" />
       </div>
@@ -85,10 +98,23 @@ const Login = () => {
             <h1 className="font-heading text-2xl font-bold">WaaZ</h1>
           </div>
 
-          <h2 className="font-heading text-2xl font-bold mb-1">Welcome back</h2>
-          <p className="text-muted-foreground mb-8">Sign in to your WaaZ account</p>
+          <h2 className="font-heading text-2xl font-bold mb-1">
+            {isSignUp ? 'Create your account' : 'Welcome back'}
+          </h2>
+          <p className="text-muted-foreground mb-8">
+            {isSignUp ? 'Sign up to start protecting your devices' : 'Sign in to your WaaZ account'}
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <div className="relative">
+                  <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <Input id="fullName" placeholder="Your full name" value={fullName} onChange={e => setFullName(e.target.value)} className="pl-10" required />
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -100,35 +126,24 @@ const Login = () => {
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="pl-10" required />
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="pl-10" required minLength={6} />
               </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full gradient-primary text-primary-foreground hover:opacity-90">
-              Sign In <ArrowRight size={16} className="ml-2" />
+            <Button type="submit" disabled={submitting} className="w-full gradient-primary text-primary-foreground hover:opacity-90">
+              {submitting && <Loader2 size={16} className="mr-2 animate-spin" />}
+              {isSignUp ? 'Create Account' : 'Sign In'} <ArrowRight size={16} className="ml-2" />
             </Button>
           </form>
 
-          <div className="mt-8">
-            <p className="text-sm text-muted-foreground mb-3">Quick access with demo accounts:</p>
-            <div className="grid gap-2">
-              {demoAccounts.map(acc => (
-                <button
-                  key={acc.email}
-                  onClick={() => { setEmail(acc.email); setPassword('demo'); }}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-secondary transition-colors text-left"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{acc.label}</p>
-                    <p className="text-xs text-muted-foreground">{acc.desc}</p>
-                  </div>
-                  <ArrowRight size={14} className="text-muted-foreground" />
-                </button>
-              ))}
-            </div>
-          </div>
-
           <p className="mt-6 text-center text-sm text-muted-foreground">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button onClick={() => { setIsSignUp(!isSignUp); setError(''); }} className="text-primary hover:underline font-medium">
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </button>
+          </p>
+
+          <p className="mt-4 text-center text-sm text-muted-foreground">
             <Link to="/" className="text-primary hover:underline">← Back to Home</Link>
           </p>
         </motion.div>
