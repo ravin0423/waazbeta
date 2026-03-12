@@ -14,6 +14,7 @@ import CustomerTickets from "./pages/customer/CustomerTickets";
 import CustomerProfile from "./pages/customer/CustomerProfile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
+import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminPurchaseOrders from "./pages/admin/AdminPurchaseOrders";
 import AdminServices from "./pages/admin/AdminServices";
