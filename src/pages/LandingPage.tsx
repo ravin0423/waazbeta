@@ -19,6 +19,7 @@ const deviceCategories = [
   { icon: Camera, label: 'DSLR Cameras', desc: 'Canon, Nikon, Sony mirrorless & DSLRs. Sensor cleaning, shutter mechanism, lens motor repairs.' },
   { icon: Gamepad2, label: 'Gaming Consoles', desc: 'PlayStation, Xbox, Nintendo Switch. Overheating, HDMI port, disc drive and drift repairs.' },
   { icon: Shield, label: 'CCTV Systems', desc: 'IP cameras, DVR/NVR units, PTZ cameras. Night vision, motion sensor, and storage failures.' },
+  { icon: Projector, label: 'Projectors', desc: 'Home theater, office & portable projectors. Lamp, color wheel, HDMI port, and overheating repairs.' },
   { icon: Printer, label: 'Printers & More', desc: 'Inkjet, laser, 3D printers. Print head, roller, connectivity, and firmware issues resolved.' },
 ];
 
