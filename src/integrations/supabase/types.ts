@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          amount: number | null
+          created_at: string
+          event_date: string
+          event_type: string
+          id: string
+          metadata: Json | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          event_date?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          event_date?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       feature_permissions: {
         Row: {
           created_at: string
@@ -189,6 +216,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subscription_plans: {
+        Row: {
+          annual_price: number
+          code: string
+          covers_accidental_damage: boolean
+          covers_battery: boolean
+          covers_hardware_failure: boolean
+          covers_liquid_damage: boolean
+          covers_motherboard: boolean
+          created_at: string
+          gadget_category_id: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          annual_price?: number
+          code: string
+          covers_accidental_damage?: boolean
+          covers_battery?: boolean
+          covers_hardware_failure?: boolean
+          covers_liquid_damage?: boolean
+          covers_motherboard?: boolean
+          created_at?: string
+          gadget_category_id?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          annual_price?: number
+          code?: string
+          covers_accidental_damage?: boolean
+          covers_battery?: boolean
+          covers_hardware_failure?: boolean
+          covers_liquid_damage?: boolean
+          covers_motherboard?: boolean
+          created_at?: string
+          gadget_category_id?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_plans_gadget_category_id_fkey"
+            columns: ["gadget_category_id"]
+            isOneToOne: false
+            referencedRelation: "gadget_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
