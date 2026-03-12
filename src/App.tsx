@@ -18,6 +18,7 @@ import AdminServices from "./pages/admin/AdminServices";
 import AdminPartners from "./pages/admin/AdminPartners";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminFraudMonitoring from "./pages/admin/AdminFraudMonitoring";
+import AdminDeviceVerification from "./pages/admin/AdminDeviceVerification";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
