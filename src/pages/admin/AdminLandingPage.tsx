@@ -390,6 +390,50 @@ const AdminLandingPage = () => {
       );
     }
 
+    // TERMS & CONDITIONS — list of disclaimer lines
+    if (key === 'terms_conditions' && Array.isArray(parsed)) {
+      return (
+        <div>
+          <Label className="mb-3 block">Terms & Conditions Lines</Label>
+          <p className="text-xs text-muted-foreground mb-3">Each line will be shown as a bullet point with an asterisk (*) under the pricing plans.</p>
+          <div className="space-y-2">
+            {parsed.map((line: string, i: number) => (
+              <div key={i} className="flex items-start gap-2">
+                <span className="text-muted-foreground mt-2.5 shrink-0">*</span>
+                <Textarea
+                  value={line}
+                  onChange={e => {
+                    const updated = [...parsed];
+                    updated[i] = e.target.value;
+                    updateContent(updated);
+                  }}
+                  placeholder="Terms & conditions text..."
+                  rows={2}
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10 shrink-0 mt-1"
+                  onClick={() => updateContent(parsed.filter((_: any, j: number) => j !== i))}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => updateContent([...parsed, ''])}
+          >
+            <Plus size={14} className="mr-1" /> Add Line
+          </Button>
+        </div>
+      );
+    }
+
     // Default: show raw JSON
     return (
       <div>
