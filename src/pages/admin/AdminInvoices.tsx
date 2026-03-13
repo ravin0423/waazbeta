@@ -36,6 +36,7 @@ const AdminInvoices = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [customerSearch, setCustomerSearch] = useState('');
   const [plans, setPlans] = useState<any[]>([]);
+  const [customItemText, setCustomItemText] = useState('');
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
