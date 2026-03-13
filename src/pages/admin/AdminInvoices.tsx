@@ -12,8 +12,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { FileText, Plus, Loader2, Edit, Download, Upload, Image, Trash2 } from 'lucide-react';
+import { FileText, Plus, Loader2, Edit, Download, Upload, Image, Trash2, Printer } from 'lucide-react';
 import { format } from 'date-fns';
+import { generateInvoiceHtml } from '@/utils/invoiceTemplate';
 
 interface LineItem {
   type: string; // plan id or 'other'
