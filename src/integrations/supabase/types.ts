@@ -264,6 +264,8 @@ export type Database = {
       invoices: {
         Row: {
           amount: number
+          cgst_amount: number
+          cgst_percent: number
           created_at: string
           customer_device_id: string | null
           customer_email: string | null
@@ -273,11 +275,17 @@ export type Database = {
           invoice_number: string
           notes: string | null
           paid_at: string | null
+          sgst_amount: number
+          sgst_percent: number
           status: string
+          subtotal: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           amount?: number
+          cgst_amount?: number
+          cgst_percent?: number
           created_at?: string
           customer_device_id?: string | null
           customer_email?: string | null
@@ -287,11 +295,17 @@ export type Database = {
           invoice_number: string
           notes?: string | null
           paid_at?: string | null
+          sgst_amount?: number
+          sgst_percent?: number
           status?: string
+          subtotal?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
+          cgst_amount?: number
+          cgst_percent?: number
           created_at?: string
           customer_device_id?: string | null
           customer_email?: string | null
@@ -301,8 +315,12 @@ export type Database = {
           invoice_number?: string
           notes?: string | null
           paid_at?: string | null
+          sgst_amount?: number
+          sgst_percent?: number
           status?: string
+          subtotal?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -789,6 +807,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invoice_number: { Args: never; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
