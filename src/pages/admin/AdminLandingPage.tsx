@@ -308,17 +308,17 @@ const AdminLandingPage = () => {
                     rows={2}
                   />
                 </div>
-                <div>
-                  <Label>Content (JSON)</Label>
+                {renderContentEditor()}
+                <details className="mt-2">
+                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">Advanced: Raw JSON</summary>
                   <Textarea
                     value={contentStr}
                     onChange={e => setContentStr(e.target.value)}
                     placeholder='[{"key": "value"}]'
-                    rows={10}
-                    className="font-mono text-sm"
+                    rows={6}
+                    className="font-mono text-sm mt-2"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">JSON array or object for section-specific data</p>
-                </div>
+                </details>
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={editSection.is_enabled}
