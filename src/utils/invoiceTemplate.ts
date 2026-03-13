@@ -90,19 +90,19 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   /* === WATERMARK === */
   .watermark {
     position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0.04; z-index: 0; pointer-events: none;
+    transform: translate(-50%, -50%) rotate(-25deg);
+    opacity: 0.035; z-index: 2; pointer-events: none;
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 180px; font-weight: 700; letter-spacing: 12px;
+    font-size: 140px; font-weight: 700; letter-spacing: 12px;
     color: var(--navy); text-transform: uppercase;
     white-space: nowrap;
   }
-  ${logoUrl ? `.watermark-logo {
+  .watermark-logo {
     position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    opacity: 0.06; z-index: 0; pointer-events: none;
-    width: 320px; height: auto;
-  }` : ''}
+    opacity: 0.05; z-index: 2; pointer-events: none;
+    width: 280px; height: auto;
+  }
 
   /* === HEADER === */
   .inv-header-banner {
