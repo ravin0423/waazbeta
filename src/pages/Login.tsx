@@ -64,7 +64,7 @@ const Login = () => {
               Warranty as a Service
             </h2>
             <p className="text-primary-foreground/70 text-lg leading-relaxed">
-              Complete device protection platform. Manage subscriptions, track claims, and grow your repair partner network — all in one place.
+              Complete gadget protection platform. Manage subscriptions, track claims, and grow your repair partner network — all in one place.
             </p>
             <div className="mt-10 grid grid-cols-3 gap-6">
               {[
