@@ -39,7 +39,17 @@ const adminNav: NavItem[] = [
   { label: 'Partners', path: '/admin/partners-manage', icon: <Users size={20} /> },
   { label: 'Subscriptions', path: '/admin/subscriptions', icon: <Shield size={20} /> },
   { label: 'Subscription Plans', path: '/admin/subscription-plans', icon: <Package size={20} /> },
-  { label: 'Invoices', path: '/admin/invoices', icon: <Receipt size={20} /> },
+  {
+    label: 'Finance', path: '/admin/finance', icon: <IndianRupee size={20} />,
+    children: [
+      { label: 'Overview', path: '/admin/finance', icon: <TrendingUp size={18} /> },
+      { label: 'Invoices', path: '/admin/invoices', icon: <Receipt size={18} /> },
+      { label: 'GST & Tax Filing', path: '/admin/finance-gst', icon: <FileText size={18} /> },
+      { label: 'Income & Expenses', path: '/admin/finance-transactions', icon: <Wallet size={18} /> },
+      { label: 'Partner Payments', path: '/admin/finance-partner-payments', icon: <Users size={18} /> },
+      { label: 'Compliance & MSME', path: '/admin/finance-compliance', icon: <BadgeCheck size={18} /> },
+    ],
+  },
   { label: 'Purchase Orders', path: '/admin/purchase-orders', icon: <Package size={20} /> },
   { label: 'Service Bookings', path: '/admin/services', icon: <Wrench size={20} /> },
   { label: 'Support Tickets', path: '/admin/tickets', icon: <Ticket size={20} /> },
