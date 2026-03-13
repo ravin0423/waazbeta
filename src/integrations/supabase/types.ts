@@ -433,6 +433,66 @@ export type Database = {
         }
         Relationships: []
       }
+      service_claims: {
+        Row: {
+          admin_notes: string | null
+          assigned_partner_id: string | null
+          created_at: string
+          description: string
+          device_id: string | null
+          id: string
+          image_urls: string[] | null
+          imei_number: string
+          issue_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          assigned_partner_id?: string | null
+          created_at?: string
+          description: string
+          device_id?: string | null
+          id?: string
+          image_urls?: string[] | null
+          imei_number: string
+          issue_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          assigned_partner_id?: string | null
+          created_at?: string
+          description?: string
+          device_id?: string | null
+          id?: string
+          image_urls?: string[] | null
+          imei_number?: string
+          issue_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_claims_assigned_partner_id_fkey"
+            columns: ["assigned_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_claims_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "customer_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           annual_price: number
