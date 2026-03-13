@@ -189,7 +189,7 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
     <div class="inv-header-top">
       <div>
         <div class="company-name">WaaZ</div>
-        <div class="company-tagline">Device Protection Services</div>
+        <div class="company-tagline">Gadget Protection Services</div>
       </div>
       <div class="inv-title-block">
         <div class="inv-title">TAX INVOICE</div>
@@ -269,7 +269,7 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   </div>
 
   <!-- Footer -->
-  <div class="footer-bar"><span>WaaZ</span> Device Protection Services &bull; Thank you for your business</div>
+  <div class="footer-bar"><span>WaaZ</span> Gadget Protection Services &bull; Thank you for your business</div>
 </div>
 </div>
 

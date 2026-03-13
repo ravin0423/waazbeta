@@ -137,7 +137,7 @@ const AdminCustomerDatabase = () => {
         @media print { body { padding: 20px; } }
       </style></head><body>
       <div class="header">
-        <div><div class="logo">WaaZ<span>Device Protection Services</span></div></div>
+        <div><div class="logo">WaaZ<span>Gadget Protection Services</span></div></div>
         <div class="meta">
           <strong>Invoice #</strong> ${inv.invoice_number}<br/>
           <strong>Date:</strong> ${format(new Date(inv.created_at), 'dd MMM yyyy')}<br/>
@@ -159,7 +159,7 @@ const AdminCustomerDatabase = () => {
         ${signatureUrl ? `<img src="${signatureUrl}" alt="Signature" />` : ''}
         <p style="font-size:13px;font-weight:bold;margin-top:4px">WaaZ</p>
       </div>
-      <div class="footer">This is a computer-generated invoice. &copy; WaaZ Device Protection Services</div>
+      <div class="footer">This is a computer-generated invoice. &copy; WaaZ Gadget Protection Services</div>
       <script>window.print();</script></body></html>
     `);
     win.document.close();

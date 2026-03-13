@@ -34,7 +34,7 @@ const CustomerSubscriptions = () => {
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-heading text-2xl font-bold mb-1">My Subscriptions</h1>
-        <p className="text-muted-foreground mb-6">Available device protection plans</p>
+        <p className="text-muted-foreground mb-6">Available gadget protection plans</p>
 
         {plans.length === 0 ? (
           <Card className="shadow-card">
