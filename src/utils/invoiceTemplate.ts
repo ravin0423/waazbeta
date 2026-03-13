@@ -228,14 +228,21 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
 <div class="a4-page">
   <!-- Watermark -->
   <div class="watermark">WaaZ</div>
-  ${logoUrl ? `<img class="watermark-logo" src="${logoUrl}" alt="" />` : ''}
+  <svg class="watermark-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>
   
 <div class="invoice-container">
   <!-- Header -->
   <div class="inv-header-banner">
     <div class="inv-header-top">
       <div class="company-block">
-        ${logoUrl ? `<img class="company-logo" src="${logoUrl}" alt="WaaZ" />` : ''}
+        <div class="company-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
         <div>
           <div class="company-name">WaaZ</div>
           <div class="company-tagline">Gadget Protection Services</div>
