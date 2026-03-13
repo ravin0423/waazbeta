@@ -179,7 +179,7 @@ const AdminInvoices = () => {
         line_item_description: primaryDesc,
         subscription_plan_id: lineItems[0]?.type !== 'other' ? lineItems[0]?.type || null : null,
       };
-      const { data: invData, error } = await supabase.from('invoices').insert(payload).select('id').single();
+      const { data: invData, error } = await supabase.from('invoices').insert(payload).select('*, invoice_line_items(id, description, amount, subscription_plan_id)').single();
       if (error || !invData) { toast.error('Failed to create: ' + (error?.message || '')); setSaving(false); return; }
 
       const itemsToInsert = lineItems.filter(li => li.type).map(li => ({
@@ -192,10 +192,16 @@ const AdminInvoices = () => {
         await supabase.from('invoice_line_items').insert(itemsToInsert);
       }
       toast.success(`Invoice ${numData} created`);
+
+      // Auto-open the created invoice
+      const createdInv = { ...invData, invoice_line_items: itemsToInsert.map((it, i) => ({ ...it, id: `temp-${i}` })) };
+      setSaving(false);
+      setOpen(false);
+      resetForm();
+      fetchInvoices();
+      handleDownloadInvoice(createdInv);
+      return;
     }
-    setSaving(false);
-    setOpen(false);
-    resetForm();
     fetchInvoices();
   };
 
