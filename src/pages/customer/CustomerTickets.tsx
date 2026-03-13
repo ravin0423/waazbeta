@@ -1,23 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Ticket, Plus, Upload, X } from 'lucide-react';
+import { Ticket, Plus, Upload, X, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
+
+const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: any }> = {
+  open: { label: 'Open', variant: 'secondary', icon: Clock },
+  in_progress: { label: 'In Progress', variant: 'default', icon: AlertCircle },
+  resolved: { label: 'Resolved', variant: 'outline', icon: CheckCircle },
+  closed: { label: 'Closed', variant: 'destructive', icon: CheckCircle },
+};
 
 const CustomerTickets = () => {
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState<string>('medium');
+  const [priority, setPriority] = useState('medium');
   const [images, setImages] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  const fetchTickets = async () => {
+    const { data } = await supabase
+      .from('service_tickets')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setTickets(data || []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchTickets(); }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -32,11 +58,38 @@ const CustomerTickets = () => {
     setPreviews(prev => prev.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+    setSubmitting(true);
+
+    // Upload images
+    const imageUrls: string[] = [];
+    for (const file of images) {
+      const ext = file.name.split('.').pop();
+      const path = `${user.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { data } = await supabase.storage.from('ticket-images').upload(path, file);
+      if (data) {
+        const { data: urlData } = supabase.storage.from('ticket-images').getPublicUrl(data.path);
+        imageUrls.push(urlData.publicUrl);
+      }
+    }
+
+    const { error } = await supabase.from('service_tickets').insert({
+      user_id: user.id,
+      subject,
+      description,
+      priority,
+      image_urls: imageUrls,
+    });
+
+    setSubmitting(false);
+    if (error) { toast.error('Failed to submit ticket'); return; }
+
     setSubject(''); setDescription(''); setPriority('medium'); setImages([]); setPreviews([]);
     setOpen(false);
     toast.success('Service ticket created successfully!');
+    fetchTickets();
   };
 
   return (
@@ -97,7 +150,8 @@ const CustomerTickets = () => {
                     )}
                   </div>
                 </div>
-                <Button type="submit" className="w-full gradient-primary text-primary-foreground hover:opacity-90">
+                <Button type="submit" disabled={submitting} className="w-full gradient-primary text-primary-foreground hover:opacity-90">
+                  {submitting ? <Loader2 size={16} className="mr-2 animate-spin" /> : null}
                   Submit Ticket
                 </Button>
               </form>
@@ -105,12 +159,54 @@ const CustomerTickets = () => {
           </Dialog>
         </div>
 
-        <Card className="shadow-card">
-          <CardContent className="p-12 text-center">
-            <Ticket size={40} className="text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">No tickets yet. Click "New Ticket" to create one.</p>
-          </CardContent>
-        </Card>
+        {loading ? (
+          <Card className="shadow-card"><CardContent className="p-12 text-center"><Loader2 className="animate-spin text-primary mx-auto" size={24} /></CardContent></Card>
+        ) : tickets.length === 0 ? (
+          <Card className="shadow-card">
+            <CardContent className="p-12 text-center">
+              <Ticket size={40} className="text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">No tickets yet. Click "New Ticket" to create one.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {tickets.map(ticket => {
+              const sc = statusConfig[ticket.status] || statusConfig.open;
+              const Icon = sc.icon;
+              return (
+                <Card key={ticket.id} className="shadow-card">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-foreground">{ticket.subject}</span>
+                          <Badge variant={sc.variant} className="text-xs">
+                            <Icon size={12} className="mr-1" /> {sc.label}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">{ticket.priority}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{ticket.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm')}</p>
+                      </div>
+                      {ticket.image_urls?.length > 0 && (
+                        <div className="flex gap-1">
+                          {ticket.image_urls.map((url: string, i: number) => (
+                            <img key={i} src={url} alt="" className="w-12 h-12 rounded border border-border object-cover" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {ticket.admin_response && (
+                      <div className="mt-3 p-2 rounded bg-muted/50 text-sm text-muted-foreground">
+                        <span className="font-medium">Admin Response:</span> {ticket.admin_response}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
     </DashboardLayout>
   );
