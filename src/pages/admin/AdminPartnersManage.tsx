@@ -82,6 +82,7 @@ const AdminPartnersManage = () => {
       sla_turnaround_days: parseInt(form.sla_turnaround_days) || 7,
       commission_rate: parseFloat(form.commission_rate) || 10,
       quality_rating: parseFloat(form.quality_rating) || 5.0,
+      partner_type: form.partner_type,
       updated_at: new Date().toISOString(),
     };
     if (editing) {
