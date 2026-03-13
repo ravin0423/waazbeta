@@ -545,6 +545,20 @@ const LandingPage = () => {
               </motion.div>
             ))}
           </div>
+
+          {/* Terms & Conditions note */}
+          <motion.div
+            className="mt-12 max-w-3xl mx-auto text-center"
+            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={2}
+          >
+            <div className="p-6 rounded-2xl bg-card/50 border border-border/50 backdrop-blur-sm">
+              <p className="text-xs text-muted-foreground leading-relaxed space-y-1">
+                <span className="block">* Coverage for accidental damage, liquid damage, and doorstep pickup & delivery is available only on select plans. Please review plan details before subscribing.</span>
+                <span className="block mt-1">* All plans are subject to device eligibility verification. Terms and conditions apply. Pricing may vary by device category.</span>
+                <span className="block mt-1">* Turnaround times are indicative and may vary based on parts availability and service location.</span>
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
     );
