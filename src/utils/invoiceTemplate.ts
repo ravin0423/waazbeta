@@ -31,11 +31,23 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
 
   const fmt = (n: number) => Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+  // Add empty rows to fill the table area (min 10 rows total)
+  const minRows = 10;
+  const emptyRowsCount = Math.max(0, minRows - items.length);
+
   const lineItemsRows = items.map((li, idx) =>
     `<tr>
       <td style="text-align:center; border:1px solid #000; padding:8px 6px;">${idx + 1}</td>
       <td style="border:1px solid #000; padding:8px 10px;">${li.description}</td>
       <td style="text-align:right; border:1px solid #000; padding:8px 10px;">₹${fmt(Number(li.amount))}</td>
+    </tr>`
+  ).join('');
+
+  const emptyRows = Array.from({ length: emptyRowsCount }, () =>
+    `<tr>
+      <td style="text-align:center; border:1px solid #000; padding:8px 6px;">&nbsp;</td>
+      <td style="border:1px solid #000; padding:8px 10px;">&nbsp;</td>
+      <td style="text-align:right; border:1px solid #000; padding:8px 10px;">&nbsp;</td>
     </tr>`
   ).join('');
 
