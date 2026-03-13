@@ -44,6 +44,7 @@ const adminNav: NavItem[] = [
   { label: 'Fraud Monitor', path: '/admin/fraud-monitoring', icon: <Shield size={20} /> },
   { label: 'Device Verification', path: '/admin/device-verification', icon: <Smartphone size={20} /> },
   { label: 'Users & Roles', path: '/admin/user-roles', icon: <UserCog size={20} /> },
+  { label: 'Landing Page', path: '/admin/landing-page', icon: <Globe size={20} /> },
 ];
 
 const partnerNav: NavItem[] = [
