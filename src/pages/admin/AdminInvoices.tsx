@@ -36,6 +36,7 @@ const AdminInvoices = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [customerSearch, setCustomerSearch] = useState('');
   const [plans, setPlans] = useState<any[]>([]);
+  const [customItemText, setCustomItemText] = useState('');
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -67,9 +68,10 @@ const AdminInvoices = () => {
 
   const resetForm = () => {
     setForm({ customer_name: '', customer_email: '', cgst_percent: '9', sgst_percent: '9', status: 'pending', notes: '', due_date: '', user_id: '' });
-    setLineItems([{ type: '', description: '', amount: '' }]);
+    setLineItems([]);
     setEditId(null);
     setCustomerSearch('');
+    setCustomItemText('');
   };
 
   const openEdit = (inv: any) => {
@@ -103,29 +105,7 @@ const AdminInvoices = () => {
     if (c) setForm(f => ({ ...f, user_id: userId, customer_name: c.full_name, customer_email: c.email }));
   };
 
-  const handlePlanSelect = (index: number, value: string) => {
-    setLineItems(prev => {
-      const updated = [...prev];
-      if (value === 'other') {
-        updated[index] = { type: 'other', description: '', amount: '' };
-      } else {
-        const plan = plans.find(p => p.id === value);
-        if (plan) {
-          updated[index] = {
-            type: value,
-            description: `${plan.name}${plan.gadget_categories?.name ? ` (${plan.gadget_categories.name})` : ''} — Annual Protection Plan`,
-            amount: String(plan.annual_price),
-          };
-        }
-      }
-      return updated;
-    });
-  };
-
-  const addLineItem = () => setLineItems(prev => [...prev, { type: '', description: '', amount: '' }]);
-
   const removeLineItem = (index: number) => {
-    if (lineItems.length <= 1) return;
     setLineItems(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -377,53 +357,67 @@ const AdminInvoices = () => {
                     </div>
                   </div>
 
-                  {/* Line Items */}
+                  {/* Line Items — single dropdown with add buttons */}
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-base font-semibold">Line Items</Label>
-                      <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
-                        <Plus size={14} className="mr-1" /> Add Item
-                      </Button>
-                    </div>
-                    {lineItems.map((li, idx) => (
-                      <div key={idx} className="border rounded-lg p-3 space-y-3 bg-muted/30">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-medium text-muted-foreground">Item {idx + 1}</span>
-                          {lineItems.length > 1 && (
-                            <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" onClick={() => removeLineItem(idx)}>
-                              <Trash2 size={14} />
+                    <Label className="text-base font-semibold">Line Items</Label>
+
+                    {/* Added items */}
+                    {lineItems.length > 0 && (
+                      <div className="space-y-1.5">
+                        {lineItems.map((li, idx) => (
+                          <div key={idx} className="flex items-center gap-2 bg-muted/40 rounded-md px-3 py-2">
+                            <span className="flex-1 text-sm truncate">{li.description}</span>
+                            <span className="text-sm font-medium whitespace-nowrap">₹{Number(li.amount || 0).toLocaleString('en-IN')}</span>
+                            {li.type === 'other' && (
+                              <Input type="number" step="0.01" className="w-24 h-7 text-xs" value={li.amount}
+                                onChange={e => updateLineItem(idx, 'amount', e.target.value)} placeholder="Amt" />
+                            )}
+                            <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive shrink-0" onClick={() => removeLineItem(idx)}>
+                              <Trash2 size={13} />
                             </Button>
-                          )}
-                        </div>
-                        <Select value={li.type} onValueChange={v => handlePlanSelect(idx, v)}>
-                          <SelectTrigger><SelectValue placeholder="Select subscription plan..." /></SelectTrigger>
-                          <SelectContent>
-                            {plans.map(p => (
-                              <SelectItem key={p.id} value={p.id}>
-                                {p.name} {p.gadget_categories?.name ? `(${p.gadget_categories.name})` : ''} — ₹{Number(p.annual_price).toLocaleString('en-IN')}
-                              </SelectItem>
-                            ))}
-                            <SelectItem value="other">Other (custom entry)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {li.type === 'other' && (
-                          <Input placeholder="Custom description..." value={li.description}
-                            onChange={e => updateLineItem(idx, 'description', e.target.value)} required />
-                        )}
-                        {li.type && (
-                          <div className="flex items-center gap-2">
-                            <Label className="text-xs whitespace-nowrap">Amount (₹)</Label>
-                            <Input type="number" step="0.01" value={li.amount}
-                              onChange={e => updateLineItem(idx, 'amount', e.target.value)}
-                              readOnly={li.type !== 'other'}
-                              required className="flex-1" />
                           </div>
-                        )}
-                        {li.type && li.type !== 'other' && (
-                          <p className="text-xs text-primary">{li.description}</p>
-                        )}
+                        ))}
                       </div>
-                    ))}
+                    )}
+
+                    {/* Plan picker list */}
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="max-h-48 overflow-y-auto divide-y">
+                        {plans.map(p => {
+                          const alreadyAdded = lineItems.some(li => li.type === p.id);
+                          return (
+                            <div key={p.id} className={`flex items-center justify-between px-3 py-2 text-sm ${alreadyAdded ? 'opacity-40' : 'hover:bg-muted/50'}`}>
+                              <div className="flex-1 min-w-0">
+                                <span className="font-medium">{p.name}</span>
+                                {p.gadget_categories?.name && <span className="text-muted-foreground text-xs ml-1">({p.gadget_categories.name})</span>}
+                                <span className="text-muted-foreground ml-2">₹{Number(p.annual_price).toLocaleString('en-IN')}</span>
+                              </div>
+                              <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0"
+                                disabled={alreadyAdded}
+                                onClick={() => {
+                                  const desc = `${p.name}${p.gadget_categories?.name ? ` (${p.gadget_categories.name})` : ''} — Annual Protection Plan`;
+                                  setLineItems(prev => [...prev, { type: p.id, description: desc, amount: String(p.annual_price) }]);
+                                }}>
+                                <Plus size={14} />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                        {/* Other option */}
+                        <div className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted/50">
+                          <Input placeholder="Custom item description..." className="h-7 text-xs flex-1"
+                            value={customItemText} onChange={e => setCustomItemText(e.target.value)} />
+                          <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0"
+                            disabled={!customItemText.trim()}
+                            onClick={() => {
+                              setLineItems(prev => [...prev, { type: 'other', description: customItemText.trim(), amount: '' }]);
+                              setCustomItemText('');
+                            }}>
+                            <Plus size={14} />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
