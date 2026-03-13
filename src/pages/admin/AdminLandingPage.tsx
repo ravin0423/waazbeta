@@ -144,6 +144,268 @@ const AdminLandingPage = () => {
     fetchSections();
   };
 
+  // Helper to update contentStr from structured data
+  const updateContent = (data: any) => {
+    setContentStr(JSON.stringify(data, null, 2));
+  };
+
+  const getContentParsed = () => {
+    try { return JSON.parse(contentStr); } catch { return null; }
+  };
+
+  // ─── FRIENDLY CONTENT EDITORS ─────────────────────────────────
+  const renderContentEditor = () => {
+    if (!editSection) return null;
+    const parsed = getContentParsed();
+    const key = editSection.section_key;
+
+    // TRUSTED BRANDS — simple list of names
+    if (key === 'trusted_brands' && Array.isArray(parsed)) {
+      return (
+        <div>
+          <Label className="mb-3 block">Brand Partners</Label>
+          <div className="space-y-2">
+            {parsed.map((brand: any, i: number) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={brand.name || ''}
+                  onChange={e => {
+                    const updated = [...parsed];
+                    updated[i] = { ...updated[i], name: e.target.value };
+                    updateContent(updated);
+                  }}
+                  placeholder="Brand name"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:bg-destructive/10 shrink-0"
+                  onClick={() => {
+                    const updated = parsed.filter((_: any, j: number) => j !== i);
+                    updateContent(updated);
+                  }}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => updateContent([...parsed, { name: '' }])}
+          >
+            <Plus size={14} className="mr-1" /> Add Brand
+          </Button>
+        </div>
+      );
+    }
+
+    // STATS — value, label, icon, suffix
+    if (key === 'stats' && Array.isArray(parsed)) {
+      return (
+        <div>
+          <Label className="mb-3 block">Statistics</Label>
+          <div className="space-y-3">
+            {parsed.map((stat: any, i: number) => (
+              <div key={i} className="p-3 rounded-lg border border-border space-y-2">
+                <div className="flex gap-2">
+                  <Input value={stat.value || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], value: e.target.value }; updateContent(u); }} placeholder="Value (e.g. 50,000+)" />
+                  <Input value={stat.label || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], label: e.target.value }; updateContent(u); }} placeholder="Label" />
+                </div>
+                <div className="flex gap-2 items-center">
+                  <Input value={stat.icon || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], icon: e.target.value }; updateContent(u); }} placeholder="Icon name" className="w-32" />
+                  <Input value={stat.suffix || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], suffix: e.target.value }; updateContent(u); }} placeholder="Suffix (optional)" />
+                  <Button variant="outline" size="sm" className="text-destructive shrink-0" onClick={() => updateContent(parsed.filter((_: any, j: number) => j !== i))}><Trash2 size={14} /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => updateContent([...parsed, { value: '', label: '', icon: 'Shield', suffix: '' }])}>
+            <Plus size={14} className="mr-1" /> Add Stat
+          </Button>
+        </div>
+      );
+    }
+
+    // FAQ — question and answer pairs
+    if (key === 'faq' && Array.isArray(parsed)) {
+      return (
+        <div>
+          <Label className="mb-3 block">FAQ Items</Label>
+          <div className="space-y-3">
+            {parsed.map((faq: any, i: number) => (
+              <div key={i} className="p-3 rounded-lg border border-border space-y-2">
+                <div className="flex gap-2 items-start">
+                  <div className="flex-1 space-y-2">
+                    <Input value={faq.q || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], q: e.target.value }; updateContent(u); }} placeholder="Question" />
+                    <Textarea value={faq.a || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], a: e.target.value }; updateContent(u); }} placeholder="Answer" rows={2} />
+                  </div>
+                  <Button variant="outline" size="sm" className="text-destructive shrink-0 mt-1" onClick={() => updateContent(parsed.filter((_: any, j: number) => j !== i))}><Trash2 size={14} /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => updateContent([...parsed, { q: '', a: '' }])}>
+            <Plus size={14} className="mr-1" /> Add FAQ
+          </Button>
+        </div>
+      );
+    }
+
+    // TESTIMONIALS — name, role, text, rating
+    if (key === 'testimonials' && Array.isArray(parsed)) {
+      return (
+        <div>
+          <Label className="mb-3 block">Testimonials</Label>
+          <div className="space-y-3">
+            {parsed.map((t: any, i: number) => (
+              <div key={i} className="p-3 rounded-lg border border-border space-y-2">
+                <div className="flex gap-2">
+                  <Input value={t.name || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], name: e.target.value }; updateContent(u); }} placeholder="Name" />
+                  <Input value={t.role || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], role: e.target.value }; updateContent(u); }} placeholder="Role / Location" />
+                </div>
+                <Textarea value={t.text || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], text: e.target.value }; updateContent(u); }} placeholder="Testimonial text" rows={2} />
+                <div className="flex gap-2 items-center">
+                  <Label className="text-xs">Rating:</Label>
+                  <Input type="number" min={1} max={5} value={t.rating || 5} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], rating: parseInt(e.target.value) || 5 }; updateContent(u); }} className="w-20" />
+                  <Button variant="outline" size="sm" className="text-destructive ml-auto shrink-0" onClick={() => updateContent(parsed.filter((_: any, j: number) => j !== i))}><Trash2 size={14} /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => updateContent([...parsed, { name: '', role: '', text: '', rating: 5 }])}>
+            <Plus size={14} className="mr-1" /> Add Testimonial
+          </Button>
+        </div>
+      );
+    }
+
+    // COVERAGE / WHY_WAAZ — icon, label/title, desc
+    if ((key === 'coverage' || key === 'why_waaz') && Array.isArray(parsed)) {
+      const labelField = key === 'coverage' ? 'label' : 'title';
+      return (
+        <div>
+          <Label className="mb-3 block">{key === 'coverage' ? 'Device Categories' : 'Features'}</Label>
+          <div className="space-y-3">
+            {parsed.map((item: any, i: number) => (
+              <div key={i} className="p-3 rounded-lg border border-border space-y-2">
+                <div className="flex gap-2">
+                  <Input value={item.icon || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], icon: e.target.value }; updateContent(u); }} placeholder="Icon name" className="w-32" />
+                  <Input value={item[labelField] || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], [labelField]: e.target.value }; updateContent(u); }} placeholder="Title" className="flex-1" />
+                  <Button variant="outline" size="sm" className="text-destructive shrink-0" onClick={() => updateContent(parsed.filter((_: any, j: number) => j !== i))}><Trash2 size={14} /></Button>
+                </div>
+                <Textarea value={item.desc || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], desc: e.target.value }; updateContent(u); }} placeholder="Description" rows={2} />
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => updateContent([...parsed, { icon: 'Shield', [labelField]: '', desc: '' }])}>
+            <Plus size={14} className="mr-1" /> Add Item
+          </Button>
+        </div>
+      );
+    }
+
+    // COMPARISON — feature, waaz, traditional
+    if (key === 'comparison' && Array.isArray(parsed)) {
+      return (
+        <div>
+          <Label className="mb-3 block">Comparison Rows</Label>
+          <div className="space-y-2">
+            {parsed.map((row: any, i: number) => (
+              <div key={i} className="flex gap-2 items-center">
+                <Input value={row.feature || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], feature: e.target.value }; updateContent(u); }} placeholder="Feature" className="flex-1" />
+                <Input value={row.waaz || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], waaz: e.target.value }; updateContent(u); }} placeholder="WaaZ" className="w-32" />
+                <Input value={row.traditional || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], traditional: e.target.value }; updateContent(u); }} placeholder="Traditional" className="w-32" />
+                <Button variant="outline" size="sm" className="text-destructive shrink-0" onClick={() => updateContent(parsed.filter((_: any, j: number) => j !== i))}><Trash2 size={14} /></Button>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => updateContent([...parsed, { feature: '', waaz: '', traditional: '' }])}>
+            <Plus size={14} className="mr-1" /> Add Row
+          </Button>
+        </div>
+      );
+    }
+
+    // HOW IT WORKS — step, title, desc
+    if (key === 'how_it_works' && Array.isArray(parsed)) {
+      return (
+        <div>
+          <Label className="mb-3 block">Steps</Label>
+          <div className="space-y-3">
+            {parsed.map((item: any, i: number) => (
+              <div key={i} className="p-3 rounded-lg border border-border space-y-2">
+                <div className="flex gap-2">
+                  <Input value={item.step || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], step: e.target.value }; updateContent(u); }} placeholder="Step #" className="w-20" />
+                  <Input value={item.title || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], title: e.target.value }; updateContent(u); }} placeholder="Title" className="flex-1" />
+                  <Button variant="outline" size="sm" className="text-destructive shrink-0" onClick={() => updateContent(parsed.filter((_: any, j: number) => j !== i))}><Trash2 size={14} /></Button>
+                </div>
+                <Textarea value={item.desc || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], desc: e.target.value }; updateContent(u); }} placeholder="Description" rows={2} />
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => updateContent([...parsed, { step: String(parsed.length + 1).padStart(2, '0'), title: '', desc: '' }])}>
+            <Plus size={14} className="mr-1" /> Add Step
+          </Button>
+        </div>
+      );
+    }
+
+    // PLANS — name, price, period, features[], popular
+    if (key === 'plans' && Array.isArray(parsed)) {
+      return (
+        <div>
+          <Label className="mb-3 block">Pricing Plans</Label>
+          <div className="space-y-4">
+            {parsed.map((plan: any, i: number) => (
+              <div key={i} className="p-4 rounded-lg border border-border space-y-3">
+                <div className="flex gap-2 items-center">
+                  <Input value={plan.name || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], name: e.target.value }; updateContent(u); }} placeholder="Plan name" />
+                  <Input value={plan.price || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], price: e.target.value }; updateContent(u); }} placeholder="Price" className="w-28" />
+                  <Input value={plan.period || ''} onChange={e => { const u = [...parsed]; u[i] = { ...u[i], period: e.target.value }; updateContent(u); }} placeholder="/year" className="w-20" />
+                  <div className="flex items-center gap-1">
+                    <Switch checked={plan.popular || false} onCheckedChange={c => { const u = [...parsed]; u[i] = { ...u[i], popular: c }; updateContent(u); }} />
+                    <Label className="text-xs">Popular</Label>
+                  </div>
+                  <Button variant="outline" size="sm" className="text-destructive shrink-0" onClick={() => updateContent(parsed.filter((_: any, j: number) => j !== i))}><Trash2 size={14} /></Button>
+                </div>
+                <div>
+                  <Label className="text-xs mb-1 block">Features (one per line)</Label>
+                  <Textarea
+                    value={(plan.features || []).join('\n')}
+                    onChange={e => { const u = [...parsed]; u[i] = { ...u[i], features: e.target.value.split('\n') }; updateContent(u); }}
+                    rows={4}
+                    placeholder="Feature 1&#10;Feature 2&#10;Feature 3"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => updateContent([...parsed, { name: '', price: '', period: '/year', features: [], popular: false }])}>
+            <Plus size={14} className="mr-1" /> Add Plan
+          </Button>
+        </div>
+      );
+    }
+
+    // Default: show raw JSON
+    return (
+      <div>
+        <Label>Content (JSON)</Label>
+        <Textarea
+          value={contentStr}
+          onChange={e => setContentStr(e.target.value)}
+          placeholder='[{"key": "value"}]'
+          rows={10}
+          className="font-mono text-sm"
+        />
+        <p className="text-xs text-muted-foreground mt-1">JSON array or object for section-specific data</p>
+      </div>
+    );
+  };
+
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -308,17 +570,17 @@ const AdminLandingPage = () => {
                     rows={2}
                   />
                 </div>
-                <div>
-                  <Label>Content (JSON)</Label>
+                {renderContentEditor()}
+                <details className="mt-2">
+                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground">Advanced: Raw JSON</summary>
                   <Textarea
                     value={contentStr}
                     onChange={e => setContentStr(e.target.value)}
                     placeholder='[{"key": "value"}]'
-                    rows={10}
-                    className="font-mono text-sm"
+                    rows={6}
+                    className="font-mono text-sm mt-2"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">JSON array or object for section-specific data</p>
-                </div>
+                </details>
                 <div className="flex items-center gap-2">
                   <Switch
                     checked={editSection.is_enabled}
