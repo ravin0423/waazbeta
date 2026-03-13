@@ -144,6 +144,7 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   <button onclick="window.print()">🖨️ Print Invoice</button>
 </div>
 
+<div class="a4-page">
 <div class="invoice-container">
   <!-- Header -->
   <div class="inv-header">
@@ -211,6 +212,9 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
     <div class="notes-text">${inv.notes}</div>
   </div>` : ''}
 
+  <!-- Spacer pushes signature to bottom -->
+  <div class="spacer"></div>
+
   <!-- Signature -->
   <div class="sig-footer">
     <div class="sig-left">
@@ -225,6 +229,7 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   </div>
 
   <div class="footer-bar">WaaZ Device Protection Services &bull; Thank you for your business</div>
+</div>
 </div>
 
 </body></html>`;
