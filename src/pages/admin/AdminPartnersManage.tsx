@@ -25,6 +25,7 @@ interface Partner {
   quality_rating: number;
   total_repairs: number;
   is_active: boolean;
+  partner_type: string;
 }
 
 interface Region {
