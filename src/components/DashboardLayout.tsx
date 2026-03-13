@@ -150,6 +150,60 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
+            const hasChildren = item.children && item.children.length > 0;
+            const isChildActive = hasChildren && item.children!.some(c => location.pathname === c.path);
+            const isExpanded = expandedGroups.includes(item.label) || isChildActive;
+
+            if (hasChildren) {
+              return (
+                <div key={item.label}>
+                  <button
+                    onClick={() => {
+                      if (collapsed) return;
+                      setExpandedGroups(prev => prev.includes(item.label) ? prev.filter(g => g !== item.label) : [...prev, item.label]);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                      isChildActive
+                        ? "bg-sidebar-primary/10 text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    {item.icon}
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 text-left">{item.label}</span>
+                        <ChevronDown size={14} className={cn("transition-transform", isExpanded && "rotate-180")} />
+                      </>
+                    )}
+                  </button>
+                  {!collapsed && isExpanded && (
+                    <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-3">
+                      {item.children!.map(child => {
+                        const childActive = location.pathname === child.path;
+                        return (
+                          <Link
+                            key={child.path}
+                            to={child.path}
+                            onClick={() => setMobileOpen(false)}
+                            className={cn(
+                              "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-colors",
+                              childActive
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            )}
+                          >
+                            {child.icon}
+                            <span>{child.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={item.path}
