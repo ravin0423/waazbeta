@@ -121,7 +121,11 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   }
   .inv-header-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }
   .company-block { display: flex; align-items: center; gap: 14px; }
-  .company-logo { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; }
+  .company-icon { 
+    width: 44px; height: 44px; border-radius: 10px; 
+    background: var(--teal); display: flex; align-items: center; justify-content: center;
+  }
+  .company-icon svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .company-name { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; }
   .company-tagline { font-size: 9px; color: rgba(255,255,255,0.5); margin-top: 2px; letter-spacing: 2px; text-transform: uppercase; }
   .inv-title-block { text-align: right; }
