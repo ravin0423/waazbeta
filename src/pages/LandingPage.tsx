@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/ThemeProvider';
-import heroDevices from '@/assets/hero-devices.png';
+import heroDevices from '@/assets/hero-devices-purple.png';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
