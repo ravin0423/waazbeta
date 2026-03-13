@@ -35,6 +35,7 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -62,6 +63,7 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
       setLoading(false);
     };
     fetchCategories();
+    if (user?.phone) setPhoneNumber(user.phone);
   }, []);
 
   useEffect(() => {
@@ -93,11 +95,17 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
 
   const canGoStep2 = selectedCategoryId && selectedPlanId;
   const canGoStep3 = serialNumber.trim().length > 0 && (!isMobile || imeiNumber.trim().length > 0);
-  const canSubmit = whatsappNumber.trim().length > 0 && address.trim().length > 0;
+  const canSubmit = phoneNumber.trim().length > 0 && whatsappNumber.trim().length > 0 && address.trim().length > 0;
 
   const handleSubmit = async () => {
     if (!user) return;
     setSubmitting(true);
+
+    // Save phone to profile
+    if (phoneNumber.trim()) {
+      await supabase.from('profiles').update({ phone: phoneNumber.trim() }).eq('id', user.id);
+    }
+
     const { error } = await supabase.from('customer_devices').insert({
       user_id: user.id,
       gadget_category_id: selectedCategoryId,
@@ -286,8 +294,14 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">Phone Number (from profile)</Label>
-                  <Input id="phone" value={user?.phone || 'Not set'} disabled className="mt-1 bg-muted" />
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    value={phoneNumber}
+                    onChange={e => setPhoneNumber(e.target.value)}
+                    placeholder="e.g. +91 98765 43210"
+                    className="mt-1"
+                  />
                 </div>
 
                 <div>
