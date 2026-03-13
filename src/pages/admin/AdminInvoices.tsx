@@ -12,8 +12,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { FileText, Plus, Loader2, Edit, Download, Upload, Image } from 'lucide-react';
+import { FileText, Plus, Loader2, Edit, Download, Upload, Image, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+
+interface LineItem {
+  type: string; // plan id or 'other'
+  description: string;
+  amount: string;
+}
 
 const AdminInvoices = () => {
   const [invoices, setInvoices] = useState<any[]>([]);
@@ -22,11 +28,10 @@ const AdminInvoices = () => {
   const [sigOpen, setSigOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({
-    customer_name: '', customer_email: '', subtotal: '', cgst_percent: '9', sgst_percent: '9',
+    customer_name: '', customer_email: '', cgst_percent: '9', sgst_percent: '9',
     status: 'pending', notes: '', due_date: '', user_id: '',
-    line_item_type: '' as string, // plan id or 'other'
-    line_item_description: '',
   });
+  const [lineItems, setLineItems] = useState<LineItem[]>([{ type: '', description: '', amount: '' }]);
   const [saving, setSaving] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
   const [customerSearch, setCustomerSearch] = useState('');
@@ -35,7 +40,7 @@ const AdminInvoices = () => {
   const [uploading, setUploading] = useState(false);
 
   const fetchInvoices = async () => {
-    const { data } = await supabase.from('invoices').select('*, subscription_plans(name, annual_price)').order('created_at', { ascending: false });
+    const { data } = await supabase.from('invoices').select('*, invoice_line_items(id, description, amount, subscription_plan_id)').order('created_at', { ascending: false });
     setInvoices(data || []);
     setLoading(false);
   };
@@ -58,15 +63,11 @@ const AdminInvoices = () => {
     }
   };
 
-  useEffect(() => {
-    fetchInvoices();
-    fetchCustomers();
-    fetchPlans();
-    fetchSignature();
-  }, []);
+  useEffect(() => { fetchInvoices(); fetchCustomers(); fetchPlans(); fetchSignature(); }, []);
 
   const resetForm = () => {
-    setForm({ customer_name: '', customer_email: '', subtotal: '', cgst_percent: '9', sgst_percent: '9', status: 'pending', notes: '', due_date: '', user_id: '', line_item_type: '', line_item_description: '' });
+    setForm({ customer_name: '', customer_email: '', cgst_percent: '9', sgst_percent: '9', status: 'pending', notes: '', due_date: '', user_id: '' });
+    setLineItems([{ type: '', description: '', amount: '' }]);
     setEditId(null);
     setCustomerSearch('');
   };
@@ -75,86 +76,106 @@ const AdminInvoices = () => {
     setForm({
       customer_name: inv.customer_name,
       customer_email: inv.customer_email || '',
-      subtotal: String(inv.subtotal || inv.amount),
       cgst_percent: String(inv.cgst_percent || 0),
       sgst_percent: String(inv.sgst_percent || 0),
       status: inv.status,
       notes: inv.notes || '',
       due_date: inv.due_date || '',
       user_id: inv.user_id || '',
-      line_item_type: inv.subscription_plan_id || (inv.line_item_description !== 'Service / Subscription' ? 'other' : ''),
-      line_item_description: inv.line_item_description || '',
     });
+    const items: LineItem[] = (inv.invoice_line_items || []).map((li: any) => ({
+      type: li.subscription_plan_id || 'other',
+      description: li.description,
+      amount: String(li.amount),
+    }));
+    setLineItems(items.length > 0 ? items : [{ type: 'other', description: inv.line_item_description || '', amount: String(inv.subtotal || inv.amount) }]);
     setEditId(inv.id);
     setOpen(true);
   };
 
-  const calcTotals = () => {
-    const sub = Number(form.subtotal) || 0;
-    const cgst = sub * (Number(form.cgst_percent) || 0) / 100;
-    const sgst = sub * (Number(form.sgst_percent) || 0) / 100;
-    return { subtotal: sub, cgst_amount: cgst, sgst_amount: sgst, amount: sub + cgst + sgst };
-  };
+  const subtotal = lineItems.reduce((sum, li) => sum + (Number(li.amount) || 0), 0);
+  const cgstAmt = subtotal * (Number(form.cgst_percent) || 0) / 100;
+  const sgstAmt = subtotal * (Number(form.sgst_percent) || 0) / 100;
+  const totalAmt = subtotal + cgstAmt + sgstAmt;
 
   const handleCustomerSelect = (userId: string) => {
     const c = customers.find(c => c.id === userId);
-    if (c) {
-      setForm(f => ({ ...f, user_id: userId, customer_name: c.full_name, customer_email: c.email }));
-    }
+    if (c) setForm(f => ({ ...f, user_id: userId, customer_name: c.full_name, customer_email: c.email }));
   };
 
-  const handlePlanSelect = (value: string) => {
-    if (value === 'other') {
-      setForm(f => ({ ...f, line_item_type: 'other', line_item_description: '', subtotal: '' }));
-    } else {
-      const plan = plans.find(p => p.id === value);
-      if (plan) {
-        setForm(f => ({
-          ...f,
-          line_item_type: value,
-          line_item_description: `${plan.name}${plan.gadget_categories?.name ? ` (${plan.gadget_categories.name})` : ''} — Annual Protection Plan`,
-          subtotal: String(plan.annual_price),
-        }));
+  const handlePlanSelect = (index: number, value: string) => {
+    setLineItems(prev => {
+      const updated = [...prev];
+      if (value === 'other') {
+        updated[index] = { type: 'other', description: '', amount: '' };
+      } else {
+        const plan = plans.find(p => p.id === value);
+        if (plan) {
+          updated[index] = {
+            type: value,
+            description: `${plan.name}${plan.gadget_categories?.name ? ` (${plan.gadget_categories.name})` : ''} — Annual Protection Plan`,
+            amount: String(plan.annual_price),
+          };
+        }
       }
-    }
+      return updated;
+    });
   };
 
-  const getLineItemDescription = () => {
-    if (form.line_item_type === 'other') return form.line_item_description || 'Custom Service';
-    if (form.line_item_type) {
-      const plan = plans.find(p => p.id === form.line_item_type);
-      return plan ? `${plan.name}${plan.gadget_categories?.name ? ` (${plan.gadget_categories.name})` : ''} — Annual Protection Plan` : form.line_item_description;
-    }
-    return form.line_item_description || 'Service / Subscription';
+  const addLineItem = () => setLineItems(prev => [...prev, { type: '', description: '', amount: '' }]);
+
+  const removeLineItem = (index: number) => {
+    if (lineItems.length <= 1) return;
+    setLineItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateLineItem = (index: number, field: 'description' | 'amount', value: string) => {
+    setLineItems(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (lineItems.every(li => !li.type)) { toast.error('Please add at least one line item'); return; }
     setSaving(true);
-    const totals = calcTotals();
-    const description = getLineItemDescription();
-    const planId = form.line_item_type && form.line_item_type !== 'other' ? form.line_item_type : null;
+
+    const primaryDesc = lineItems.map(li => li.description).filter(Boolean).join(', ');
 
     if (editId) {
       const payload = {
         customer_name: form.customer_name,
         customer_email: form.customer_email || null,
-        subtotal: totals.subtotal,
+        subtotal,
         cgst_percent: Number(form.cgst_percent),
         sgst_percent: Number(form.sgst_percent),
-        cgst_amount: totals.cgst_amount,
-        sgst_amount: totals.sgst_amount,
-        amount: totals.amount,
+        cgst_amount: cgstAmt,
+        sgst_amount: sgstAmt,
+        amount: totalAmt,
         status: form.status,
         notes: form.notes || null,
         due_date: form.due_date || null,
         user_id: form.user_id || null,
-        line_item_description: description,
-        subscription_plan_id: planId,
+        line_item_description: primaryDesc,
+        subscription_plan_id: lineItems[0]?.type !== 'other' ? lineItems[0]?.type || null : null,
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('invoices').update(payload).eq('id', editId);
       if (error) { toast.error('Failed to update'); setSaving(false); return; }
+
+      // Replace line items
+      await supabase.from('invoice_line_items').delete().eq('invoice_id', editId);
+      const itemsToInsert = lineItems.filter(li => li.type).map(li => ({
+        invoice_id: editId,
+        description: li.description,
+        amount: Number(li.amount) || 0,
+        subscription_plan_id: li.type !== 'other' ? li.type : null,
+      }));
+      if (itemsToInsert.length > 0) {
+        await supabase.from('invoice_line_items').insert(itemsToInsert);
+      }
       toast.success('Invoice updated');
     } else {
       const { data: numData, error: numErr } = await supabase.rpc('generate_invoice_number');
@@ -164,21 +185,31 @@ const AdminInvoices = () => {
         invoice_number: numData,
         customer_name: form.customer_name,
         customer_email: form.customer_email || null,
-        subtotal: totals.subtotal,
+        subtotal,
         cgst_percent: Number(form.cgst_percent),
         sgst_percent: Number(form.sgst_percent),
-        cgst_amount: totals.cgst_amount,
-        sgst_amount: totals.sgst_amount,
-        amount: totals.amount,
+        cgst_amount: cgstAmt,
+        sgst_amount: sgstAmt,
+        amount: totalAmt,
         status: form.status,
         notes: form.notes || null,
         due_date: form.due_date || null,
         user_id: form.user_id || null,
-        line_item_description: description,
-        subscription_plan_id: planId,
+        line_item_description: primaryDesc,
+        subscription_plan_id: lineItems[0]?.type !== 'other' ? lineItems[0]?.type || null : null,
       };
-      const { error } = await supabase.from('invoices').insert(payload);
-      if (error) { toast.error('Failed to create: ' + error.message); setSaving(false); return; }
+      const { data: invData, error } = await supabase.from('invoices').insert(payload).select('id').single();
+      if (error || !invData) { toast.error('Failed to create: ' + (error?.message || '')); setSaving(false); return; }
+
+      const itemsToInsert = lineItems.filter(li => li.type).map(li => ({
+        invoice_id: invData.id,
+        description: li.description,
+        amount: Number(li.amount) || 0,
+        subscription_plan_id: li.type !== 'other' ? li.type : null,
+      }));
+      if (itemsToInsert.length > 0) {
+        await supabase.from('invoice_line_items').insert(itemsToInsert);
+      }
       toast.success(`Invoice ${numData} created`);
     }
     setSaving(false);
@@ -192,9 +223,7 @@ const AdminInvoices = () => {
     if (!file) return;
     setUploading(true);
     const { data: existing } = await supabase.storage.from('company-assets').list('', { search: 'signature' });
-    if (existing && existing.length > 0) {
-      await supabase.storage.from('company-assets').remove(existing.map(f => f.name));
-    }
+    if (existing && existing.length > 0) await supabase.storage.from('company-assets').remove(existing.map(f => f.name));
     const ext = file.name.split('.').pop();
     const { error } = await supabase.storage.from('company-assets').upload(`signature.${ext}`, file, { upsert: true });
     if (error) { toast.error('Upload failed'); setUploading(false); return; }
@@ -203,8 +232,17 @@ const AdminInvoices = () => {
     fetchSignature();
   };
 
+  const buildInvoiceLineItemsHtml = (inv: any) => {
+    const items = inv.invoice_line_items || [];
+    if (items.length > 0) {
+      return items.map((li: any) =>
+        `<tr><td>${li.description}</td><td style="text-align:right">₹${Number(li.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`
+      ).join('');
+    }
+    return `<tr><td>${inv.line_item_description || 'Service / Subscription'}</td><td style="text-align:right">₹${Number(inv.subtotal || inv.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>`;
+  };
+
   const handleDownloadInvoice = (inv: any) => {
-    const desc = inv.line_item_description || 'Service / Subscription';
     const win = window.open('', '_blank');
     if (!win) return;
     win.document.write(`
@@ -239,9 +277,7 @@ const AdminInvoices = () => {
       <p><strong>Bill To:</strong><br/>${inv.customer_name}<br/>${inv.customer_email || ''}</p>
       <table>
         <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
-        <tbody>
-          <tr><td>${desc}</td><td style="text-align:right">₹${Number(inv.subtotal || inv.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
-        </tbody>
+        <tbody>${buildInvoiceLineItemsHtml(inv)}</tbody>
       </table>
       <div class="totals">
         <p>Subtotal: ₹${Number(inv.subtotal || inv.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
@@ -262,13 +298,7 @@ const AdminInvoices = () => {
     win.document.close();
   };
 
-  const statusColor = (s: string) => {
-    if (s === 'paid') return 'default';
-    if (s === 'overdue') return 'destructive';
-    return 'secondary';
-  };
-
-  const totals = calcTotals();
+  const statusColor = (s: string) => s === 'paid' ? 'default' : s === 'overdue' ? 'destructive' : 'secondary';
 
   return (
     <DashboardLayout>
@@ -308,7 +338,7 @@ const AdminInvoices = () => {
               <DialogTrigger asChild>
                 <Button><Plus size={16} className="mr-1" /> New Invoice</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader><DialogTitle className="font-heading">{editId ? 'Edit Invoice' : 'New Invoice'}</DialogTitle></DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-2">
                   {/* Customer search */}
@@ -323,29 +353,17 @@ const AdminInvoices = () => {
                       {customerSearch && !form.user_id && (
                         <div className="max-h-40 overflow-y-auto border rounded-md bg-background">
                           {customers
-                            .filter(c =>
-                              c.full_name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-                              c.email.toLowerCase().includes(customerSearch.toLowerCase())
-                            )
+                            .filter(c => c.full_name.toLowerCase().includes(customerSearch.toLowerCase()) || c.email.toLowerCase().includes(customerSearch.toLowerCase()))
                             .map(c => (
-                              <button
-                                key={c.id}
-                                type="button"
-                                className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
-                                onClick={() => {
-                                  handleCustomerSelect(c.id);
-                                  setCustomerSearch(c.full_name);
-                                }}
-                              >
+                              <button key={c.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                                onClick={() => { handleCustomerSelect(c.id); setCustomerSearch(c.full_name); }}>
                                 <span className="font-medium">{c.full_name}</span>
                                 <span className="text-muted-foreground ml-2 text-xs">{c.email}</span>
                               </button>
                             ))}
                         </div>
                       )}
-                      {form.user_id && (
-                        <p className="text-xs text-success">✓ Linked to {form.customer_name}</p>
-                      )}
+                      {form.user_id && <p className="text-xs text-success">✓ Linked to {form.customer_name}</p>}
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4">
@@ -359,55 +377,53 @@ const AdminInvoices = () => {
                     </div>
                   </div>
 
-                  {/* Line Item — Subscription selector */}
-                  <div className="space-y-2">
-                    <Label>Line Item — Subscription Plan</Label>
-                    <Select value={form.line_item_type} onValueChange={handlePlanSelect}>
-                      <SelectTrigger><SelectValue placeholder="Select a subscription plan..." /></SelectTrigger>
-                      <SelectContent>
-                        {plans.map(p => (
-                          <SelectItem key={p.id} value={p.id}>
-                            {p.name} {p.gadget_categories?.name ? `(${p.gadget_categories.name})` : ''} — ₹{Number(p.annual_price).toLocaleString('en-IN')}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="other">Other (custom entry)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Show selected plan info or custom input */}
-                  {form.line_item_type === 'other' && (
-                    <div className="space-y-2">
-                      <Label>Custom Line Item Description</Label>
-                      <Input
-                        placeholder="Enter custom service description..."
-                        value={form.line_item_description}
-                        onChange={e => setForm(f => ({ ...f, line_item_description: e.target.value }))}
-                        required
-                      />
+                  {/* Line Items */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-semibold">Line Items</Label>
+                      <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
+                        <Plus size={14} className="mr-1" /> Add Item
+                      </Button>
                     </div>
-                  )}
-
-                  {form.line_item_type && form.line_item_type !== 'other' && (
-                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm">
-                      <p className="font-medium text-primary">{getLineItemDescription()}</p>
-                      <p className="text-muted-foreground text-xs mt-1">Price auto-filled from subscription plan</p>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label>Subtotal (₹)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={form.subtotal}
-                      onChange={e => setForm(f => ({ ...f, subtotal: e.target.value }))}
-                      required
-                      readOnly={!!form.line_item_type && form.line_item_type !== 'other'}
-                    />
-                    {form.line_item_type && form.line_item_type !== 'other' && (
-                      <p className="text-xs text-muted-foreground">Amount is set from the selected plan</p>
-                    )}
+                    {lineItems.map((li, idx) => (
+                      <div key={idx} className="border rounded-lg p-3 space-y-3 bg-muted/30">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium text-muted-foreground">Item {idx + 1}</span>
+                          {lineItems.length > 1 && (
+                            <Button type="button" variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" onClick={() => removeLineItem(idx)}>
+                              <Trash2 size={14} />
+                            </Button>
+                          )}
+                        </div>
+                        <Select value={li.type} onValueChange={v => handlePlanSelect(idx, v)}>
+                          <SelectTrigger><SelectValue placeholder="Select subscription plan..." /></SelectTrigger>
+                          <SelectContent>
+                            {plans.map(p => (
+                              <SelectItem key={p.id} value={p.id}>
+                                {p.name} {p.gadget_categories?.name ? `(${p.gadget_categories.name})` : ''} — ₹{Number(p.annual_price).toLocaleString('en-IN')}
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="other">Other (custom entry)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {li.type === 'other' && (
+                          <Input placeholder="Custom description..." value={li.description}
+                            onChange={e => updateLineItem(idx, 'description', e.target.value)} required />
+                        )}
+                        {li.type && (
+                          <div className="flex items-center gap-2">
+                            <Label className="text-xs whitespace-nowrap">Amount (₹)</Label>
+                            <Input type="number" step="0.01" value={li.amount}
+                              onChange={e => updateLineItem(idx, 'amount', e.target.value)}
+                              readOnly={li.type !== 'other'}
+                              required className="flex-1" />
+                          </div>
+                        )}
+                        {li.type && li.type !== 'other' && (
+                          <p className="text-xs text-primary">{li.description}</p>
+                        )}
+                      </div>
+                    ))}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -420,12 +436,21 @@ const AdminInvoices = () => {
                       <Input type="number" step="0.01" value={form.sgst_percent} onChange={e => setForm(f => ({ ...f, sgst_percent: e.target.value }))} />
                     </div>
                   </div>
+
+                  {/* Totals preview */}
                   <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
-                    <div className="flex justify-between"><span>{getLineItemDescription()}</span><span>₹{totals.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>CGST ({form.cgst_percent}%)</span><span>₹{totals.cgst_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-                    <div className="flex justify-between text-muted-foreground"><span>SGST ({form.sgst_percent}%)</span><span>₹{totals.sgst_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
-                    <div className="flex justify-between font-bold border-t pt-1 mt-1"><span>Total</span><span>₹{totals.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                    {lineItems.filter(li => li.type).map((li, idx) => (
+                      <div key={idx} className="flex justify-between">
+                        <span className="truncate max-w-[250px]">{li.description || 'Item ' + (idx + 1)}</span>
+                        <span>₹{(Number(li.amount) || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    ))}
+                    <div className="flex justify-between border-t pt-1 mt-1"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>CGST ({form.cgst_percent}%)</span><span>₹{cgstAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                    <div className="flex justify-between text-muted-foreground"><span>SGST ({form.sgst_percent}%)</span><span>₹{sgstAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                    <div className="flex justify-between font-bold border-t pt-1 mt-1"><span>Total</span><span>₹{totalAmt.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
                   </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Status</Label>
@@ -472,7 +497,7 @@ const AdminInvoices = () => {
                   <TableRow>
                     <TableHead>Invoice #</TableHead>
                     <TableHead>Customer</TableHead>
-                    <TableHead>Line Item</TableHead>
+                    <TableHead>Line Items</TableHead>
                     <TableHead>Subtotal</TableHead>
                     <TableHead>GST</TableHead>
                     <TableHead>Total</TableHead>
@@ -482,35 +507,48 @@ const AdminInvoices = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invoices.map(inv => (
-                    <TableRow key={inv.id}>
-                      <TableCell className="font-mono text-sm">{inv.invoice_number}</TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">{inv.customer_name}</p>
-                          {inv.customer_email && <p className="text-xs text-muted-foreground">{inv.customer_email}</p>}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm max-w-[200px] truncate" title={inv.line_item_description}>
-                        {inv.line_item_description || '—'}
-                      </TableCell>
-                      <TableCell className="text-sm">₹{Number(inv.subtotal || 0).toLocaleString('en-IN')}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">
-                        {Number(inv.cgst_amount || 0) > 0 && <span className="block">C: ₹{Number(inv.cgst_amount).toLocaleString('en-IN')}</span>}
-                        {Number(inv.sgst_amount || 0) > 0 && <span className="block">S: ₹{Number(inv.sgst_amount).toLocaleString('en-IN')}</span>}
-                        {Number(inv.cgst_amount || 0) === 0 && Number(inv.sgst_amount || 0) === 0 && '—'}
-                      </TableCell>
-                      <TableCell className="font-medium">₹{Number(inv.amount).toLocaleString('en-IN')}</TableCell>
-                      <TableCell><Badge variant={statusColor(inv.status) as any}>{inv.status}</Badge></TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{format(new Date(inv.created_at), 'dd MMM yyyy')}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => openEdit(inv)}><Edit size={14} /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(inv)}><Download size={14} /></Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {invoices.map(inv => {
+                    const items = inv.invoice_line_items || [];
+                    return (
+                      <TableRow key={inv.id}>
+                        <TableCell className="font-mono text-sm">{inv.invoice_number}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{inv.customer_name}</p>
+                            {inv.customer_email && <p className="text-xs text-muted-foreground">{inv.customer_email}</p>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm max-w-[200px]">
+                          {items.length > 0 ? (
+                            <div className="space-y-0.5">
+                              {items.map((li: any) => (
+                                <span key={li.id} className="block text-xs truncate" title={li.description}>
+                                  {li.description} — ₹{Number(li.amount).toLocaleString('en-IN')}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="truncate block" title={inv.line_item_description}>{inv.line_item_description || '—'}</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-sm">₹{Number(inv.subtotal || 0).toLocaleString('en-IN')}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                          {Number(inv.cgst_amount || 0) > 0 && <span className="block">C: ₹{Number(inv.cgst_amount).toLocaleString('en-IN')}</span>}
+                          {Number(inv.sgst_amount || 0) > 0 && <span className="block">S: ₹{Number(inv.sgst_amount).toLocaleString('en-IN')}</span>}
+                          {Number(inv.cgst_amount || 0) === 0 && Number(inv.sgst_amount || 0) === 0 && '—'}
+                        </TableCell>
+                        <TableCell className="font-medium">₹{Number(inv.amount).toLocaleString('en-IN')}</TableCell>
+                        <TableCell><Badge variant={statusColor(inv.status) as any}>{inv.status}</Badge></TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{format(new Date(inv.created_at), 'dd MMM yyyy')}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => openEdit(inv)}><Edit size={14} /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(inv)}><Download size={14} /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}
