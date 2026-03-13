@@ -15,6 +15,7 @@ interface NavItem {
   label: string;
   path: string;
   icon: React.ReactNode;
+  children?: NavItem[];
 }
 
 const customerNavFull: NavItem[] = [
