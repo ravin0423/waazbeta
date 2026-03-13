@@ -159,6 +159,7 @@ const CustomerInvoices = () => {
                 <div className="flex justify-between"><span className="text-muted-foreground">Status</span><Badge variant={statusColor(selected.status) as any}>{selected.status}</Badge></div>
                 {selected.due_date && <div className="flex justify-between"><span className="text-muted-foreground">Due Date</span><span>{format(new Date(selected.due_date), 'dd MMM yyyy')}</span></div>}
                 <hr />
+                <div className="flex justify-between"><span className="text-muted-foreground">Item</span><span className="text-right max-w-[200px]">{selected.line_item_description || 'Service / Subscription'}</span></div>
                 <div className="flex justify-between"><span>Subtotal</span><span>₹{Number(selected.subtotal || selected.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
                 {Number(selected.cgst_amount) > 0 && <div className="flex justify-between text-muted-foreground"><span>CGST ({selected.cgst_percent}%)</span><span>₹{Number(selected.cgst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>}
                 {Number(selected.sgst_amount) > 0 && <div className="flex justify-between text-muted-foreground"><span>SGST ({selected.sgst_percent}%)</span><span>₹{Number(selected.sgst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>}
