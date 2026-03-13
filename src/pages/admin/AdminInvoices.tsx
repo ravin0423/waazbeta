@@ -13,6 +13,36 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { FileText, Plus, Loader2, Edit, Download, Upload, Image, Trash2, Printer } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+
+const recordPaidInvoiceAsIncome = async (invoice: any, userId?: string) => {
+  if (invoice.status !== 'paid') return;
+  // Check if already recorded
+  const { data: existing } = await supabase
+    .from('finance_transactions')
+    .select('id')
+    .eq('source_type', 'invoice')
+    .eq('source_id', invoice.id)
+    .limit(1);
+  if (existing && existing.length > 0) return;
+
+  // Get subscription revenue category
+  const { data: cat } = await supabase.from('finance_categories').select('id').eq('name', 'Subscription Revenue').limit(1).single();
+
+  await supabase.from('finance_transactions').insert({
+    transaction_date: invoice.paid_at ? invoice.paid_at.substring(0, 10) : new Date().toISOString().substring(0, 10),
+    type: 'income',
+    category_id: cat?.id || null,
+    description: `Invoice ${invoice.invoice_number} - ${invoice.customer_name}`,
+    amount: Number(invoice.amount),
+    tax_amount: Number(invoice.cgst_amount || 0) + Number(invoice.sgst_amount || 0),
+    gst_rate: Number(invoice.cgst_percent || 0) + Number(invoice.sgst_percent || 0),
+    source_type: 'invoice',
+    source_id: invoice.id,
+    is_auto_generated: true,
+    created_by: userId,
+  });
+};
 import { format } from 'date-fns';
 import { generateInvoiceHtml } from '@/utils/invoiceTemplate';
 
