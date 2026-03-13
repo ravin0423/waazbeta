@@ -38,7 +38,7 @@ const AdminInvoices = () => {
   };
 
   const fetchCustomers = async () => {
-    const { data } = await supabase.from('profiles').select('id, full_name, email');
+    const { data } = await supabase.from('profiles').select('id, full_name, email, created_at').order('created_at', { ascending: false });
     setCustomers(data || []);
   };
 
