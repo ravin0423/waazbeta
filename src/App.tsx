@@ -18,7 +18,7 @@ import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminPurchaseOrders from "./pages/admin/AdminPurchaseOrders";
 import AdminServices from "./pages/admin/AdminServices";
-import AdminPartners from "./pages/admin/AdminPartners";
+import AdminCustomerDatabase from "./pages/admin/AdminCustomerDatabase";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminFraudMonitoring from "./pages/admin/AdminFraudMonitoring";
 import AdminDeviceVerification from "./pages/admin/AdminDeviceVerification";
@@ -72,7 +72,7 @@ const AppRoutes = () => {
       <Route path="/admin/invoices" element={<ProtectedRoute role="admin"><AdminInvoices /></ProtectedRoute>} />
       <Route path="/admin/purchase-orders" element={<ProtectedRoute role="admin"><AdminPurchaseOrders /></ProtectedRoute>} />
       <Route path="/admin/services" element={<ProtectedRoute role="admin"><AdminServices /></ProtectedRoute>} />
-      <Route path="/admin/partners" element={<ProtectedRoute role="admin"><AdminPartners /></ProtectedRoute>} />
+      <Route path="/admin/customer-database" element={<ProtectedRoute role="admin"><AdminCustomerDatabase /></ProtectedRoute>} />
       <Route path="/admin/analytics" element={<ProtectedRoute role="admin"><AdminAnalytics /></ProtectedRoute>} />
       <Route path="/admin/fraud-monitoring" element={<ProtectedRoute role="admin"><AdminFraudMonitoring /></ProtectedRoute>} />
       <Route path="/admin/device-verification" element={<ProtectedRoute role="admin"><AdminDeviceVerification /></ProtectedRoute>} />

@@ -1,0 +1,1 @@
+CREATE POLICY "Users can delete own pending devices" ON public.customer_devices FOR DELETE TO authenticated USING (auth.uid() = user_id AND status = 'pending');

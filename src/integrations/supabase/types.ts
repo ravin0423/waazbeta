@@ -299,6 +299,7 @@ export type Database = {
           id: string
           is_active: boolean
           name: string
+          partner_type: string
           phone: string | null
           quality_rating: number
           region_id: string | null
@@ -315,6 +316,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name: string
+          partner_type?: string
           phone?: string | null
           quality_rating?: number
           region_id?: string | null
@@ -331,6 +333,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           name?: string
+          partner_type?: string
           phone?: string | null
           quality_rating?: number
           region_id?: string | null

@@ -25,6 +25,7 @@ interface Partner {
   quality_rating: number;
   total_repairs: number;
   is_active: boolean;
+  partner_type: string;
 }
 
 interface Region {
@@ -38,7 +39,7 @@ const AdminPartnersManage = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Partner | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', state: '', region_id: '', sla_turnaround_days: '7', commission_rate: '10', quality_rating: '5.0' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', state: '', region_id: '', sla_turnaround_days: '7', commission_rate: '10', quality_rating: '5.0', partner_type: 'technical' });
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
@@ -55,7 +56,7 @@ const AdminPartnersManage = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', email: '', phone: '', city: '', state: '', region_id: '', sla_turnaround_days: '7', commission_rate: '10', quality_rating: '5.0' });
+    setForm({ name: '', email: '', phone: '', city: '', state: '', region_id: '', sla_turnaround_days: '7', commission_rate: '10', quality_rating: '5.0', partner_type: 'technical' });
     setDialogOpen(true);
   };
 
@@ -67,6 +68,7 @@ const AdminPartnersManage = () => {
       sla_turnaround_days: String(p.sla_turnaround_days),
       commission_rate: String(p.commission_rate),
       quality_rating: String(p.quality_rating),
+      partner_type: p.partner_type || 'technical',
     });
     setDialogOpen(true);
   };
@@ -80,6 +82,7 @@ const AdminPartnersManage = () => {
       sla_turnaround_days: parseInt(form.sla_turnaround_days) || 7,
       commission_rate: parseFloat(form.commission_rate) || 10,
       quality_rating: parseFloat(form.quality_rating) || 5.0,
+      partner_type: form.partner_type,
       updated_at: new Date().toISOString(),
     };
     if (editing) {
@@ -133,6 +136,13 @@ const AdminPartnersManage = () => {
                   <Input placeholder="City" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} />
                   <Input placeholder="State" value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} />
                 </div>
+                <Select value={form.partner_type} onValueChange={v => setForm({ ...form, partner_type: v })}>
+                  <SelectTrigger><SelectValue placeholder="Partner type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="technical">Technical (Service)</SelectItem>
+                    <SelectItem value="non_technical">Non-Technical (Sales)</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Select value={form.region_id} onValueChange={v => setForm({ ...form, region_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
                   <SelectContent>
@@ -169,7 +179,8 @@ const AdminPartnersManage = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Partner Name</TableHead>
+                     <TableHead>Partner Name</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>SLA (days)</TableHead>
                     <TableHead>Commission</TableHead>
@@ -183,6 +194,11 @@ const AdminPartnersManage = () => {
                   {partners.map(p => (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.partner_type === 'technical' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent-foreground'}`}>
+                          {p.partner_type === 'technical' ? 'Technical' : 'Non-Technical'}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-muted-foreground">{p.city}, {p.state}</TableCell>
                       <TableCell>{p.sla_turnaround_days}</TableCell>
                       <TableCell>{p.commission_rate}%</TableCell>

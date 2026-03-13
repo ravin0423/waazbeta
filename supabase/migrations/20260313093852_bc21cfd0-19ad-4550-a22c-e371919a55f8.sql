@@ -1,0 +1,1 @@
+ALTER TABLE public.partners ADD COLUMN partner_type text NOT NULL DEFAULT 'technical';
