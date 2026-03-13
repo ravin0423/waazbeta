@@ -62,6 +62,7 @@ const AppRoutes = () => {
       <Route path="/customer/subscriptions" element={<ProtectedRoute role="customer"><CustomerSubscriptions /></ProtectedRoute>} />
       <Route path="/customer/claims" element={<ProtectedRoute role="customer"><CustomerClaims /></ProtectedRoute>} />
       <Route path="/customer/tickets" element={<ProtectedRoute role="customer"><CustomerTickets /></ProtectedRoute>} />
+      <Route path="/customer/invoices" element={<ProtectedRoute role="customer"><CustomerInvoices /></ProtectedRoute>} />
       <Route path="/customer/profile" element={<ProtectedRoute role="customer"><CustomerProfile /></ProtectedRoute>} />
 
       {/* Admin routes */}
