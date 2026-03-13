@@ -32,11 +32,17 @@ import AdminDeviceApprovals from "./pages/admin/AdminDeviceApprovals";
 import AdminApprovalChecklist from "./pages/admin/AdminApprovalChecklist";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
 import AdminTickets from "./pages/admin/AdminTickets";
+import AdminFinanceOverview from "./pages/admin/AdminFinanceOverview";
+import AdminFinanceGST from "./pages/admin/AdminFinanceGST";
+import AdminFinanceTransactions from "./pages/admin/AdminFinanceTransactions";
+import AdminFinancePartnerPayments from "./pages/admin/AdminFinancePartnerPayments";
+import AdminFinanceCompliance from "./pages/admin/AdminFinanceCompliance";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
 import PartnerCustomers from "./pages/partner/PartnerCustomers";
 import PartnerSettings from "./pages/partner/PartnerSettings";
+import PartnerFinance from "./pages/partner/PartnerFinance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
