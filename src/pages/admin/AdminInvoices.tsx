@@ -275,14 +275,37 @@ const AdminInvoices = () => {
                   {!editId && (
                     <div className="space-y-2">
                       <Label>Link to Customer (optional)</Label>
-                      <Select value={form.user_id} onValueChange={handleCustomerSelect}>
-                        <SelectTrigger><SelectValue placeholder="Select a customer..." /></SelectTrigger>
-                        <SelectContent>
-                          {customers.map(c => (
-                            <SelectItem key={c.id} value={c.id}>{c.full_name} ({c.email})</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        placeholder="Search customers by name or email..."
+                        value={customerSearch}
+                        onChange={e => { setCustomerSearch(e.target.value); setForm(f => ({ ...f, user_id: '' })); }}
+                      />
+                      {customerSearch && !form.user_id && (
+                        <div className="max-h-40 overflow-y-auto border rounded-md bg-background">
+                          {customers
+                            .filter(c =>
+                              c.full_name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                              c.email.toLowerCase().includes(customerSearch.toLowerCase())
+                            )
+                            .map(c => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                                onClick={() => {
+                                  handleCustomerSelect(c.id);
+                                  setCustomerSearch(c.full_name);
+                                }}
+                              >
+                                <span className="font-medium">{c.full_name}</span>
+                                <span className="text-muted-foreground ml-2 text-xs">{c.email}</span>
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                      {form.user_id && (
+                        <p className="text-xs text-success">✓ Linked to {form.customer_name}</p>
+                      )}
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4">
