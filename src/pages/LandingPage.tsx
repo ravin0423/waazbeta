@@ -135,7 +135,7 @@ const LandingPage = () => {
               className="relative"
             >
               <div className="relative">
-                <img src={heroDevices} alt="Electronic devices protected by WaaZ" className="w-full max-w-lg mx-auto drop-shadow-2xl relative z-10" />
+                <img src={heroDevices} alt="Electronic devices protected by WaaZ" className="w-full max-w-lg mx-auto drop-shadow-2xl relative z-10 mix-blend-lighten dark:mix-blend-screen" />
                 {/* Glow ring behind image */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-80 h-80 rounded-full bg-primary/20 blur-[60px]" />
