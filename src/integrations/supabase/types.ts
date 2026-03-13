@@ -273,11 +273,13 @@ export type Database = {
           due_date: string | null
           id: string
           invoice_number: string
+          line_item_description: string
           notes: string | null
           paid_at: string | null
           sgst_amount: number
           sgst_percent: number
           status: string
+          subscription_plan_id: string | null
           subtotal: number
           updated_at: string
           user_id: string | null
@@ -293,11 +295,13 @@ export type Database = {
           due_date?: string | null
           id?: string
           invoice_number: string
+          line_item_description?: string
           notes?: string | null
           paid_at?: string | null
           sgst_amount?: number
           sgst_percent?: number
           status?: string
+          subscription_plan_id?: string | null
           subtotal?: number
           updated_at?: string
           user_id?: string | null
@@ -313,11 +317,13 @@ export type Database = {
           due_date?: string | null
           id?: string
           invoice_number?: string
+          line_item_description?: string
           notes?: string | null
           paid_at?: string | null
           sgst_amount?: number
           sgst_percent?: number
           status?: string
+          subscription_plan_id?: string | null
           subtotal?: number
           updated_at?: string
           user_id?: string | null
@@ -328,6 +334,13 @@ export type Database = {
             columns: ["customer_device_id"]
             isOneToOne: false
             referencedRelation: "customer_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_subscription_plan_id_fkey"
+            columns: ["subscription_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
         ]
