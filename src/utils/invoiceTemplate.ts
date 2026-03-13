@@ -269,7 +269,7 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   </div>
 
   <!-- Footer -->
-  <div class="footer-bar"><span>WaaZ</span> Device Protection Services &bull; Thank you for your business</div>
+  <div class="footer-bar"><span>WaaZ</span> Gadget Protection Services &bull; Thank you for your business</div>
 </div>
 </div>
 
