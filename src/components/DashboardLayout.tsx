@@ -80,6 +80,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hasDevices, setHasDevices] = useState<boolean | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   useEffect(() => {
     if (user?.role !== 'customer') { setHasDevices(true); return; }
