@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 export type UserRole = 'customer' | 'admin' | 'partner';
@@ -111,6 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setUser(null);
     setSupabaseUser(null);
+    toast.success('You have been logged out successfully');
   };
 
   return (

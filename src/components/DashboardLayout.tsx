@@ -89,9 +89,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
   const navItems = getNavItems();
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
   };
 
   const roleLabel = user?.role === 'admin' ? 'Admin Panel' : user?.role === 'partner' ? 'Partner Portal' : 'Customer Portal';
