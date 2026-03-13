@@ -21,6 +21,7 @@ interface CustomerRow {
     whatsapp_number: string;
     subscription_plans: { name: string } | null;
   }[];
+  claimsCount: number;
 }
 
 const AdminCustomerDatabase = () => {
@@ -30,22 +31,24 @@ const AdminCustomerDatabase = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      // Get all profiles
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, phone')
-        .order('full_name');
+      const [profilesRes, devicesRes, claimsRes] = await Promise.all([
+        supabase.from('profiles').select('id, full_name, email, phone').order('full_name'),
+        supabase.from('customer_devices').select('id, user_id, product_name, status, created_at, google_location_pin, whatsapp_number, subscription_plans(name)'),
+        supabase.from('service_claims').select('id, user_id'),
+      ]);
 
-      if (!profiles) { setLoading(false); return; }
+      const profiles = profilesRes.data || [];
+      const devices = devicesRes.data || [];
+      const claims = claimsRes.data || [];
 
-      // Get all devices with plans
-      const { data: devices } = await supabase
-        .from('customer_devices')
-        .select('id, user_id, product_name, status, created_at, google_location_pin, whatsapp_number, subscription_plans(name)');
-
-      const devicesByUser = (devices || []).reduce((acc: Record<string, any[]>, d) => {
+      const devicesByUser = devices.reduce((acc: Record<string, any[]>, d) => {
         if (!acc[d.user_id]) acc[d.user_id] = [];
         acc[d.user_id].push(d);
+        return acc;
+      }, {});
+
+      const claimsByUser = claims.reduce((acc: Record<string, number>, c) => {
+        acc[c.user_id] = (acc[c.user_id] || 0) + 1;
         return acc;
       }, {});
 
@@ -54,6 +57,7 @@ const AdminCustomerDatabase = () => {
         .map(p => ({
           ...p,
           devices: devicesByUser[p.id] || [],
+          claimsCount: claimsByUser[p.id] || 0,
         }));
 
       setCustomers(rows);
@@ -149,10 +153,7 @@ const AdminCustomerDatabase = () => {
                         <TableCell className="text-sm font-medium">
                           {earliest ? `${daysSince(earliest)} days` : '—'}
                         </TableCell>
-                        <TableCell className="text-sm font-medium">
-                          {/* Claims count - placeholder until claims table exists */}
-                          0
-                        </TableCell>
+                        <TableCell className="text-sm font-medium">{c.claimsCount}</TableCell>
                       </TableRow>
                     );
                   })}
