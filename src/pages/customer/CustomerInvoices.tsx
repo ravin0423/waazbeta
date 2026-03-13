@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { FileText, Loader2, Download, Eye } from 'lucide-react';
+import { FileText, Loader2, Download, Eye, Printer } from 'lucide-react';
 import { format } from 'date-fns';
+import { generateInvoiceHtml } from '@/utils/invoiceTemplate';
 
 const CustomerInvoices = () => {
   const { user } = useAuth();
