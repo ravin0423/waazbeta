@@ -20,6 +20,7 @@ const customerNavFull: NavItem[] = [
   { label: 'Dashboard', path: '/customer', icon: <LayoutDashboard size={20} /> },
   { label: 'Subscriptions', path: '/customer/subscriptions', icon: <Shield size={20} /> },
   { label: 'Claims', path: '/customer/claims', icon: <FileText size={20} /> },
+  { label: 'Invoices', path: '/customer/invoices', icon: <Receipt size={20} /> },
   { label: 'Service Tickets', path: '/customer/tickets', icon: <Ticket size={20} /> },
   { label: 'Profile', path: '/customer/profile', icon: <User size={20} /> },
 ];
