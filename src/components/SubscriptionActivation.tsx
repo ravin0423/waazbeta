@@ -100,6 +100,12 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
   const handleSubmit = async () => {
     if (!user) return;
     setSubmitting(true);
+
+    // Save phone to profile
+    if (phoneNumber.trim()) {
+      await supabase.from('profiles').update({ phone: phoneNumber.trim() }).eq('id', user.id);
+    }
+
     const { error } = await supabase.from('customer_devices').insert({
       user_id: user.id,
       gadget_category_id: selectedCategoryId,
