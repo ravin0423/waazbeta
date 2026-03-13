@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/ThemeProvider';
-import heroDevices from '@/assets/hero-devices.png';
+import heroDevices from '@/assets/hero-devices-purple.png';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -150,29 +150,6 @@ const LandingPage = () => {
                 </div>
               </div>
 
-              {/* Floating badges */}
-              {badges.map((badge: any, i: number) => {
-                const positions = [
-                  'top-4 -left-4 sm:top-8 sm:-left-8',
-                  'top-1/3 -right-2 sm:-right-6',
-                  'bottom-8 left-4 sm:left-0',
-                ];
-                const Icon = iconMap[badge.icon] || Shield;
-                return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.8 + i * 0.15, type: 'spring', stiffness: 200 }}
-                    className={`absolute ${positions[i] || ''} z-20`}
-                  >
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-card/90 backdrop-blur-md border border-border/50 shadow-elevated text-sm">
-                      <Icon size={16} className="text-primary" />
-                      <span className="font-medium text-foreground text-xs whitespace-nowrap">{badge.text}</span>
-                    </div>
-                  </motion.div>
-                );
-              })}
             </motion.div>
           </div>
         </motion.div>
