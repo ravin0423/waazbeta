@@ -53,6 +53,7 @@ interface LineItem {
 }
 
 const AdminInvoices = () => {
+  const { user } = useAuth();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
