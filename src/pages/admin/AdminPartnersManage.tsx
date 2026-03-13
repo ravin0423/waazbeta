@@ -68,6 +68,7 @@ const AdminPartnersManage = () => {
       sla_turnaround_days: String(p.sla_turnaround_days),
       commission_rate: String(p.commission_rate),
       quality_rating: String(p.quality_rating),
+      partner_type: p.partner_type || 'technical',
     });
     setDialogOpen(true);
   };
