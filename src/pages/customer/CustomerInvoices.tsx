@@ -128,7 +128,7 @@ const CustomerInvoices = () => {
                 {Number(selected.sgst_amount) > 0 && <div className="flex justify-between text-muted-foreground"><span>SGST ({selected.sgst_percent}%)</span><span>₹{Number(selected.sgst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>}
                 <div className="flex justify-between font-bold border-t pt-2"><span>Total</span><span>₹{Number(selected.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
                 {selected.notes && <p className="text-muted-foreground pt-2"><strong>Notes:</strong> {selected.notes}</p>}
-                <Button className="w-full mt-2" onClick={() => handleDownload(selected)}><Download size={14} className="mr-1" /> Download Invoice</Button>
+                <Button className="w-full mt-2" onClick={() => handleDownload(selected)}><Printer size={14} className="mr-1" /> Print Invoice</Button>
               </div>
             )}
           </DialogContent>
