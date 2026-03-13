@@ -478,8 +478,8 @@ const AdminInvoices = () => {
                         <TableCell className="text-sm text-muted-foreground">{format(new Date(inv.created_at), 'dd MMM yyyy')}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => openEdit(inv)}><Edit size={14} /></Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(inv)}><Download size={14} /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => openEdit(inv)} title="Edit"><Edit size={14} /></Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownloadInvoice(inv)} title="Print Invoice"><Printer size={14} /></Button>
                           </div>
                         </TableCell>
                       </TableRow>
