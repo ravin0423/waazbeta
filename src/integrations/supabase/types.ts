@@ -231,6 +231,253 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          is_system: boolean
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_system?: boolean
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      finance_compliance_info: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          info_group: string
+          info_key: string
+          info_label: string
+          info_value: string
+          is_editable: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          info_group?: string
+          info_key: string
+          info_label: string
+          info_value?: string
+          is_editable?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          info_group?: string
+          info_key?: string
+          info_label?: string
+          info_value?: string
+          is_editable?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_gst_returns: {
+        Row: {
+          created_at: string
+          filed_at: string | null
+          id: string
+          input_tax_credit: number
+          net_tax_liability: number
+          notes: string | null
+          return_period: string
+          return_type: string
+          status: string
+          total_cess: number
+          total_cgst: number
+          total_igst: number
+          total_sgst: number
+          total_taxable_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          filed_at?: string | null
+          id?: string
+          input_tax_credit?: number
+          net_tax_liability?: number
+          notes?: string | null
+          return_period: string
+          return_type?: string
+          status?: string
+          total_cess?: number
+          total_cgst?: number
+          total_igst?: number
+          total_sgst?: number
+          total_taxable_value?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          filed_at?: string | null
+          id?: string
+          input_tax_credit?: number
+          net_tax_liability?: number
+          notes?: string | null
+          return_period?: string
+          return_type?: string
+          status?: string
+          total_cess?: number
+          total_cgst?: number
+          total_igst?: number
+          total_sgst?: number
+          total_taxable_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_partner_payouts: {
+        Row: {
+          created_at: string
+          gross_amount: number
+          id: string
+          net_amount: number
+          notes: string | null
+          paid_at: string | null
+          partner_id: string
+          payment_method: string | null
+          payment_reference: string | null
+          payout_month: string
+          status: string
+          tds_amount: number
+          tds_rate: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          partner_id: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payout_month: string
+          status?: string
+          tds_amount?: number
+          tds_rate?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gross_amount?: number
+          id?: string
+          net_amount?: number
+          notes?: string | null
+          paid_at?: string | null
+          partner_id?: string
+          payment_method?: string | null
+          payment_reference?: string | null
+          payout_month?: string
+          status?: string
+          tds_amount?: number
+          tds_rate?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_partner_payouts_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_transactions: {
+        Row: {
+          amount: number
+          category_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          gst_rate: number
+          hsn_sac_code: string | null
+          id: string
+          is_auto_generated: boolean
+          notes: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          source_id: string | null
+          source_type: string | null
+          tax_amount: number
+          transaction_date: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          gst_rate?: number
+          hsn_sac_code?: string | null
+          id?: string
+          is_auto_generated?: boolean
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          tax_amount?: number
+          transaction_date?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          gst_rate?: number
+          hsn_sac_code?: string | null
+          id?: string
+          is_auto_generated?: boolean
+          notes?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          tax_amount?: number
+          transaction_date?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gadget_categories: {
         Row: {
           created_at: string

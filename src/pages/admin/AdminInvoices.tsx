@@ -13,6 +13,36 @@ import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { FileText, Plus, Loader2, Edit, Download, Upload, Image, Trash2, Printer } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+
+const recordPaidInvoiceAsIncome = async (invoice: any, userId?: string) => {
+  if (invoice.status !== 'paid') return;
+  // Check if already recorded
+  const { data: existing } = await supabase
+    .from('finance_transactions')
+    .select('id')
+    .eq('source_type', 'invoice')
+    .eq('source_id', invoice.id)
+    .limit(1);
+  if (existing && existing.length > 0) return;
+
+  // Get subscription revenue category
+  const { data: cat } = await supabase.from('finance_categories').select('id').eq('name', 'Subscription Revenue').limit(1).single();
+
+  await supabase.from('finance_transactions').insert({
+    transaction_date: invoice.paid_at ? invoice.paid_at.substring(0, 10) : new Date().toISOString().substring(0, 10),
+    type: 'income',
+    category_id: cat?.id || null,
+    description: `Invoice ${invoice.invoice_number} - ${invoice.customer_name}`,
+    amount: Number(invoice.amount),
+    tax_amount: Number(invoice.cgst_amount || 0) + Number(invoice.sgst_amount || 0),
+    gst_rate: Number(invoice.cgst_percent || 0) + Number(invoice.sgst_percent || 0),
+    source_type: 'invoice',
+    source_id: invoice.id,
+    is_auto_generated: true,
+    created_by: userId,
+  });
+};
 import { format } from 'date-fns';
 import { generateInvoiceHtml } from '@/utils/invoiceTemplate';
 
@@ -23,6 +53,7 @@ interface LineItem {
 }
 
 const AdminInvoices = () => {
+  const { user } = useAuth();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -158,6 +189,10 @@ const AdminInvoices = () => {
         await supabase.from('invoice_line_items').insert(itemsToInsert);
       }
       toast.success('Invoice updated');
+      // Auto-record if marked as paid
+      if (form.status === 'paid') {
+        await recordPaidInvoiceAsIncome({ id: editId, invoice_number: invoices.find(i => i.id === editId)?.invoice_number, customer_name: form.customer_name, amount: totalAmt, cgst_amount: cgstAmt, sgst_amount: sgstAmt, cgst_percent: Number(form.cgst_percent), sgst_percent: Number(form.sgst_percent), paid_at: new Date().toISOString() }, user?.id);
+      }
     } else {
       const { data: numData, error: numErr } = await supabase.rpc('generate_invoice_number');
       if (numErr || !numData) { toast.error('Failed to generate invoice number'); setSaving(false); return; }
@@ -192,6 +227,11 @@ const AdminInvoices = () => {
         await supabase.from('invoice_line_items').insert(itemsToInsert);
       }
       toast.success(`Invoice ${numData} created`);
+
+      // Auto-record if created as paid
+      if (form.status === 'paid') {
+        await recordPaidInvoiceAsIncome(invData, user?.id);
+      }
 
       // Auto-open the created invoice
       const createdInv = { ...invData, invoice_line_items: itemsToInsert.map((it, i) => ({ ...it, id: `temp-${i}` })) };

@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Shield, FileText, Ticket, User, LogOut, Package, Receipt,
   Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone,
-  Layers, MapPin, UserCog, Globe, ShieldCheck, ListChecks, QrCode
+  Layers, MapPin, UserCog, Globe, ShieldCheck, ListChecks, QrCode, IndianRupee,
+  ChevronDown, Wallet, BadgeCheck, Building2
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,6 +15,7 @@ interface NavItem {
   label: string;
   path: string;
   icon: React.ReactNode;
+  children?: NavItem[];
 }
 
 const customerNavFull: NavItem[] = [
@@ -37,7 +39,17 @@ const adminNav: NavItem[] = [
   { label: 'Partners', path: '/admin/partners-manage', icon: <Users size={20} /> },
   { label: 'Subscriptions', path: '/admin/subscriptions', icon: <Shield size={20} /> },
   { label: 'Subscription Plans', path: '/admin/subscription-plans', icon: <Package size={20} /> },
-  { label: 'Invoices', path: '/admin/invoices', icon: <Receipt size={20} /> },
+  {
+    label: 'Finance', path: '/admin/finance', icon: <IndianRupee size={20} />,
+    children: [
+      { label: 'Overview', path: '/admin/finance', icon: <TrendingUp size={18} /> },
+      { label: 'Invoices', path: '/admin/invoices', icon: <Receipt size={18} /> },
+      { label: 'GST & Tax Filing', path: '/admin/finance-gst', icon: <FileText size={18} /> },
+      { label: 'Income & Expenses', path: '/admin/finance-transactions', icon: <Wallet size={18} /> },
+      { label: 'Partner Payments', path: '/admin/finance-partner-payments', icon: <Users size={18} /> },
+      { label: 'Compliance & MSME', path: '/admin/finance-compliance', icon: <BadgeCheck size={18} /> },
+    ],
+  },
   { label: 'Purchase Orders', path: '/admin/purchase-orders', icon: <Package size={20} /> },
   { label: 'Service Bookings', path: '/admin/services', icon: <Wrench size={20} /> },
   { label: 'Support Tickets', path: '/admin/tickets', icon: <Ticket size={20} /> },
@@ -56,6 +68,7 @@ const partnerNav: NavItem[] = [
   { label: 'Dashboard', path: '/partner', icon: <LayoutDashboard size={20} /> },
   { label: 'Sales', path: '/partner/sales', icon: <ShoppingCart size={20} /> },
   { label: 'Commissions', path: '/partner/commissions', icon: <Receipt size={20} /> },
+  { label: 'My Financials', path: '/partner/finance', icon: <IndianRupee size={20} /> },
   { label: 'Customers', path: '/partner/customers', icon: <Users size={20} /> },
   { label: 'Settings', path: '/partner/settings', icon: <Settings size={20} /> },
 ];
@@ -67,6 +80,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hasDevices, setHasDevices] = useState<boolean | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   useEffect(() => {
     if (user?.role !== 'customer') { setHasDevices(true); return; }
@@ -136,6 +150,60 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
           {navItems.map(item => {
             const isActive = location.pathname === item.path;
+            const hasChildren = item.children && item.children.length > 0;
+            const isChildActive = hasChildren && item.children!.some(c => location.pathname === c.path);
+            const isExpanded = expandedGroups.includes(item.label) || isChildActive;
+
+            if (hasChildren) {
+              return (
+                <div key={item.label}>
+                  <button
+                    onClick={() => {
+                      if (collapsed) return;
+                      setExpandedGroups(prev => prev.includes(item.label) ? prev.filter(g => g !== item.label) : [...prev, item.label]);
+                    }}
+                    className={cn(
+                      "flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                      isChildActive
+                        ? "bg-sidebar-primary/10 text-sidebar-primary-foreground"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    {item.icon}
+                    {!collapsed && (
+                      <>
+                        <span className="flex-1 text-left">{item.label}</span>
+                        <ChevronDown size={14} className={cn("transition-transform", isExpanded && "rotate-180")} />
+                      </>
+                    )}
+                  </button>
+                  {!collapsed && isExpanded && (
+                    <div className="ml-4 mt-0.5 space-y-0.5 border-l border-sidebar-border pl-3">
+                      {item.children!.map(child => {
+                        const childActive = location.pathname === child.path;
+                        return (
+                          <Link
+                            key={child.path}
+                            to={child.path}
+                            onClick={() => setMobileOpen(false)}
+                            className={cn(
+                              "flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-colors",
+                              childActive
+                                ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                                : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                            )}
+                          >
+                            {child.icon}
+                            <span>{child.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             return (
               <Link
                 key={item.path}

@@ -32,11 +32,17 @@ import AdminDeviceApprovals from "./pages/admin/AdminDeviceApprovals";
 import AdminApprovalChecklist from "./pages/admin/AdminApprovalChecklist";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
 import AdminTickets from "./pages/admin/AdminTickets";
+import AdminFinanceOverview from "./pages/admin/AdminFinanceOverview";
+import AdminFinanceGST from "./pages/admin/AdminFinanceGST";
+import AdminFinanceTransactions from "./pages/admin/AdminFinanceTransactions";
+import AdminFinancePartnerPayments from "./pages/admin/AdminFinancePartnerPayments";
+import AdminFinanceCompliance from "./pages/admin/AdminFinanceCompliance";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
 import PartnerCustomers from "./pages/partner/PartnerCustomers";
 import PartnerSettings from "./pages/partner/PartnerSettings";
+import PartnerFinance from "./pages/partner/PartnerFinance";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -85,11 +91,17 @@ const AppRoutes = () => {
       <Route path="/admin/approval-checklist" element={<ProtectedRoute role="admin"><AdminApprovalChecklist /></ProtectedRoute>} />
       <Route path="/admin/payment-settings" element={<ProtectedRoute role="admin"><AdminPaymentSettings /></ProtectedRoute>} />
       <Route path="/admin/tickets" element={<ProtectedRoute role="admin"><AdminTickets /></ProtectedRoute>} />
+      <Route path="/admin/finance" element={<ProtectedRoute role="admin"><AdminFinanceOverview /></ProtectedRoute>} />
+      <Route path="/admin/finance-gst" element={<ProtectedRoute role="admin"><AdminFinanceGST /></ProtectedRoute>} />
+      <Route path="/admin/finance-transactions" element={<ProtectedRoute role="admin"><AdminFinanceTransactions /></ProtectedRoute>} />
+      <Route path="/admin/finance-partner-payments" element={<ProtectedRoute role="admin"><AdminFinancePartnerPayments /></ProtectedRoute>} />
+      <Route path="/admin/finance-compliance" element={<ProtectedRoute role="admin"><AdminFinanceCompliance /></ProtectedRoute>} />
 
       {/* Partner routes */}
       <Route path="/partner" element={<ProtectedRoute role="partner"><PartnerDashboard /></ProtectedRoute>} />
       <Route path="/partner/sales" element={<ProtectedRoute role="partner"><PartnerSales /></ProtectedRoute>} />
       <Route path="/partner/commissions" element={<ProtectedRoute role="partner"><PartnerCommissions /></ProtectedRoute>} />
+      <Route path="/partner/finance" element={<ProtectedRoute role="partner"><PartnerFinance /></ProtectedRoute>} />
       <Route path="/partner/customers" element={<ProtectedRoute role="partner"><PartnerCustomers /></ProtectedRoute>} />
       <Route path="/partner/settings" element={<ProtectedRoute role="partner"><PartnerSettings /></ProtectedRoute>} />
 
