@@ -63,6 +63,7 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
       setLoading(false);
     };
     fetchCategories();
+    if (user?.phone) setPhoneNumber(user.phone);
   }, []);
 
   useEffect(() => {
