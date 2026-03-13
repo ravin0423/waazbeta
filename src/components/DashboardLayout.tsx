@@ -68,6 +68,7 @@ const partnerNav: NavItem[] = [
   { label: 'Dashboard', path: '/partner', icon: <LayoutDashboard size={20} /> },
   { label: 'Sales', path: '/partner/sales', icon: <ShoppingCart size={20} /> },
   { label: 'Commissions', path: '/partner/commissions', icon: <Receipt size={20} /> },
+  { label: 'My Financials', path: '/partner/finance', icon: <IndianRupee size={20} /> },
   { label: 'Customers', path: '/partner/customers', icon: <Users size={20} /> },
   { label: 'Settings', path: '/partner/settings', icon: <Settings size={20} /> },
 ];
