@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Upload, X, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const ISSUE_TYPES = [
   'Hardware Failure',
@@ -38,13 +39,48 @@ const ClaimSubmissionForm = ({ onClose, onSubmit }: { onClose: () => void; onSub
   const removeImage = (idx: number) => setImages(prev => prev.filter((_, i) => i !== idx));
   const canSubmit = imei.length === 15 && issueType && description.trim().length >= 10;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
-      toast.success('Claim submitted successfully! Our admin team will verify your device and process the claim.');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Upload images
+      const imageUrls: string[] = [];
+      for (const file of images) {
+        const ext = file.name.split('.').pop();
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from('claim-images').upload(path, file);
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage.from('claim-images').getPublicUrl(path);
+        imageUrls.push(urlData.publicUrl);
+      }
+
+      // Find matching device
+      const { data: devices } = await supabase
+        .from('customer_devices')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('imei_number', imei)
+        .limit(1);
+
+      const { error } = await supabase.from('service_claims').insert({
+        user_id: user.id,
+        imei_number: imei,
+        issue_type: issueType,
+        description,
+        image_urls: imageUrls,
+        device_id: devices?.[0]?.id || null,
+      });
+
+      if (error) throw error;
+      toast.success('Claim submitted successfully! Our admin team will review it shortly.');
       onSubmit();
-    }, 1500);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to submit claim');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -57,7 +93,6 @@ const ClaimSubmissionForm = ({ onClose, onSubmit }: { onClose: () => void; onSub
           </div>
         </CardHeader>
         <CardContent className="space-y-5">
-          {/* IMEI */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Device IMEI</label>
             <Input
@@ -67,10 +102,9 @@ const ClaimSubmissionForm = ({ onClose, onSubmit }: { onClose: () => void; onSub
               maxLength={15}
               className="font-mono"
             />
-            <p className="text-xs text-muted-foreground">Dial *#06# on your phone to find the IMEI. Our admin team will verify device details.</p>
+            <p className="text-xs text-muted-foreground">Dial *#06# on your phone to find the IMEI.</p>
           </div>
 
-          {/* Issue Type */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Issue Type</label>
             <Select value={issueType} onValueChange={setIssueType}>
@@ -81,7 +115,6 @@ const ClaimSubmissionForm = ({ onClose, onSubmit }: { onClose: () => void; onSub
             </Select>
           </div>
 
-          {/* Description */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Description</label>
             <Textarea
@@ -92,7 +125,6 @@ const ClaimSubmissionForm = ({ onClose, onSubmit }: { onClose: () => void; onSub
             />
           </div>
 
-          {/* Image Upload */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Upload Images (max 2)</label>
             <div className="flex gap-3 items-center">
@@ -114,7 +146,6 @@ const ClaimSubmissionForm = ({ onClose, onSubmit }: { onClose: () => void; onSub
             </div>
           </div>
 
-          {/* Actions */}
           <div className="flex gap-3 pt-2">
             <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
             <Button onClick={handleSubmit} disabled={!canSubmit || submitting} className="flex-1">
