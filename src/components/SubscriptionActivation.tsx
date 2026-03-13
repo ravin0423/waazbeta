@@ -294,8 +294,14 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
                 </div>
 
                 <div>
-                  <Label htmlFor="phone">Phone Number (from profile)</Label>
-                  <Input id="phone" value={user?.phone || 'Not set'} disabled className="mt-1 bg-muted" />
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    value={phoneNumber}
+                    onChange={e => setPhoneNumber(e.target.value)}
+                    placeholder="e.g. +91 98765 43210"
+                    className="mt-1"
+                  />
                 </div>
 
                 <div>
