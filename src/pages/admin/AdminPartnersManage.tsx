@@ -39,7 +39,7 @@ const AdminPartnersManage = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Partner | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', state: '', region_id: '', sla_turnaround_days: '7', commission_rate: '10', quality_rating: '5.0' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', city: '', state: '', region_id: '', sla_turnaround_days: '7', commission_rate: '10', quality_rating: '5.0', partner_type: 'technical' });
   const [saving, setSaving] = useState(false);
 
   const fetchData = async () => {
