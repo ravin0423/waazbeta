@@ -112,6 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setUser(null);
     setSupabaseUser(null);
+    toast.success('You have been logged out successfully');
   };
 
   return (
