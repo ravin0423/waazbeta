@@ -115,6 +115,7 @@ const CustomerInvoices = () => {
                   <TableRow>
                     <TableHead>Invoice #</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
                     <TableHead>Subtotal</TableHead>
                     <TableHead>CGST</TableHead>
                     <TableHead>SGST</TableHead>
@@ -128,6 +129,7 @@ const CustomerInvoices = () => {
                     <TableRow key={inv.id}>
                       <TableCell className="font-mono text-sm">{inv.invoice_number}</TableCell>
                       <TableCell className="text-sm">{format(new Date(inv.created_at), 'dd MMM yyyy')}</TableCell>
+                      <TableCell className="text-sm max-w-[180px] truncate" title={inv.line_item_description}>{inv.line_item_description || '—'}</TableCell>
                       <TableCell className="text-sm">₹{Number(inv.subtotal || 0).toLocaleString('en-IN')}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">₹{Number(inv.cgst_amount || 0).toLocaleString('en-IN')}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">₹{Number(inv.sgst_amount || 0).toLocaleString('en-IN')}</TableCell>
@@ -157,6 +159,7 @@ const CustomerInvoices = () => {
                 <div className="flex justify-between"><span className="text-muted-foreground">Status</span><Badge variant={statusColor(selected.status) as any}>{selected.status}</Badge></div>
                 {selected.due_date && <div className="flex justify-between"><span className="text-muted-foreground">Due Date</span><span>{format(new Date(selected.due_date), 'dd MMM yyyy')}</span></div>}
                 <hr />
+                <div className="flex justify-between"><span className="text-muted-foreground">Item</span><span className="text-right max-w-[200px]">{selected.line_item_description || 'Service / Subscription'}</span></div>
                 <div className="flex justify-between"><span>Subtotal</span><span>₹{Number(selected.subtotal || selected.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
                 {Number(selected.cgst_amount) > 0 && <div className="flex justify-between text-muted-foreground"><span>CGST ({selected.cgst_percent}%)</span><span>₹{Number(selected.cgst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>}
                 {Number(selected.sgst_amount) > 0 && <div className="flex justify-between text-muted-foreground"><span>SGST ({selected.sgst_percent}%)</span><span>₹{Number(selected.sgst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>}
