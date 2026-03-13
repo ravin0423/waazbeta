@@ -24,15 +24,18 @@ const AdminInvoices = () => {
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', subtotal: '', cgst_percent: '9', sgst_percent: '9',
     status: 'pending', notes: '', due_date: '', user_id: '',
+    line_item_type: '' as string, // plan id or 'other'
+    line_item_description: '',
   });
   const [saving, setSaving] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
   const [customerSearch, setCustomerSearch] = useState('');
+  const [plans, setPlans] = useState<any[]>([]);
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const fetchInvoices = async () => {
-    const { data } = await supabase.from('invoices').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase.from('invoices').select('*, subscription_plans(name, annual_price)').order('created_at', { ascending: false });
     setInvoices(data || []);
     setLoading(false);
   };
@@ -40,6 +43,11 @@ const AdminInvoices = () => {
   const fetchCustomers = async () => {
     const { data } = await supabase.from('profiles').select('id, full_name, email, created_at').order('created_at', { ascending: false });
     setCustomers(data || []);
+  };
+
+  const fetchPlans = async () => {
+    const { data } = await supabase.from('subscription_plans').select('id, name, annual_price, code, gadget_categories(name)').eq('is_active', true).order('name');
+    setPlans(data || []);
   };
 
   const fetchSignature = async () => {
@@ -53,11 +61,12 @@ const AdminInvoices = () => {
   useEffect(() => {
     fetchInvoices();
     fetchCustomers();
+    fetchPlans();
     fetchSignature();
   }, []);
 
   const resetForm = () => {
-    setForm({ customer_name: '', customer_email: '', subtotal: '', cgst_percent: '9', sgst_percent: '9', status: 'pending', notes: '', due_date: '', user_id: '' });
+    setForm({ customer_name: '', customer_email: '', subtotal: '', cgst_percent: '9', sgst_percent: '9', status: 'pending', notes: '', due_date: '', user_id: '', line_item_type: '', line_item_description: '' });
     setEditId(null);
     setCustomerSearch('');
   };
@@ -73,6 +82,8 @@ const AdminInvoices = () => {
       notes: inv.notes || '',
       due_date: inv.due_date || '',
       user_id: inv.user_id || '',
+      line_item_type: inv.subscription_plan_id || (inv.line_item_description !== 'Service / Subscription' ? 'other' : ''),
+      line_item_description: inv.line_item_description || '',
     });
     setEditId(inv.id);
     setOpen(true);
@@ -92,10 +103,37 @@ const AdminInvoices = () => {
     }
   };
 
+  const handlePlanSelect = (value: string) => {
+    if (value === 'other') {
+      setForm(f => ({ ...f, line_item_type: 'other', line_item_description: '', subtotal: '' }));
+    } else {
+      const plan = plans.find(p => p.id === value);
+      if (plan) {
+        setForm(f => ({
+          ...f,
+          line_item_type: value,
+          line_item_description: `${plan.name}${plan.gadget_categories?.name ? ` (${plan.gadget_categories.name})` : ''} — Annual Protection Plan`,
+          subtotal: String(plan.annual_price),
+        }));
+      }
+    }
+  };
+
+  const getLineItemDescription = () => {
+    if (form.line_item_type === 'other') return form.line_item_description || 'Custom Service';
+    if (form.line_item_type) {
+      const plan = plans.find(p => p.id === form.line_item_type);
+      return plan ? `${plan.name}${plan.gadget_categories?.name ? ` (${plan.gadget_categories.name})` : ''} — Annual Protection Plan` : form.line_item_description;
+    }
+    return form.line_item_description || 'Service / Subscription';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     const totals = calcTotals();
+    const description = getLineItemDescription();
+    const planId = form.line_item_type && form.line_item_type !== 'other' ? form.line_item_type : null;
 
     if (editId) {
       const payload = {
@@ -111,13 +149,14 @@ const AdminInvoices = () => {
         notes: form.notes || null,
         due_date: form.due_date || null,
         user_id: form.user_id || null,
+        line_item_description: description,
+        subscription_plan_id: planId,
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('invoices').update(payload).eq('id', editId);
       if (error) { toast.error('Failed to update'); setSaving(false); return; }
       toast.success('Invoice updated');
     } else {
-      // Generate invoice number via DB function
       const { data: numData, error: numErr } = await supabase.rpc('generate_invoice_number');
       if (numErr || !numData) { toast.error('Failed to generate invoice number'); setSaving(false); return; }
 
@@ -135,6 +174,8 @@ const AdminInvoices = () => {
         notes: form.notes || null,
         due_date: form.due_date || null,
         user_id: form.user_id || null,
+        line_item_description: description,
+        subscription_plan_id: planId,
       };
       const { error } = await supabase.from('invoices').insert(payload);
       if (error) { toast.error('Failed to create: ' + error.message); setSaving(false); return; }
@@ -150,7 +191,6 @@ const AdminInvoices = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
-    // Remove old signature files
     const { data: existing } = await supabase.storage.from('company-assets').list('', { search: 'signature' });
     if (existing && existing.length > 0) {
       await supabase.storage.from('company-assets').remove(existing.map(f => f.name));
@@ -164,6 +204,7 @@ const AdminInvoices = () => {
   };
 
   const handleDownloadInvoice = (inv: any) => {
+    const desc = inv.line_item_description || 'Service / Subscription';
     const win = window.open('', '_blank');
     if (!win) return;
     win.document.write(`
@@ -185,12 +226,9 @@ const AdminInvoices = () => {
         .sig img { max-height: 60px; }
         .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 15px; }
         @media print { body { padding: 20px; } }
-      </style>
-      </head><body>
+      </style></head><body>
       <div class="header">
-        <div>
-          <div class="logo">WaaZ<span>Device Protection Services</span></div>
-        </div>
+        <div><div class="logo">WaaZ<span>Device Protection Services</span></div></div>
         <div class="meta">
           <strong>Invoice #</strong> ${inv.invoice_number}<br/>
           <strong>Date:</strong> ${format(new Date(inv.created_at), 'dd MMM yyyy')}<br/>
@@ -202,7 +240,7 @@ const AdminInvoices = () => {
       <table>
         <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
         <tbody>
-          <tr><td>Service / Subscription</td><td style="text-align:right">₹${Number(inv.subtotal || inv.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
+          <tr><td>${desc}</td><td style="text-align:right">₹${Number(inv.subtotal || inv.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr>
         </tbody>
       </table>
       <div class="totals">
@@ -270,9 +308,10 @@ const AdminInvoices = () => {
               <DialogTrigger asChild>
                 <Button><Plus size={16} className="mr-1" /> New Invoice</Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg">
+              <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
                 <DialogHeader><DialogTitle className="font-heading">{editId ? 'Edit Invoice' : 'New Invoice'}</DialogTitle></DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+                  {/* Customer search */}
                   {!editId && (
                     <div className="space-y-2">
                       <Label>Link to Customer (optional)</Label>
@@ -319,10 +358,58 @@ const AdminInvoices = () => {
                       <Input type="email" value={form.customer_email} onChange={e => setForm(f => ({ ...f, customer_email: e.target.value }))} />
                     </div>
                   </div>
+
+                  {/* Line Item — Subscription selector */}
+                  <div className="space-y-2">
+                    <Label>Line Item — Subscription Plan</Label>
+                    <Select value={form.line_item_type} onValueChange={handlePlanSelect}>
+                      <SelectTrigger><SelectValue placeholder="Select a subscription plan..." /></SelectTrigger>
+                      <SelectContent>
+                        {plans.map(p => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name} {p.gadget_categories?.name ? `(${p.gadget_categories.name})` : ''} — ₹{Number(p.annual_price).toLocaleString('en-IN')}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="other">Other (custom entry)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Show selected plan info or custom input */}
+                  {form.line_item_type === 'other' && (
+                    <div className="space-y-2">
+                      <Label>Custom Line Item Description</Label>
+                      <Input
+                        placeholder="Enter custom service description..."
+                        value={form.line_item_description}
+                        onChange={e => setForm(f => ({ ...f, line_item_description: e.target.value }))}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  {form.line_item_type && form.line_item_type !== 'other' && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm">
+                      <p className="font-medium text-primary">{getLineItemDescription()}</p>
+                      <p className="text-muted-foreground text-xs mt-1">Price auto-filled from subscription plan</p>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label>Subtotal (₹)</Label>
-                    <Input type="number" step="0.01" value={form.subtotal} onChange={e => setForm(f => ({ ...f, subtotal: e.target.value }))} required />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={form.subtotal}
+                      onChange={e => setForm(f => ({ ...f, subtotal: e.target.value }))}
+                      required
+                      readOnly={!!form.line_item_type && form.line_item_type !== 'other'}
+                    />
+                    {form.line_item_type && form.line_item_type !== 'other' && (
+                      <p className="text-xs text-muted-foreground">Amount is set from the selected plan</p>
+                    )}
                   </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>CGST %</Label>
@@ -334,7 +421,7 @@ const AdminInvoices = () => {
                     </div>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
-                    <div className="flex justify-between"><span>Subtotal</span><span>₹{totals.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
+                    <div className="flex justify-between"><span>{getLineItemDescription()}</span><span>₹{totals.subtotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
                     <div className="flex justify-between text-muted-foreground"><span>CGST ({form.cgst_percent}%)</span><span>₹{totals.cgst_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
                     <div className="flex justify-between text-muted-foreground"><span>SGST ({form.sgst_percent}%)</span><span>₹{totals.sgst_amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
                     <div className="flex justify-between font-bold border-t pt-1 mt-1"><span>Total</span><span>₹{totals.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span></div>
@@ -385,11 +472,11 @@ const AdminInvoices = () => {
                   <TableRow>
                     <TableHead>Invoice #</TableHead>
                     <TableHead>Customer</TableHead>
+                    <TableHead>Line Item</TableHead>
                     <TableHead>Subtotal</TableHead>
                     <TableHead>GST</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Due Date</TableHead>
                     <TableHead>Created</TableHead>
                     <TableHead></TableHead>
                   </TableRow>
@@ -404,6 +491,9 @@ const AdminInvoices = () => {
                           {inv.customer_email && <p className="text-xs text-muted-foreground">{inv.customer_email}</p>}
                         </div>
                       </TableCell>
+                      <TableCell className="text-sm max-w-[200px] truncate" title={inv.line_item_description}>
+                        {inv.line_item_description || '—'}
+                      </TableCell>
                       <TableCell className="text-sm">₹{Number(inv.subtotal || 0).toLocaleString('en-IN')}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
                         {Number(inv.cgst_amount || 0) > 0 && <span className="block">C: ₹{Number(inv.cgst_amount).toLocaleString('en-IN')}</span>}
@@ -412,7 +502,6 @@ const AdminInvoices = () => {
                       </TableCell>
                       <TableCell className="font-medium">₹{Number(inv.amount).toLocaleString('en-IN')}</TableCell>
                       <TableCell><Badge variant={statusColor(inv.status) as any}>{inv.status}</Badge></TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{inv.due_date ? format(new Date(inv.due_date), 'dd MMM yyyy') : '—'}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{format(new Date(inv.created_at), 'dd MMM yyyy')}</TableCell>
                       <TableCell>
                         <div className="flex gap-1">
