@@ -200,6 +200,7 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
     </thead>
     <tbody>
       ${lineItemsRows}
+      ${emptyRows}
     </tbody>
   </table>
 
