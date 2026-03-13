@@ -105,29 +105,7 @@ const AdminInvoices = () => {
     if (c) setForm(f => ({ ...f, user_id: userId, customer_name: c.full_name, customer_email: c.email }));
   };
 
-  const handlePlanSelect = (index: number, value: string) => {
-    setLineItems(prev => {
-      const updated = [...prev];
-      if (value === 'other') {
-        updated[index] = { type: 'other', description: '', amount: '' };
-      } else {
-        const plan = plans.find(p => p.id === value);
-        if (plan) {
-          updated[index] = {
-            type: value,
-            description: `${plan.name}${plan.gadget_categories?.name ? ` (${plan.gadget_categories.name})` : ''} — Annual Protection Plan`,
-            amount: String(plan.annual_price),
-          };
-        }
-      }
-      return updated;
-    });
-  };
-
-  const addLineItem = () => setLineItems(prev => [...prev, { type: '', description: '', amount: '' }]);
-
   const removeLineItem = (index: number) => {
-    if (lineItems.length <= 1) return;
     setLineItems(prev => prev.filter((_, i) => i !== index));
   };
 
