@@ -67,14 +67,26 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
   useEffect(() => {
     if (!selectedCategoryId) { setPlans([]); return; }
     const fetchPlans = async () => {
-      // Fetch plans that match the selected category OR have no category (universal plans)
-      const { data } = await supabase
+      // First try category-specific plans
+      const { data: categoryPlans } = await supabase
         .from('subscription_plans')
         .select('*')
         .eq('is_active', true)
-        .or(`gadget_category_id.eq.${selectedCategoryId},gadget_category_id.is.null`)
+        .eq('gadget_category_id', selectedCategoryId)
         .order('annual_price');
-      setPlans(data || []);
+      
+      if (categoryPlans && categoryPlans.length > 0) {
+        setPlans(categoryPlans);
+      } else {
+        // Fallback to universal plans (no category assigned)
+        const { data: universalPlans } = await supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('is_active', true)
+          .is('gadget_category_id', null)
+          .order('annual_price');
+        setPlans(universalPlans || []);
+      }
     };
     fetchPlans();
   }, [selectedCategoryId]);
