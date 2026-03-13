@@ -8,10 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { Ticket, Search, MessageSquare, Loader2, Image } from 'lucide-react';
+import { Ticket, Search, MessageSquare, Loader2, Image, Send, Shield, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns';
 
 interface TicketRow {
   id: string;
@@ -32,6 +35,15 @@ interface ProfileRow {
   email: string;
 }
 
+interface TicketMessage {
+  id: string;
+  ticket_id: string;
+  sender_id: string;
+  sender_role: string;
+  message: string;
+  created_at: string;
+}
+
 const statusColors: Record<string, string> = {
   open: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
   in_progress: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
@@ -47,15 +59,21 @@ const priorityColors: Record<string, string> = {
 };
 
 const AdminTickets = () => {
+  const { user } = useAuth();
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileRow>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Conversation state
   const [selected, setSelected] = useState<TicketRow | null>(null);
-  const [response, setResponse] = useState('');
   const [newStatus, setNewStatus] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [messages, setMessages] = useState<TicketMessage[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [savingStatus, setSavingStatus] = useState(false);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -66,7 +84,6 @@ const AdminTickets = () => {
     if (error) { toast.error('Failed to load tickets'); setLoading(false); return; }
     setTickets(data || []);
 
-    // Fetch profiles for all unique user_ids
     const userIds = [...new Set((data || []).map(t => t.user_id))];
     if (userIds.length > 0) {
       const { data: profileData } = await supabase
@@ -82,27 +99,50 @@ const AdminTickets = () => {
 
   useEffect(() => { fetchTickets(); }, []);
 
-  const handleManage = (ticket: TicketRow) => {
-    setSelected(ticket);
-    setResponse(ticket.admin_response || '');
-    setNewStatus(ticket.status);
+  const fetchMessages = async (ticketId: string) => {
+    setLoadingMessages(true);
+    const { data } = await supabase
+      .from('ticket_messages')
+      .select('*')
+      .eq('ticket_id', ticketId)
+      .order('created_at', { ascending: true });
+    setMessages((data as TicketMessage[]) || []);
+    setLoadingMessages(false);
   };
 
-  const handleSave = async () => {
+  const handleManage = (ticket: TicketRow) => {
+    setSelected(ticket);
+    setNewStatus(ticket.status);
+    setNewMessage('');
+    fetchMessages(ticket.id);
+  };
+
+  const handleSendMessage = async () => {
+    if (!user || !selected || !newMessage.trim()) return;
+    setSendingMessage(true);
+    const { error } = await supabase.from('ticket_messages').insert({
+      ticket_id: selected.id,
+      sender_id: user.id,
+      sender_role: 'admin',
+      message: newMessage.trim(),
+    });
+    setSendingMessage(false);
+    if (error) { toast.error('Failed to send message'); return; }
+    setNewMessage('');
+    fetchMessages(selected.id);
+  };
+
+  const handleStatusUpdate = async () => {
     if (!selected) return;
-    setSaving(true);
+    setSavingStatus(true);
     const { error } = await supabase
       .from('service_tickets')
-      .update({
-        status: newStatus,
-        admin_response: response || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
       .eq('id', selected.id);
-    setSaving(false);
-    if (error) { toast.error('Failed to update ticket'); return; }
-    toast.success('Ticket updated');
-    setSelected(null);
+    setSavingStatus(false);
+    if (error) { toast.error('Failed to update status'); return; }
+    toast.success('Status updated');
+    setSelected({ ...selected, status: newStatus });
     fetchTickets();
   };
 
@@ -137,17 +177,10 @@ const AdminTickets = () => {
           <div className="flex items-center gap-3">
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search tickets..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="pl-9 w-64"
-              />
+              <Input placeholder="Search tickets..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 w-64" />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
+              <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All ({counts.all})</SelectItem>
                 <SelectItem value="open">Open ({counts.open})</SelectItem>
@@ -161,9 +194,7 @@ const AdminTickets = () => {
         <Card className="shadow-card">
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
+              <div className="flex items-center justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
                 <Ticket size={40} className="mb-3 opacity-40" />
@@ -196,18 +227,12 @@ const AdminTickets = () => {
                             <p className="text-xs text-muted-foreground truncate">{ticket.description}</p>
                           </td>
                           <td className="p-4">
-                            <Badge variant="outline" className={priorityColors[ticket.priority] || ''}>
-                              {ticket.priority}
-                            </Badge>
+                            <Badge variant="outline" className={priorityColors[ticket.priority] || ''}>{ticket.priority}</Badge>
                           </td>
                           <td className="p-4">
-                            <Badge variant="outline" className={statusColors[ticket.status] || ''}>
-                              {ticket.status.replace('_', ' ')}
-                            </Badge>
+                            <Badge variant="outline" className={statusColors[ticket.status] || ''}>{ticket.status.replace('_', ' ')}</Badge>
                           </td>
-                          <td className="p-4 text-muted-foreground">
-                            {new Date(ticket.created_at).toLocaleDateString('en-IN')}
-                          </td>
+                          <td className="p-4 text-muted-foreground">{new Date(ticket.created_at).toLocaleDateString('en-IN')}</td>
                           <td className="p-4">
                             <Button size="sm" variant="outline" onClick={() => handleManage(ticket)}>
                               <MessageSquare size={14} className="mr-1" /> Respond
@@ -224,37 +249,24 @@ const AdminTickets = () => {
         </Card>
       </motion.div>
 
+      {/* Conversation Dialog */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle className="font-heading">Manage Ticket</DialogTitle>
+            <DialogTitle className="font-heading text-base truncate pr-6">{selected?.subject}</DialogTitle>
+            {selected && (
+              <p className="text-xs text-muted-foreground">
+                {profiles[selected.user_id]?.full_name} • {profiles[selected.user_id]?.email}
+              </p>
+            )}
           </DialogHeader>
+
           {selected && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium">{selected.subject}</p>
-                <p className="text-sm text-muted-foreground mt-1">{selected.description}</p>
-              </div>
-
-              {selected.image_urls && selected.image_urls.length > 0 && (
-                <div>
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1 mb-2">
-                    <Image size={12} /> Attachments
-                  </Label>
-                  <div className="flex gap-2">
-                    {selected.image_urls.map((url, i) => (
-                      <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                        <img src={url} alt={`Attachment ${i + 1}`} className="h-16 w-16 rounded-md object-cover border border-border" />
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label>Status</Label>
+            <div className="flex flex-col flex-1 min-h-0">
+              {/* Status control */}
+              <div className="flex items-center gap-2 mb-3">
                 <Select value={newStatus} onValueChange={setNewStatus}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="w-40 h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="open">Open</SelectItem>
                     <SelectItem value="in_progress">In Progress</SelectItem>
@@ -262,22 +274,80 @@ const AdminTickets = () => {
                     <SelectItem value="closed">Closed</SelectItem>
                   </SelectContent>
                 </Select>
+                {newStatus !== selected.status && (
+                  <Button size="sm" variant="outline" onClick={handleStatusUpdate} disabled={savingStatus} className="h-8 text-xs">
+                    {savingStatus ? <Loader2 size={12} className="mr-1 animate-spin" /> : null}
+                    Update Status
+                  </Button>
+                )}
               </div>
 
-              <div className="space-y-2">
-                <Label>Admin Response</Label>
+              {/* Original ticket */}
+              <div className="p-3 rounded-lg bg-muted/30 border border-border mb-3">
+                <p className="text-sm">{selected.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">{format(new Date(selected.created_at), 'dd MMM yyyy HH:mm')}</p>
+                {selected.image_urls && selected.image_urls.length > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    {selected.image_urls.map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={url} alt={`Attachment ${i + 1}`} className="h-14 w-14 rounded-md object-cover border border-border" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Messages thread */}
+              <ScrollArea className="flex-1 min-h-0 max-h-[250px] pr-2">
+                {loadingMessages ? (
+                  <div className="flex justify-center py-6"><Loader2 className="animate-spin text-primary" size={20} /></div>
+                ) : messages.length === 0 ? (
+                  <div className="text-center py-6 text-sm text-muted-foreground">
+                    <MessageSquare size={24} className="mx-auto mb-2 opacity-40" />
+                    No conversation yet. Send a reply below.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {messages.map(msg => {
+                      const isAdmin = msg.sender_role === 'admin';
+                      return (
+                        <div key={msg.id} className={`flex gap-2 ${isAdmin ? 'flex-row-reverse' : ''}`}>
+                          <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isAdmin ? 'bg-primary/20' : 'gradient-primary'}`}>
+                            {isAdmin ? <Shield size={14} className="text-primary" /> : <User size={14} className="text-primary-foreground" />}
+                          </div>
+                          <div className={`flex-1 max-w-[80%] rounded-lg p-3 border ${isAdmin ? 'bg-primary/10 border-primary/20 ml-auto' : 'bg-accent/50 border-accent'}`}>
+                            <p className={`text-xs font-medium mb-1 ${isAdmin ? 'text-primary' : 'text-accent-foreground'}`}>
+                              {isAdmin ? 'You (Admin)' : profiles[msg.sender_id]?.full_name || 'Customer'}
+                            </p>
+                            <p className="text-sm">{msg.message}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{format(new Date(msg.created_at), 'dd MMM, HH:mm')}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </ScrollArea>
+
+              {/* Reply input */}
+              <div className="flex items-end gap-2 mt-3 pt-3 border-t border-border">
                 <Textarea
-                  value={response}
-                  onChange={e => setResponse(e.target.value)}
-                  placeholder="Type your response to the customer..."
-                  rows={4}
+                  value={newMessage}
+                  onChange={e => setNewMessage(e.target.value)}
+                  placeholder="Type your reply to the customer..."
+                  rows={2}
+                  className="flex-1 resize-none"
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                 />
+                <Button
+                  size="icon"
+                  onClick={handleSendMessage}
+                  disabled={sendingMessage || !newMessage.trim()}
+                  className="gradient-primary text-primary-foreground hover:opacity-90 h-10 w-10 shrink-0"
+                >
+                  {sendingMessage ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                </Button>
               </div>
-
-              <Button onClick={handleSave} disabled={saving} className="w-full gradient-primary text-primary-foreground hover:opacity-90">
-                {saving ? <Loader2 size={16} className="mr-2 animate-spin" /> : <MessageSquare size={16} className="mr-2" />}
-                Save Response
-              </Button>
             </div>
           )}
         </DialogContent>

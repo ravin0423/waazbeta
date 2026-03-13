@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Ticket, Plus, Upload, X, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Ticket, Plus, Upload, X, Clock, CheckCircle, AlertCircle, Loader2, MessageSquare, Send, Shield } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +23,15 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
   closed: { label: 'Closed', variant: 'destructive', icon: CheckCircle },
 };
 
+interface TicketMessage {
+  id: string;
+  ticket_id: string;
+  sender_id: string;
+  sender_role: string;
+  message: string;
+  created_at: string;
+}
+
 const CustomerTickets = () => {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -34,6 +44,13 @@ const CustomerTickets = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
+  // Conversation state
+  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
+  const [messages, setMessages] = useState<TicketMessage[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
+
   const fetchTickets = async () => {
     const { data } = await supabase
       .from('service_tickets')
@@ -44,6 +61,43 @@ const CustomerTickets = () => {
   };
 
   useEffect(() => { fetchTickets(); }, []);
+
+  const fetchMessages = async (ticketId: string) => {
+    setLoadingMessages(true);
+    const { data } = await supabase
+      .from('ticket_messages')
+      .select('*')
+      .eq('ticket_id', ticketId)
+      .order('created_at', { ascending: true });
+    setMessages((data as TicketMessage[]) || []);
+    setLoadingMessages(false);
+  };
+
+  const openConversation = (ticket: any) => {
+    setSelectedTicket(ticket);
+    setNewMessage('');
+    fetchMessages(ticket.id);
+  };
+
+  const handleSendMessage = async () => {
+    if (!user || !selectedTicket || !newMessage.trim()) return;
+    setSendingMessage(true);
+    const { error } = await supabase.from('ticket_messages').insert({
+      ticket_id: selectedTicket.id,
+      sender_id: user.id,
+      sender_role: 'customer',
+      message: newMessage.trim(),
+    });
+    setSendingMessage(false);
+    if (error) { toast.error('Failed to send message'); return; }
+    setNewMessage('');
+    fetchMessages(selectedTicket.id);
+    // Reopen ticket if it was resolved/closed
+    if (selectedTicket.status === 'resolved' || selectedTicket.status === 'closed') {
+      await supabase.from('service_tickets').update({ status: 'open', updated_at: new Date().toISOString() }).eq('id', selectedTicket.id);
+      fetchTickets();
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -63,7 +117,6 @@ const CustomerTickets = () => {
     if (!user) return;
     setSubmitting(true);
 
-    // Upload images
     const imageUrls: string[] = [];
     for (const file of images) {
       const ext = file.name.split('.').pop();
@@ -174,7 +227,7 @@ const CustomerTickets = () => {
               const sc = statusConfig[ticket.status] || statusConfig.open;
               const Icon = sc.icon;
               return (
-                <Card key={ticket.id} className="shadow-card">
+                <Card key={ticket.id} className="shadow-card hover:border-primary/30 transition-colors cursor-pointer" onClick={() => openConversation(ticket)}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -186,7 +239,12 @@ const CustomerTickets = () => {
                           <Badge variant="outline" className="text-xs">{ticket.priority}</Badge>
                         </div>
                         <p className="text-sm text-muted-foreground truncate">{ticket.description}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm')}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <p className="text-xs text-muted-foreground">{format(new Date(ticket.created_at), 'dd MMM yyyy HH:mm')}</p>
+                          <button className="text-xs text-primary flex items-center gap-1 hover:underline" onClick={e => { e.stopPropagation(); openConversation(ticket); }}>
+                            <MessageSquare size={12} /> View Conversation
+                          </button>
+                        </div>
                       </div>
                       {ticket.image_urls?.length > 0 && (
                         <div className="flex gap-1">
@@ -208,6 +266,117 @@ const CustomerTickets = () => {
           </div>
         )}
       </motion.div>
+
+      {/* Conversation Dialog */}
+      <Dialog open={!!selectedTicket} onOpenChange={() => setSelectedTicket(null)}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-base truncate pr-6">
+              {selectedTicket?.subject}
+            </DialogTitle>
+            {selectedTicket && (
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant={statusConfig[selectedTicket.status]?.variant || 'secondary'} className="text-xs">
+                  {selectedTicket.status.replace('_', ' ')}
+                </Badge>
+                <Badge variant="outline" className="text-xs">{selectedTicket.priority}</Badge>
+              </div>
+            )}
+          </DialogHeader>
+
+          {selectedTicket && (
+            <div className="flex flex-col flex-1 min-h-0">
+              {/* Original ticket description */}
+              <div className="p-3 rounded-lg bg-muted/30 border border-border mb-3">
+                <p className="text-sm">{selectedTicket.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">{format(new Date(selectedTicket.created_at), 'dd MMM yyyy HH:mm')}</p>
+                {selectedTicket.image_urls?.length > 0 && (
+                  <div className="flex gap-2 mt-2">
+                    {selectedTicket.image_urls.map((url: string, i: number) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                        <img src={url} alt="" className="h-14 w-14 rounded-md object-cover border border-border" />
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Messages thread */}
+              <ScrollArea className="flex-1 min-h-0 max-h-[300px] pr-2">
+                {loadingMessages ? (
+                  <div className="flex justify-center py-6"><Loader2 className="animate-spin text-primary" size={20} /></div>
+                ) : messages.length === 0 && !selectedTicket.admin_response ? (
+                  <div className="text-center py-6 text-sm text-muted-foreground">
+                    <MessageSquare size={24} className="mx-auto mb-2 opacity-40" />
+                    No messages yet. Start the conversation below.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {/* Legacy admin_response as first message if exists and no messages yet */}
+                    {selectedTicket.admin_response && messages.length === 0 && (
+                      <div className="flex gap-2">
+                        <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                          <Shield size={14} className="text-primary" />
+                        </div>
+                        <div className="flex-1 bg-primary/10 rounded-lg p-3 border border-primary/20">
+                          <p className="text-xs font-medium text-primary mb-1">Admin</p>
+                          <p className="text-sm">{selectedTicket.admin_response}</p>
+                        </div>
+                      </div>
+                    )}
+                    {messages.map(msg => {
+                      const isCustomer = msg.sender_role === 'customer';
+                      return (
+                        <div key={msg.id} className={`flex gap-2 ${isCustomer ? 'flex-row-reverse' : ''}`}>
+                          <div className={`h-7 w-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${isCustomer ? 'gradient-primary' : 'bg-primary/20'}`}>
+                            {isCustomer ? (
+                              <span className="text-xs font-bold text-primary-foreground">{user?.fullName?.charAt(0) || 'Y'}</span>
+                            ) : (
+                              <Shield size={14} className="text-primary" />
+                            )}
+                          </div>
+                          <div className={`flex-1 max-w-[80%] rounded-lg p-3 border ${isCustomer ? 'bg-accent/50 border-accent ml-auto' : 'bg-primary/10 border-primary/20'}`}>
+                            <p className={`text-xs font-medium mb-1 ${isCustomer ? 'text-accent-foreground' : 'text-primary'}`}>
+                              {isCustomer ? 'You' : 'Admin'}
+                            </p>
+                            <p className="text-sm">{msg.message}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{format(new Date(msg.created_at), 'dd MMM, HH:mm')}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </ScrollArea>
+
+              {/* Reply input */}
+              {selectedTicket.status !== 'closed' && (
+                <div className="flex items-end gap-2 mt-3 pt-3 border-t border-border">
+                  <Textarea
+                    value={newMessage}
+                    onChange={e => setNewMessage(e.target.value)}
+                    placeholder="Type your reply..."
+                    rows={2}
+                    className="flex-1 resize-none"
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
+                  />
+                  <Button
+                    size="icon"
+                    onClick={handleSendMessage}
+                    disabled={sendingMessage || !newMessage.trim()}
+                    className="gradient-primary text-primary-foreground hover:opacity-90 h-10 w-10 shrink-0"
+                  >
+                    {sendingMessage ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  </Button>
+                </div>
+              )}
+              {selectedTicket.status === 'closed' && (
+                <p className="text-xs text-muted-foreground text-center mt-3 pt-3 border-t border-border">This ticket is closed.</p>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
