@@ -146,7 +146,7 @@ const LandingPage = () => {
                 />
                 {/* Glow ring behind image */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-80 h-80 rounded-full bg-primary/20 blur-[60px]" />
+                  <div className="w-80 h-80 rounded-full blur-[60px]" style={{ background: 'hsl(270 60% 50% / 0.25)' }} />
                 </div>
               </div>
 
