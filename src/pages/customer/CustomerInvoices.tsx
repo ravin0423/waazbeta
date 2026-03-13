@@ -129,6 +129,7 @@ const CustomerInvoices = () => {
                     <TableRow key={inv.id}>
                       <TableCell className="font-mono text-sm">{inv.invoice_number}</TableCell>
                       <TableCell className="text-sm">{format(new Date(inv.created_at), 'dd MMM yyyy')}</TableCell>
+                      <TableCell className="text-sm max-w-[180px] truncate" title={inv.line_item_description}>{inv.line_item_description || '—'}</TableCell>
                       <TableCell className="text-sm">₹{Number(inv.subtotal || 0).toLocaleString('en-IN')}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">₹{Number(inv.cgst_amount || 0).toLocaleString('en-IN')}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">₹{Number(inv.sgst_amount || 0).toLocaleString('en-IN')}</TableCell>
