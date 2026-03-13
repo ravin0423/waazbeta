@@ -1,30 +1,39 @@
 import { useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Camera, Save } from 'lucide-react';
+import { Camera, Save, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const CustomerProfile = () => {
   const { user } = useAuth();
   const [name, setName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [email] = useState(user?.email || '');
+  const [company, setCompany] = useState(user?.company || '');
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setAvatar(URL.createObjectURL(file));
-    }
+    if (file) setAvatar(URL.createObjectURL(file));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ full_name: name, phone, company, updated_at: new Date().toISOString() })
+      .eq('id', user.id);
+    setSaving(false);
+    if (error) { toast.error('Failed to save profile'); return; }
     toast.success('Profile updated successfully!');
   };
 
@@ -38,7 +47,6 @@ const CustomerProfile = () => {
           <Card className="shadow-card">
             <CardContent className="p-6">
               <form onSubmit={handleSave} className="space-y-6">
-                {/* Avatar */}
                 <div className="flex items-center gap-6">
                   <div className="relative">
                     <div className="h-20 w-20 rounded-full gradient-primary flex items-center justify-center overflow-hidden">
@@ -72,10 +80,15 @@ const CustomerProfile = () => {
                     <Label htmlFor="phone">Phone</Label>
                     <Input id="phone" value={phone} onChange={e => setPhone(e.target.value)} />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company</Label>
+                    <Input id="company" value={company} onChange={e => setCompany(e.target.value)} />
+                  </div>
                 </div>
 
-                <Button type="submit" className="gradient-primary text-primary-foreground hover:opacity-90">
-                  <Save size={16} className="mr-2" /> Save Changes
+                <Button type="submit" disabled={saving} className="gradient-primary text-primary-foreground hover:opacity-90">
+                  {saving ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Save size={16} className="mr-2" />}
+                  Save Changes
                 </Button>
               </form>
             </CardContent>

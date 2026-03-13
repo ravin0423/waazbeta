@@ -5,18 +5,28 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { Save } from 'lucide-react';
+import { Save, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const PartnerSettings = () => {
   const { user } = useAuth();
   const [name, setName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [company, setCompany] = useState(user?.company || '');
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({ full_name: name, phone, company, updated_at: new Date().toISOString() })
+      .eq('id', user.id);
+    setSaving(false);
+    if (error) { toast.error('Failed to save settings'); return; }
     toast.success('Settings updated successfully!');
   };
 
@@ -49,8 +59,9 @@ const PartnerSettings = () => {
                     <Input value={company} onChange={e => setCompany(e.target.value)} />
                   </div>
                 </div>
-                <Button type="submit" className="gradient-primary text-primary-foreground hover:opacity-90">
-                  <Save size={16} className="mr-2" /> Save Changes
+                <Button type="submit" disabled={saving} className="gradient-primary text-primary-foreground hover:opacity-90">
+                  {saving ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Save size={16} className="mr-2" />}
+                  Save Changes
                 </Button>
               </form>
             </CardContent>
