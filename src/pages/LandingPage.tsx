@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme } from '@/components/ThemeProvider';
-import heroDevices from '@/assets/hero-devices.png';
+import heroDevices from '@/assets/hero-devices-cutout.png';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -135,7 +135,7 @@ const LandingPage = () => {
               className="relative"
             >
               <div className="relative">
-                <img src={heroDevices} alt="Electronic devices protected by WaaZ" className="w-full max-w-lg mx-auto drop-shadow-2xl relative z-10 mix-blend-lighten dark:mix-blend-screen" />
+                <img src={heroDevices} alt="Electronic devices protected by WaaZ" className="w-full max-w-lg mx-auto drop-shadow-2xl relative z-10" />
                 {/* Glow ring behind image */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-80 h-80 rounded-full bg-primary/20 blur-[60px]" />
