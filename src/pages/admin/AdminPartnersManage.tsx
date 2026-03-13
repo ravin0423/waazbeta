@@ -56,7 +56,7 @@ const AdminPartnersManage = () => {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', email: '', phone: '', city: '', state: '', region_id: '', sla_turnaround_days: '7', commission_rate: '10', quality_rating: '5.0' });
+    setForm({ name: '', email: '', phone: '', city: '', state: '', region_id: '', sla_turnaround_days: '7', commission_rate: '10', quality_rating: '5.0', partner_type: 'technical' });
     setDialogOpen(true);
   };
 
