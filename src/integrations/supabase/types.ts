@@ -161,6 +161,45 @@ export type Database = {
         }
         Relationships: []
       }
+      landing_sections: {
+        Row: {
+          content: Json
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_enabled: boolean
+          section_key: string
+          subtitle: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          section_key: string
+          subtitle?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_enabled?: boolean
+          section_key?: string
+          subtitle?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partners: {
         Row: {
           city: string
