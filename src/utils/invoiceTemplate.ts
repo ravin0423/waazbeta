@@ -90,19 +90,19 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   /* === WATERMARK === */
   .watermark {
     position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0.04; z-index: 0; pointer-events: none;
+    transform: translate(-50%, -50%) rotate(-25deg);
+    opacity: 0.035; z-index: 2; pointer-events: none;
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 180px; font-weight: 700; letter-spacing: 12px;
+    font-size: 140px; font-weight: 700; letter-spacing: 12px;
     color: var(--navy); text-transform: uppercase;
     white-space: nowrap;
   }
-  ${logoUrl ? `.watermark-logo {
+  .watermark-logo {
     position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
-    opacity: 0.06; z-index: 0; pointer-events: none;
-    width: 320px; height: auto;
-  }` : ''}
+    opacity: 0.05; z-index: 2; pointer-events: none;
+    width: 280px; height: auto;
+  }
 
   /* === HEADER === */
   .inv-header-banner {
@@ -121,7 +121,11 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   }
   .inv-header-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }
   .company-block { display: flex; align-items: center; gap: 14px; }
-  .company-logo { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; }
+  .company-icon { 
+    width: 44px; height: 44px; border-radius: 10px; 
+    background: var(--teal); display: flex; align-items: center; justify-content: center;
+  }
+  .company-icon svg { width: 26px; height: 26px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .company-name { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; }
   .company-tagline { font-size: 9px; color: rgba(255,255,255,0.5); margin-top: 2px; letter-spacing: 2px; text-transform: uppercase; }
   .inv-title-block { text-align: right; }
@@ -224,14 +228,21 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
 <div class="a4-page">
   <!-- Watermark -->
   <div class="watermark">WaaZ</div>
-  ${logoUrl ? `<img class="watermark-logo" src="${logoUrl}" alt="" />` : ''}
+  <svg class="watermark-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="var(--teal)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>
   
 <div class="invoice-container">
   <!-- Header -->
   <div class="inv-header-banner">
     <div class="inv-header-top">
       <div class="company-block">
-        ${logoUrl ? `<img class="company-logo" src="${logoUrl}" alt="WaaZ" />` : ''}
+        <div class="company-icon">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
         <div>
           <div class="company-name">WaaZ</div>
           <div class="company-tagline">Gadget Protection Services</div>
