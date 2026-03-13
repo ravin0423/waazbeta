@@ -24,36 +24,41 @@ interface InvoiceData {
   invoice_line_items?: InvoiceLineItem[];
 }
 
-export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | null): string {
+export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | null, logoUrl?: string): string {
   const items: InvoiceLineItem[] = (inv.invoice_line_items && inv.invoice_line_items.length > 0)
     ? inv.invoice_line_items
     : [{ description: inv.line_item_description || 'Service / Subscription', amount: Number(inv.subtotal || inv.amount) }];
 
   const fmt = (n: number) => Number(n).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-  // Add empty rows to fill the table area (min 10 rows total)
   const minRows = 10;
   const emptyRowsCount = Math.max(0, minRows - items.length);
 
   const lineItemsRows = items.map((li, idx) =>
     `<tr>
-      <td style="text-align:center; padding:8px 6px; border-bottom:1px solid #eef1f5;">${idx + 1}</td>
-      <td style="padding:8px 12px; border-bottom:1px solid #eef1f5;">${li.description}</td>
-      <td style="text-align:right; padding:8px 12px; border-bottom:1px solid #eef1f5;">₹${fmt(Number(li.amount))}</td>
+      <td style="text-align:center; padding:9px 6px; border-bottom:1px solid #e2e8f0;">${idx + 1}</td>
+      <td style="padding:9px 14px; border-bottom:1px solid #e2e8f0;">${li.description}</td>
+      <td style="text-align:right; padding:9px 14px; border-bottom:1px solid #e2e8f0; font-weight:500;">₹${fmt(Number(li.amount))}</td>
     </tr>`
   ).join('');
 
   const emptyRows = Array.from({ length: emptyRowsCount }, () =>
-    `<tr class="empty-row">
-      <td style="text-align:center; padding:8px 6px; border-bottom:1px solid #f0f2f5;">&nbsp;</td>
-      <td style="padding:8px 12px; border-bottom:1px solid #f0f2f5;">&nbsp;</td>
-      <td style="text-align:right; padding:8px 12px; border-bottom:1px solid #f0f2f5;">&nbsp;</td>
+    `<tr>
+      <td style="text-align:center; padding:9px 6px; border-bottom:1px solid #f1f5f9;">&nbsp;</td>
+      <td style="padding:9px 14px; border-bottom:1px solid #f1f5f9;">&nbsp;</td>
+      <td style="text-align:right; padding:9px 14px; border-bottom:1px solid #f1f5f9;">&nbsp;</td>
     </tr>`
   ).join('');
 
   const hasCgst = Number(inv.cgst_amount) > 0;
   const hasSgst = Number(inv.sgst_amount) > 0;
   const totalInWords = numberToWords(Number(inv.amount));
+
+  const statusBadge = inv.status === 'paid' 
+    ? '<span style="background:#0e9a83;color:#fff;padding:3px 12px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">PAID</span>'
+    : inv.status === 'overdue'
+    ? '<span style="background:#e8532e;color:#fff;padding:3px 12px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">OVERDUE</span>'
+    : '<span style="background:#f59e0b;color:#fff;padding:3px 12px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">PENDING</span>';
 
   return `<!DOCTYPE html>
 <html><head>
@@ -64,111 +69,145 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
     --teal: #0e9a83;
     --teal-light: #e8f7f4;
     --teal-dark: #0a7d6a;
+    --teal-muted: #b2e0d6;
     --coral: #e8532e;
     --navy: #141b2d;
     --navy-light: #1e2a42;
+    --slate: #64748b;
+    --border: #e2e8f0;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  @page { size: A4; margin: 15mm; }
-  body { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--navy); background: #eef1f5; padding: 0; font-size: 13px; line-height: 1.5; }
+  @page { size: A4; margin: 12mm; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; color: var(--navy); background: #f1f5f9; padding: 0; font-size: 13px; line-height: 1.5; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   
   .a4-page {
     width: 210mm; min-height: 297mm; margin: 20px auto; padding: 0;
     background: #fff; box-shadow: 0 4px 30px rgba(20,27,45,0.12);
-    display: flex; flex-direction: column; overflow: hidden;
+    display: flex; flex-direction: column; overflow: hidden; position: relative;
   }
-  .invoice-container { flex: 1; display: flex; flex-direction: column; }
+  .invoice-container { flex: 1; display: flex; flex-direction: column; position: relative; z-index: 1; }
 
-  /* === HEADER BANNER === */
+  /* === WATERMARK === */
+  .watermark {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.04; z-index: 0; pointer-events: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 180px; font-weight: 700; letter-spacing: 12px;
+    color: var(--navy); text-transform: uppercase;
+    white-space: nowrap;
+  }
+  ${logoUrl ? `.watermark-logo {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.06; z-index: 0; pointer-events: none;
+    width: 320px; height: auto;
+  }` : ''}
+
+  /* === HEADER === */
   .inv-header-banner {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
-    color: #fff; padding: 24px 28px 20px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 60%, #243352 100%);
+    color: #fff; padding: 22px 28px 18px; position: relative; overflow: hidden;
+  }
+  .inv-header-banner::before {
+    content: ''; position: absolute; bottom: -30px; right: 30px;
+    width: 120px; height: 120px; border-radius: 50%;
+    background: var(--teal); opacity: 0.08;
   }
   .inv-header-banner::after {
-    content: ''; position: absolute; top: -40px; right: -40px;
-    width: 160px; height: 160px; border-radius: 50%;
-    background: var(--teal); opacity: 0.1;
+    content: ''; position: absolute; top: -20px; right: -20px;
+    width: 80px; height: 80px; border-radius: 50%;
+    background: var(--coral); opacity: 0.06;
   }
   .inv-header-top { display: flex; justify-content: space-between; align-items: flex-start; position: relative; z-index: 1; }
-  .company-name { font-family: 'Space Grotesk', sans-serif; font-size: 34px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; }
-  .company-tagline { font-size: 10px; color: rgba(255,255,255,0.6); margin-top: 2px; letter-spacing: 1.5px; text-transform: uppercase; }
+  .company-block { display: flex; align-items: center; gap: 14px; }
+  .company-logo { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; }
+  .company-name { font-family: 'Space Grotesk', sans-serif; font-size: 32px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; }
+  .company-tagline { font-size: 9px; color: rgba(255,255,255,0.5); margin-top: 2px; letter-spacing: 2px; text-transform: uppercase; }
   .inv-title-block { text-align: right; }
-  .inv-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; letter-spacing: 2px; color: var(--teal); }
-  .inv-title-sub { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 4px; letter-spacing: 1px; }
+  .inv-title { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 3px; }
+  .inv-title-main { color: #fff; }
+  .inv-title-accent { color: var(--teal); }
 
-  /* === TEAL ACCENT BAR === */
-  .accent-bar { height: 4px; background: linear-gradient(90deg, var(--teal), var(--coral)); }
+  /* === GRADIENT BAR === */
+  .accent-bar { height: 4px; background: linear-gradient(90deg, var(--teal) 0%, var(--teal-dark) 40%, var(--coral) 100%); }
 
-  /* === INFO SECTION === */
-  .inv-info-section { display: flex; border-bottom: 1px solid #e8ecf1; }
+  /* === INFO GRID === */
+  .inv-info-section { display: flex; border-bottom: 1px solid var(--border); }
   .inv-info-left, .inv-info-right { flex: 1; padding: 14px 28px; }
-  .inv-info-left { border-right: 1px solid #e8ecf1; }
-  .info-row { display: flex; margin-bottom: 4px; align-items: baseline; }
-  .info-label { font-weight: 700; min-width: 105px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #8892a4; }
+  .inv-info-left { border-right: 1px solid var(--border); }
+  .info-row { display: flex; margin-bottom: 5px; align-items: center; }
+  .info-label { font-weight: 600; min-width: 100px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--slate); }
   .info-value { font-size: 13px; font-weight: 500; color: var(--navy); }
 
   /* === BILL TO === */
-  .bill-to { padding: 14px 28px; border-bottom: 1px solid #e8ecf1; }
-  .bill-to-label { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--teal); margin-bottom: 4px; }
+  .bill-to { padding: 14px 28px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-start; }
+  .bill-to-content {}
+  .bill-to-label { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--teal); margin-bottom: 4px; }
   .bill-to-name { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: var(--navy); }
-  .bill-to-email { font-size: 12px; color: #8892a4; margin-top: 2px; }
+  .bill-to-email { font-size: 12px; color: var(--slate); margin-top: 2px; }
+  .status-badge { padding-top: 4px; }
 
-  /* === ITEMS TABLE === */
+  /* === TABLE === */
   .items-table { width: 100%; border-collapse: collapse; }
-  .items-table th { 
-    background: var(--teal); color: #fff; font-family: 'Space Grotesk', sans-serif;
-    font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-    padding: 10px 12px; text-align: left; font-weight: 600;
+  .items-table thead tr {
+    background: linear-gradient(90deg, var(--navy) 0%, var(--navy-light) 100%);
   }
-  .items-table th:first-child { text-align: center; width: 50px; }
-  .items-table th:last-child { text-align: right; width: 130px; }
-  .items-table td { font-size: 12px; border-bottom: 1px solid #eef1f5; }
-  .items-table tr:nth-child(even) td { background: #fafbfc; }
-  .items-table .empty-row td { border-bottom: 1px solid #f0f2f5; }
+  .items-table th { 
+    color: #fff; font-family: 'Space Grotesk', sans-serif;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+    padding: 11px 14px; text-align: left; font-weight: 600;
+  }
+  .items-table th:first-child { text-align: center; width: 50px; border-right: 1px solid rgba(255,255,255,0.1); }
+  .items-table th:last-child { text-align: right; width: 140px; border-left: 1px solid rgba(255,255,255,0.1); }
+  .items-table td { font-size: 12px; color: var(--navy); }
+  .items-table tbody tr:nth-child(even) td { background: #f8fafc; }
 
   /* === TOTALS === */
-  .totals-section { display: flex; border-top: 2px solid var(--teal); }
-  .totals-words { flex: 1; padding: 14px 28px; border-right: 1px solid #e8ecf1; background: var(--teal-light); }
-  .totals-words-label { font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--teal-dark); margin-bottom: 4px; }
-  .totals-words-text { font-size: 12px; font-style: italic; color: var(--navy); }
-  .totals-numbers { width: 250px; padding: 0; }
-  .total-row { display: flex; justify-content: space-between; padding: 7px 18px; font-size: 12px; color: #555; border-bottom: 1px solid #eef1f5; }
+  .totals-section { display: flex; border-top: 2px solid var(--navy); }
+  .totals-words { flex: 1; padding: 14px 28px; border-right: 1px solid var(--border); background: linear-gradient(135deg, var(--teal-light) 0%, #f0fdf9 100%); }
+  .totals-words-label { font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--teal-dark); margin-bottom: 4px; }
+  .totals-words-text { font-size: 12px; font-style: italic; color: var(--navy); font-weight: 500; }
+  .totals-numbers { width: 260px; padding: 0; }
+  .total-row { display: flex; justify-content: space-between; padding: 7px 20px; font-size: 12px; color: var(--slate); border-bottom: 1px solid #f1f5f9; }
   .total-row:last-child { border-bottom: none; }
   .total-row.grand { 
-    background: linear-gradient(135deg, var(--navy), var(--navy-light)); 
+    background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%); 
     color: #fff; font-weight: 700; font-family: 'Space Grotesk', sans-serif;
-    font-size: 15px; padding: 10px 18px;
+    font-size: 16px; padding: 11px 20px; letter-spacing: 0.5px;
   }
 
   /* === NOTES === */
-  .notes-section { padding: 12px 28px; border-top: 1px solid #e8ecf1; }
-  .notes-label { font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: var(--teal); }
-  .notes-text { font-size: 11px; color: #666; margin-top: 3px; }
+  .notes-section { padding: 12px 28px; border-top: 1px solid var(--border); }
+  .notes-label { font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--teal); }
+  .notes-text { font-size: 11px; color: var(--slate); margin-top: 4px; line-height: 1.6; }
 
   /* === SIGNATURE === */
-  .sig-footer { display: flex; justify-content: space-between; align-items: flex-end; padding: 24px 28px 20px; margin-top: auto; border-top: 1px solid #e8ecf1; }
-  .sig-left { font-size: 10px; color: #aaa; line-height: 1.6; }
+  .sig-footer { display: flex; justify-content: space-between; align-items: flex-end; padding: 24px 28px 20px; margin-top: auto; border-top: 1px solid var(--border); }
+  .sig-left { font-size: 10px; color: #94a3b8; line-height: 1.7; }
   .sig-right { text-align: right; }
-  .sig-right img { max-height: 45px; margin-bottom: 4px; }
-  .sig-label { font-size: 10px; color: #8892a4; border-top: 2px solid var(--navy); padding-top: 6px; margin-top: 6px; }
-  .sig-company { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: var(--navy); margin-top: 2px; }
+  .sig-right img { max-height: 45px; margin-bottom: 6px; }
+  .sig-label { font-size: 10px; color: var(--slate); border-top: 2px solid var(--navy); padding-top: 6px; margin-top: 6px; letter-spacing: 0.5px; }
+  .sig-company { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 14px; color: var(--navy); margin-top: 3px; letter-spacing: 1px; }
 
   /* === FOOTER === */
   .footer-bar { 
-    text-align: center; font-size: 9px; color: #fff; letter-spacing: 1px;
-    padding: 10px 0; background: var(--navy);
+    text-align: center; font-size: 9px; color: rgba(255,255,255,0.8); letter-spacing: 1.2px;
+    padding: 10px 0;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--navy-light) 100%);
   }
-  .footer-bar span { color: var(--teal); }
+  .footer-bar .brand { color: var(--teal); font-weight: 700; }
 
-  /* === PRINT BUTTON === */
-  .no-print { text-align: center; padding: 16px 0; }
+  /* === PRINT === */
+  .no-print { text-align: center; padding: 18px 0; display: flex; justify-content: center; gap: 12px; }
   .no-print button { 
     background: linear-gradient(135deg, var(--teal), var(--teal-dark)); color: #fff; border: none; 
     padding: 12px 44px; font-size: 14px; font-family: 'Space Grotesk', sans-serif;
     font-weight: 600; cursor: pointer; letter-spacing: 1px; text-transform: uppercase;
     border-radius: 6px; box-shadow: 0 4px 14px rgba(14,154,131,0.3);
+    transition: all 0.2s;
   }
-  .no-print button:hover { opacity: 0.9; }
+  .no-print button:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(14,154,131,0.4); }
   @media print { 
     .no-print { display: none !important; } 
     body { background: #fff; padding: 0; }
@@ -183,43 +222,51 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
 </div>
 
 <div class="a4-page">
+  <!-- Watermark -->
+  <div class="watermark">WaaZ</div>
+  ${logoUrl ? `<img class="watermark-logo" src="${logoUrl}" alt="" />` : ''}
+  
 <div class="invoice-container">
-  <!-- Header Banner -->
+  <!-- Header -->
   <div class="inv-header-banner">
     <div class="inv-header-top">
-      <div>
-        <div class="company-name">WaaZ</div>
-        <div class="company-tagline">Gadget Protection Services</div>
+      <div class="company-block">
+        ${logoUrl ? `<img class="company-logo" src="${logoUrl}" alt="WaaZ" />` : ''}
+        <div>
+          <div class="company-name">WaaZ</div>
+          <div class="company-tagline">Gadget Protection Services</div>
+        </div>
       </div>
       <div class="inv-title-block">
-        <div class="inv-title">TAX INVOICE</div>
-        <div class="inv-title-sub">Original for Recipient</div>
+        <div class="inv-title"><span class="inv-title-main">TAX </span><span class="inv-title-accent">INVOICE</span></div>
       </div>
     </div>
   </div>
   <div class="accent-bar"></div>
 
-  <!-- Invoice Info -->
+  <!-- Info -->
   <div class="inv-info-section">
     <div class="inv-info-left">
-      <div class="info-row"><span class="info-label">Invoice No.</span><span class="info-value" style="font-weight:700">${inv.invoice_number}</span></div>
+      <div class="info-row"><span class="info-label">Invoice No.</span><span class="info-value" style="font-weight:700;color:var(--teal)">${inv.invoice_number}</span></div>
       <div class="info-row"><span class="info-label">Invoice Date</span><span class="info-value">${format(new Date(inv.created_at), 'dd/MM/yyyy')}</span></div>
       ${inv.due_date ? `<div class="info-row"><span class="info-label">Due Date</span><span class="info-value">${format(new Date(inv.due_date), 'dd/MM/yyyy')}</span></div>` : ''}
     </div>
     <div class="inv-info-right">
-      <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="font-weight:700; text-transform:uppercase">${inv.status}</span></div>
+      <div class="info-row"><span class="info-label">Status</span>${statusBadge}</div>
       <div class="info-row"><span class="info-label">Place of Supply</span><span class="info-value">India</span></div>
     </div>
   </div>
 
   <!-- Bill To -->
   <div class="bill-to">
-    <div class="bill-to-label">Bill To</div>
-    <div class="bill-to-name">${inv.customer_name}</div>
-    ${inv.customer_email ? `<div class="bill-to-email">${inv.customer_email}</div>` : ''}
+    <div class="bill-to-content">
+      <div class="bill-to-label">Bill To</div>
+      <div class="bill-to-name">${inv.customer_name}</div>
+      ${inv.customer_email ? `<div class="bill-to-email">${inv.customer_email}</div>` : ''}
+    </div>
   </div>
 
-  <!-- Line Items -->
+  <!-- Items -->
   <table class="items-table">
     <thead>
       <tr>
@@ -237,11 +284,11 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   <!-- Totals -->
   <div class="totals-section">
     <div class="totals-words">
-      <div class="totals-words-label">Amount in Words</div>
+      <div class="totals-words-label">Total Amount in Words</div>
       <div class="totals-words-text">${totalInWords}</div>
     </div>
     <div class="totals-numbers">
-      <div class="total-row"><span>Subtotal</span><span>₹${fmt(Number(inv.subtotal || inv.amount))}</span></div>
+      <div class="total-row"><span>Subtotal</span><span style="color:var(--navy);font-weight:500">₹${fmt(Number(inv.subtotal || inv.amount))}</span></div>
       ${hasCgst ? `<div class="total-row"><span>CGST @ ${inv.cgst_percent}%</span><span>₹${fmt(Number(inv.cgst_amount))}</span></div>` : ''}
       ${hasSgst ? `<div class="total-row"><span>SGST @ ${inv.sgst_percent}%</span><span>₹${fmt(Number(inv.sgst_amount))}</span></div>` : ''}
       <div class="total-row grand"><span>TOTAL</span><span>₹${fmt(Number(inv.amount))}</span></div>
@@ -269,7 +316,7 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   </div>
 
   <!-- Footer -->
-  <div class="footer-bar"><span>WaaZ</span> Gadget Protection Services &bull; Thank you for your business</div>
+  <div class="footer-bar"><span class="brand">WaaZ</span> &nbsp;&bull;&nbsp; Gadget Protection Services &nbsp;&bull;&nbsp; Thank you for your business</div>
 </div>
 </div>
 
