@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, ArrowRight, ArrowLeft, CheckCircle2, Loader2, Smartphone, MapPin } from 'lucide-react';
+import { Shield, ArrowRight, ArrowLeft, CheckCircle2, Loader2, Smartphone, MapPin, CreditCard, Banknote, QrCode } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -48,28 +48,34 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
   const [address, setAddress] = useState('');
   const [googlePin, setGooglePin] = useState('');
 
+  // Payment state
+  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'cash' | ''>('');
+  const [upiTransactionId, setUpiTransactionId] = useState('');
+  const [upiQrUrl, setUpiQrUrl] = useState('');
+
   const selectedCategory = categories.find(c => c.id === selectedCategoryId);
   const isMobile = selectedCategory ? MOBILE_CATEGORY_NAMES.includes(selectedCategory.name.toLowerCase()) : false;
   const selectedPlan = plans.find(p => p.id === selectedPlanId);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      const { data } = await supabase
-        .from('gadget_categories')
-        .select('id, name, icon')
-        .eq('is_active', true)
-        .order('name');
-      setCategories(data || []);
+    const fetchData = async () => {
+      const [catRes, settingsRes] = await Promise.all([
+        supabase.from('gadget_categories').select('id, name, icon').eq('is_active', true).order('name'),
+        supabase.from('payment_settings' as any).select('setting_key, setting_value').eq('setting_key', 'upi_qr_url'),
+      ]);
+      setCategories(catRes.data || []);
+      const settings = (settingsRes.data as any[]) || [];
+      const qr = settings.find((s: any) => s.setting_key === 'upi_qr_url');
+      if (qr) setUpiQrUrl(qr.setting_value);
       setLoading(false);
     };
-    fetchCategories();
+    fetchData();
     if (user?.phone) setPhoneNumber(user.phone);
   }, []);
 
   useEffect(() => {
     if (!selectedCategoryId) { setPlans([]); return; }
     const fetchPlans = async () => {
-      // First try category-specific plans
       const { data: categoryPlans } = await supabase
         .from('subscription_plans')
         .select('*')
@@ -80,7 +86,6 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
       if (categoryPlans && categoryPlans.length > 0) {
         setPlans(categoryPlans);
       } else {
-        // Fallback to universal plans (no category assigned)
         const { data: universalPlans } = await supabase
           .from('subscription_plans')
           .select('*')
@@ -95,13 +100,13 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
 
   const canGoStep2 = selectedCategoryId && selectedPlanId;
   const canGoStep3 = serialNumber.trim().length > 0 && (!isMobile || imeiNumber.trim().length > 0);
-  const canSubmit = phoneNumber.trim().length > 0 && whatsappNumber.trim().length > 0 && address.trim().length > 0;
+  const canGoStep4 = phoneNumber.trim().length > 0 && whatsappNumber.trim().length > 0 && address.trim().length > 0;
+  const canSubmit = paymentMethod === 'cash' || (paymentMethod === 'upi' && upiTransactionId.trim().length > 0);
 
   const handleSubmit = async () => {
     if (!user) return;
     setSubmitting(true);
 
-    // Save phone to profile
     if (phoneNumber.trim()) {
       await supabase.from('profiles').update({ phone: phoneNumber.trim() }).eq('id', user.id);
     }
@@ -117,13 +122,16 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
       address: address.trim(),
       google_location_pin: googlePin.trim() || null,
       status: 'pending',
-    });
+      payment_method: paymentMethod,
+      upi_transaction_id: paymentMethod === 'upi' ? upiTransactionId.trim() : null,
+      payment_status: paymentMethod === 'upi' ? 'submitted' : 'pending',
+    } as any);
     setSubmitting(false);
     if (error) {
       toast.error('Failed to submit. Please try again.');
       return;
     }
-    toast.success('Subscription activation request submitted!');
+    toast.success('Subscription activation request submitted! Awaiting admin approval.');
     onActivated();
   };
 
@@ -134,6 +142,8 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
       </div>
     );
   }
+
+  const totalSteps = 4;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -147,14 +157,14 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
 
       {/* Step indicators */}
       <div className="flex items-center justify-center gap-2 mb-8">
-        {[1, 2, 3].map(s => (
+        {[1, 2, 3, 4].map(s => (
           <div key={s} className="flex items-center gap-2">
             <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
               step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
             }`}>
               {step > s ? <CheckCircle2 size={16} /> : s}
             </div>
-            {s < 3 && <div className={`w-12 h-0.5 ${step > s ? 'bg-primary' : 'bg-muted'}`} />}
+            {s < totalSteps && <div className={`w-8 h-0.5 ${step > s ? 'bg-primary' : 'bg-muted'}`} />}
           </div>
         ))}
       </div>
@@ -338,17 +348,116 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
                   />
                 </div>
 
-                {/* Summary */}
-                <div className="bg-muted/50 rounded-lg p-4 space-y-1 text-sm">
-                  <p className="font-heading font-semibold mb-2">Summary</p>
-                  <p><span className="text-muted-foreground">Product:</span> {selectedCategory?.name}</p>
-                  <p><span className="text-muted-foreground">Plan:</span> {selectedPlan?.name} — ₹{Number(selectedPlan?.annual_price || 0).toLocaleString('en-IN')}/yr</p>
-                  <p><span className="text-muted-foreground">Serial:</span> {serialNumber}</p>
-                  {isMobile && <p><span className="text-muted-foreground">IMEI:</span> {imeiNumber}</p>}
-                </div>
-
                 <div className="flex justify-between pt-2">
                   <Button variant="outline" onClick={() => setStep(2)}>
+                    <ArrowLeft size={16} className="mr-1" /> Back
+                  </Button>
+                  <Button onClick={() => setStep(4)} disabled={!canGoStep4}>
+                    Next <ArrowRight size={16} className="ml-1" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {step === 4 && (
+          <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <Card className="shadow-card">
+              <CardHeader>
+                <CardTitle className="font-heading text-lg flex items-center gap-2">
+                  <CreditCard size={20} className="text-primary" />
+                  Step 4: Payment
+                </CardTitle>
+                <CardDescription>Choose your payment method and complete the payment</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Summary */}
+                <div className="bg-muted/50 rounded-lg p-4 space-y-1 text-sm">
+                  <p className="font-heading font-semibold mb-2">Order Summary</p>
+                  <p><span className="text-muted-foreground">Product:</span> {selectedCategory?.name}</p>
+                  <p><span className="text-muted-foreground">Plan:</span> {selectedPlan?.name}</p>
+                  <p><span className="text-muted-foreground">Serial:</span> {serialNumber}</p>
+                  {isMobile && <p><span className="text-muted-foreground">IMEI:</span> {imeiNumber}</p>}
+                  <div className="border-t border-border mt-2 pt-2">
+                    <p className="text-base font-bold">Amount: <span className="text-primary">₹{Number(selectedPlan?.annual_price || 0).toLocaleString('en-IN')}</span>/yr</p>
+                  </div>
+                </div>
+
+                {/* Payment method selection */}
+                <div>
+                  <Label className="mb-2 block">Select Payment Method *</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div
+                      onClick={() => setPaymentMethod('upi')}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all text-center ${
+                        paymentMethod === 'upi'
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                          : 'border-border hover:border-primary/40'
+                      }`}
+                    >
+                      <QrCode size={28} className="mx-auto mb-2 text-primary" />
+                      <p className="font-semibold text-sm">UPI Payment</p>
+                      <p className="text-xs text-muted-foreground">Pay via UPI QR code</p>
+                    </div>
+                    <div
+                      onClick={() => setPaymentMethod('cash')}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all text-center ${
+                        paymentMethod === 'cash'
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                          : 'border-border hover:border-primary/40'
+                      }`}
+                    >
+                      <Banknote size={28} className="mx-auto mb-2 text-primary" />
+                      <p className="font-semibold text-sm">Cash Payment</p>
+                      <p className="text-xs text-muted-foreground">Pay in cash to admin</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* UPI flow */}
+                {paymentMethod === 'upi' && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                    {upiQrUrl ? (
+                      <div className="text-center">
+                        <p className="text-sm font-medium mb-3">Scan QR code to pay ₹{Number(selectedPlan?.annual_price || 0).toLocaleString('en-IN')}</p>
+                        <div className="inline-block border-2 border-border rounded-xl p-3 bg-white">
+                          <img src={upiQrUrl} alt="UPI QR Code" className="w-48 h-48 object-contain" />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <p className="text-sm text-muted-foreground">UPI QR code not configured yet. Please contact admin or choose cash payment.</p>
+                      </div>
+                    )}
+                    <div>
+                      <Label htmlFor="upi_txn">UPI Transaction ID / Reference Number *</Label>
+                      <Input
+                        id="upi_txn"
+                        value={upiTransactionId}
+                        onChange={e => setUpiTransactionId(e.target.value)}
+                        placeholder="e.g. 425614789632"
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Enter the transaction ID from your UPI payment confirmation</p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Cash flow */}
+                {paymentMethod === 'cash' && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <div className="bg-accent/50 border border-accent rounded-lg p-4 text-sm">
+                      <p className="font-semibold mb-1">💵 Cash Payment Selected</p>
+                      <p className="text-muted-foreground">
+                        Your subscription will be activated once the admin confirms receipt of ₹{Number(selectedPlan?.annual_price || 0).toLocaleString('en-IN')} cash payment. You will receive a notification once approved.
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+
+                <div className="flex justify-between pt-2">
+                  <Button variant="outline" onClick={() => setStep(3)}>
                     <ArrowLeft size={16} className="mr-1" /> Back
                   </Button>
                   <Button onClick={handleSubmit} disabled={!canSubmit || submitting}>
