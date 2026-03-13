@@ -27,6 +27,7 @@ const AdminInvoices = () => {
   });
   const [saving, setSaving] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
+  const [customerSearch, setCustomerSearch] = useState('');
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -37,7 +38,7 @@ const AdminInvoices = () => {
   };
 
   const fetchCustomers = async () => {
-    const { data } = await supabase.from('profiles').select('id, full_name, email');
+    const { data } = await supabase.from('profiles').select('id, full_name, email, created_at').order('created_at', { ascending: false });
     setCustomers(data || []);
   };
 
@@ -58,6 +59,7 @@ const AdminInvoices = () => {
   const resetForm = () => {
     setForm({ customer_name: '', customer_email: '', subtotal: '', cgst_percent: '9', sgst_percent: '9', status: 'pending', notes: '', due_date: '', user_id: '' });
     setEditId(null);
+    setCustomerSearch('');
   };
 
   const openEdit = (inv: any) => {
@@ -274,14 +276,37 @@ const AdminInvoices = () => {
                   {!editId && (
                     <div className="space-y-2">
                       <Label>Link to Customer (optional)</Label>
-                      <Select value={form.user_id} onValueChange={handleCustomerSelect}>
-                        <SelectTrigger><SelectValue placeholder="Select a customer..." /></SelectTrigger>
-                        <SelectContent>
-                          {customers.map(c => (
-                            <SelectItem key={c.id} value={c.id}>{c.full_name} ({c.email})</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        placeholder="Search customers by name or email..."
+                        value={customerSearch}
+                        onChange={e => { setCustomerSearch(e.target.value); setForm(f => ({ ...f, user_id: '' })); }}
+                      />
+                      {customerSearch && !form.user_id && (
+                        <div className="max-h-40 overflow-y-auto border rounded-md bg-background">
+                          {customers
+                            .filter(c =>
+                              c.full_name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+                              c.email.toLowerCase().includes(customerSearch.toLowerCase())
+                            )
+                            .map(c => (
+                              <button
+                                key={c.id}
+                                type="button"
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                                onClick={() => {
+                                  handleCustomerSelect(c.id);
+                                  setCustomerSearch(c.full_name);
+                                }}
+                              >
+                                <span className="font-medium">{c.full_name}</span>
+                                <span className="text-muted-foreground ml-2 text-xs">{c.email}</span>
+                              </button>
+                            ))}
+                        </div>
+                      )}
+                      {form.user_id && (
+                        <p className="text-xs text-success">✓ Linked to {form.customer_name}</p>
+                      )}
                     </div>
                   )}
                   <div className="grid grid-cols-2 gap-4">
