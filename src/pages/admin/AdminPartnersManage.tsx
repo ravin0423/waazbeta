@@ -179,7 +179,8 @@ const AdminPartnersManage = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Partner Name</TableHead>
+                     <TableHead>Partner Name</TableHead>
+                    <TableHead>Type</TableHead>
                     <TableHead>Location</TableHead>
                     <TableHead>SLA (days)</TableHead>
                     <TableHead>Commission</TableHead>
