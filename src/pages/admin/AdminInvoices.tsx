@@ -228,6 +228,11 @@ const AdminInvoices = () => {
       }
       toast.success(`Invoice ${numData} created`);
 
+      // Auto-record if created as paid
+      if (form.status === 'paid') {
+        await recordPaidInvoiceAsIncome(invData, user?.id);
+      }
+
       // Auto-open the created invoice
       const createdInv = { ...invData, invoice_line_items: itemsToInsert.map((it, i) => ({ ...it, id: `temp-${i}` })) };
       setSaving(false);
