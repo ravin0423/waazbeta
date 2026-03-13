@@ -34,6 +34,7 @@ const MOBILE_CATEGORY_NAMES = ['mobile', 'smartphone', 'phone', 'mobile phone'];
 const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) => {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
