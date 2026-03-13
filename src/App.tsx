@@ -18,7 +18,7 @@ import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
 import AdminInvoices from "./pages/admin/AdminInvoices";
 import AdminPurchaseOrders from "./pages/admin/AdminPurchaseOrders";
 import AdminServices from "./pages/admin/AdminServices";
-import AdminPartners from "./pages/admin/AdminPartners";
+import AdminCustomerDatabase from "./pages/admin/AdminCustomerDatabase";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminFraudMonitoring from "./pages/admin/AdminFraudMonitoring";
 import AdminDeviceVerification from "./pages/admin/AdminDeviceVerification";
