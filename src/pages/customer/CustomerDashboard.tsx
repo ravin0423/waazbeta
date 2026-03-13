@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, Smartphone, Loader2, Check, X } from 'lucide-react';
+import { Shield, Smartphone, Loader2, Check, X, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import SubscriptionActivation from '@/components/SubscriptionActivation';
+import { toast } from 'sonner';
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
@@ -24,6 +26,14 @@ const CustomerDashboard = () => {
   };
 
   useEffect(() => { fetchDevices(); }, [user]);
+
+  const handleDelete = async (deviceId: string) => {
+    if (!confirm('Are you sure you want to delete this pending subscription request?')) return;
+    const { error } = await supabase.from('customer_devices').delete().eq('id', deviceId).eq('status', 'pending');
+    if (error) { toast.error('Failed to delete'); return; }
+    toast.success('Subscription request deleted');
+    fetchDevices();
+  };
 
   if (loading) {
     return (
@@ -82,6 +92,11 @@ const CustomerDashboard = () => {
                       </span>
                     ))}
                   </div>
+                )}
+                {device.status === 'pending' && (
+                  <Button variant="destructive" size="sm" className="mt-3 w-full" onClick={() => handleDelete(device.id)}>
+                    <Trash2 size={14} className="mr-1" /> Delete Request
+                  </Button>
                 )}
               </CardContent>
             </Card>
