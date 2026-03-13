@@ -67,11 +67,12 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
   useEffect(() => {
     if (!selectedCategoryId) { setPlans([]); return; }
     const fetchPlans = async () => {
+      // Fetch plans that match the selected category OR have no category (universal plans)
       const { data } = await supabase
         .from('subscription_plans')
         .select('*')
-        .eq('gadget_category_id', selectedCategoryId)
         .eq('is_active', true)
+        .or(`gadget_category_id.eq.${selectedCategoryId},gadget_category_id.is.null`)
         .order('annual_price');
       setPlans(data || []);
     };
