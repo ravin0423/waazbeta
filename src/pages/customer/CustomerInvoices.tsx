@@ -115,6 +115,7 @@ const CustomerInvoices = () => {
                   <TableRow>
                     <TableHead>Invoice #</TableHead>
                     <TableHead>Date</TableHead>
+                    <TableHead>Description</TableHead>
                     <TableHead>Subtotal</TableHead>
                     <TableHead>CGST</TableHead>
                     <TableHead>SGST</TableHead>
