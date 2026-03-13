@@ -189,6 +189,10 @@ const AdminInvoices = () => {
         await supabase.from('invoice_line_items').insert(itemsToInsert);
       }
       toast.success('Invoice updated');
+      // Auto-record if marked as paid
+      if (form.status === 'paid') {
+        await recordPaidInvoiceAsIncome({ id: editId, invoice_number: invoices.find(i => i.id === editId)?.invoice_number, customer_name: form.customer_name, amount: totalAmt, cgst_amount: cgstAmt, sgst_amount: sgstAmt, cgst_percent: Number(form.cgst_percent), sgst_percent: Number(form.sgst_percent), paid_at: new Date().toISOString() }, user?.id);
+      }
     } else {
       const { data: numData, error: numErr } = await supabase.rpc('generate_invoice_number');
       if (numErr || !numData) { toast.error('Failed to generate invoice number'); setSaving(false); return; }
