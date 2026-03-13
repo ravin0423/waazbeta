@@ -89,8 +89,8 @@ const CustomerInvoices = () => {
                       <TableCell><Badge variant={statusColor(inv.status) as any}>{inv.status}</Badge></TableCell>
                       <TableCell>
                         <div className="flex gap-1">
-                          <Button variant="ghost" size="sm" onClick={() => setSelected(inv)}><Eye size={14} /></Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDownload(inv)}><Download size={14} /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => setSelected(inv)} title="View Details"><Eye size={14} /></Button>
+                          <Button variant="ghost" size="sm" onClick={() => handleDownload(inv)} title="Print Invoice"><Printer size={14} /></Button>
                         </div>
                       </TableCell>
                     </TableRow>
