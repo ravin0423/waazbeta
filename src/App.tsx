@@ -30,6 +30,7 @@ import AdminLandingPage from "./pages/admin/AdminLandingPage";
 import AdminDeviceApprovals from "./pages/admin/AdminDeviceApprovals";
 import AdminApprovalChecklist from "./pages/admin/AdminApprovalChecklist";
 import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
+import AdminTickets from "./pages/admin/AdminTickets";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
@@ -81,6 +82,7 @@ const AppRoutes = () => {
       <Route path="/admin/device-approvals" element={<ProtectedRoute role="admin"><AdminDeviceApprovals /></ProtectedRoute>} />
       <Route path="/admin/approval-checklist" element={<ProtectedRoute role="admin"><AdminApprovalChecklist /></ProtectedRoute>} />
       <Route path="/admin/payment-settings" element={<ProtectedRoute role="admin"><AdminPaymentSettings /></ProtectedRoute>} />
+      <Route path="/admin/tickets" element={<ProtectedRoute role="admin"><AdminTickets /></ProtectedRoute>} />
 
       {/* Partner routes */}
       <Route path="/partner" element={<ProtectedRoute role="partner"><PartnerDashboard /></ProtectedRoute>} />
