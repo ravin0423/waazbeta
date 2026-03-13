@@ -225,8 +225,6 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
     <div class="notes-text">${inv.notes}</div>
   </div>` : ''}
 
-  <!-- Spacer pushes signature to bottom -->
-  <div class="spacer"></div>
 
   <!-- Signature -->
   <div class="sig-footer">
