@@ -124,7 +124,7 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
   .notes-text { font-size: 11px; color: #333; margin-top: 3px; }
 
   /* Signature & Footer */
-  .spacer { flex: 1; }
+  .sig-footer { display: flex; justify-content: space-between; align-items: flex-end; border: 1px solid #000; border-top: none; padding: 18px; min-height: 80px; margin-top: auto; }
   .sig-footer { display: flex; justify-content: space-between; align-items: flex-end; border: 1px solid #000; border-top: none; padding: 18px; min-height: 80px; }
   .sig-left { font-size: 10px; color: #666; }
   .sig-right { text-align: right; }
