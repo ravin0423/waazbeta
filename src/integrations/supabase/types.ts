@@ -84,6 +84,7 @@ export type Database = {
           payment_method: string | null
           payment_status: string
           product_name: string
+          referred_by_partner_id: string | null
           serial_number: string
           status: string
           subscription_plan_id: string | null
@@ -104,6 +105,7 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string
           product_name: string
+          referred_by_partner_id?: string | null
           serial_number: string
           status?: string
           subscription_plan_id?: string | null
@@ -124,6 +126,7 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string
           product_name?: string
+          referred_by_partner_id?: string | null
           serial_number?: string
           status?: string
           subscription_plan_id?: string | null
@@ -138,6 +141,13 @@ export type Database = {
             columns: ["gadget_category_id"]
             isOneToOne: false
             referencedRelation: "gadget_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_devices_referred_by_partner_id_fkey"
+            columns: ["referred_by_partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
           {
@@ -251,6 +261,59 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_device_id: string | null
+          customer_email: string | null
+          customer_name: string
+          due_date: string | null
+          id: string
+          invoice_number: string
+          notes: string | null
+          paid_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          customer_device_id?: string | null
+          customer_email?: string | null
+          customer_name: string
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          notes?: string | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_device_id?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          notes?: string | null
+          paid_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_customer_device_id_fkey"
+            columns: ["customer_device_id"]
+            isOneToOne: false
+            referencedRelation: "customer_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       landing_sections: {
         Row: {
           content: Json
@@ -307,6 +370,7 @@ export type Database = {
           state: string
           total_repairs: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           city: string
@@ -324,6 +388,7 @@ export type Database = {
           state: string
           total_repairs?: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           city?: string
@@ -341,6 +406,7 @@ export type Database = {
           state?: string
           total_repairs?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -400,6 +466,83 @@ export type Database = {
           id?: string
           phone?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      purchase_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_name: string
+          purchase_order_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_name: string
+          purchase_order_id: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_name?: string
+          purchase_order_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_order_items_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_orders: {
+        Row: {
+          created_at: string
+          description: string | null
+          expected_delivery: string | null
+          id: string
+          order_date: string
+          po_number: string
+          received_at: string | null
+          status: string
+          total_amount: number
+          updated_at: string
+          vendor: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          expected_delivery?: string | null
+          id?: string
+          order_date?: string
+          po_number: string
+          received_at?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vendor: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          expected_delivery?: string | null
+          id?: string
+          order_date?: string
+          po_number?: string
+          received_at?: string | null
+          status?: string
+          total_amount?: number
+          updated_at?: string
+          vendor?: string
         }
         Relationships: []
       }
@@ -492,6 +635,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      service_tickets: {
+        Row: {
+          admin_response: string | null
+          created_at: string
+          description: string
+          id: string
+          image_urls: string[] | null
+          priority: string
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_response?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          image_urls?: string[] | null
+          priority?: string
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_response?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          image_urls?: string[] | null
+          priority?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       subscription_plans: {
         Row: {
