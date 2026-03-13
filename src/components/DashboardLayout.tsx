@@ -116,13 +116,13 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-4 py-5 border-b border-sidebar-border">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gradient-primary">
-            <Shield size={20} className="text-primary-foreground" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent">
+            <Shield size={20} className="text-accent-foreground" />
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <h1 className="font-heading text-lg font-bold text-sidebar-foreground">WaaZ</h1>
-              <p className="text-xs text-sidebar-foreground/60">{roleLabel}</p>
+              <h1 className="font-heading text-lg font-extrabold text-sidebar-foreground">WaaZ</h1>
+              <p className="text-xs text-sidebar-foreground/50">{roleLabel}</p>
             </div>
           )}
         </div>
@@ -137,10 +137,10 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
                 to={item.path}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
                   isActive
                     ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
               >
                 {item.icon}
@@ -154,18 +154,18 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <div className="border-t border-sidebar-border p-3">
           {!collapsed && (
             <div className="flex items-center gap-3 px-2 mb-3">
-              <div className="h-8 w-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold text-primary-foreground">
+              <div className="h-9 w-9 rounded-full bg-accent flex items-center justify-center text-xs font-bold text-accent-foreground">
                 {user?.fullName?.charAt(0) || user?.email?.charAt(0)}
               </div>
               <div className="overflow-hidden">
                 <p className="text-sm font-medium truncate text-sidebar-foreground">{user?.fullName || 'User'}</p>
-                <p className="text-xs text-sidebar-foreground/50 truncate">{user?.email}</p>
+                <p className="text-xs text-sidebar-foreground/40 truncate">{user?.email}</p>
               </div>
             </div>
           )}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
+            className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
           >
             <LogOut size={18} />
             {!collapsed && <span>Logout</span>}
@@ -175,7 +175,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         {/* Collapse button */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="hidden md:flex absolute -right-3 top-8 h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-elevated"
+          className="hidden md:flex absolute -right-3 top-8 h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-elevated"
         >
           <ChevronLeft size={14} className={cn("transition-transform", collapsed && "rotate-180")} />
         </button>
@@ -184,7 +184,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-border bg-background/80 backdrop-blur-sm px-6 py-3">
+        <header className="sticky top-0 z-30 flex items-center gap-4 border-b border-border bg-background/80 backdrop-blur-xl px-6 py-3">
           <button className="md:hidden" onClick={() => setMobileOpen(true)}>
             <Menu size={22} />
           </button>
