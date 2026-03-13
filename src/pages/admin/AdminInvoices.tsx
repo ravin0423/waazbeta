@@ -222,7 +222,8 @@ const AdminInvoices = () => {
   const handleDownloadInvoice = (inv: any) => {
     const win = window.open('', '_blank');
     if (!win) return;
-    win.document.write(generateInvoiceHtml(inv, signatureUrl));
+    const logoUrl = window.location.origin + '/waaz-shield.png';
+    win.document.write(generateInvoiceHtml(inv, signatureUrl, logoUrl));
     win.document.close();
   };
 
