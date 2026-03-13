@@ -136,6 +136,13 @@ const AdminPartnersManage = () => {
                   <Input placeholder="City" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} />
                   <Input placeholder="State" value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} />
                 </div>
+                <Select value={form.partner_type} onValueChange={v => setForm({ ...form, partner_type: v })}>
+                  <SelectTrigger><SelectValue placeholder="Partner type" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="technical">Technical (Service)</SelectItem>
+                    <SelectItem value="non_technical">Non-Technical (Sales)</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Select value={form.region_id} onValueChange={v => setForm({ ...form, region_id: v })}>
                   <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
                   <SelectContent>
