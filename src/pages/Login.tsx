@@ -26,6 +26,8 @@ const Login = () => {
     if (isSignUp) {
       const result = await signup(email, password, fullName);
       if (result.success) {
+        // Auto-confirmed, so login automatically happens via onAuthStateChange
+        // Small delay to let the auth state propagate
         setTimeout(() => navigate('/customer'), 500);
       } else {
         setError(result.error || 'Signup failed');
@@ -33,7 +35,10 @@ const Login = () => {
     } else {
       const result = await login(email, password);
       if (result.success) {
+        // Role-based redirect will happen from App.tsx
+        // For now, navigate to a temporary route that will redirect
         setTimeout(() => {
+          // Re-check route after auth state updates
           window.location.href = '/';
         }, 500);
       } else {
@@ -45,59 +50,59 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel — bold black with amber accent */}
-      <div className="hidden lg:flex lg:w-1/2 bg-foreground relative overflow-hidden items-center justify-center p-16">
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+      {/* Left panel */}
+      <div className="hidden lg:flex lg:w-1/2 gradient-hero relative overflow-hidden items-center justify-center p-12">
         <div className="relative z-10 max-w-md">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="flex items-center gap-3 mb-10">
-              <div className="h-14 w-14 rounded-xl bg-accent flex items-center justify-center">
-                <Shield size={30} className="text-accent-foreground" />
+            <div className="flex items-center gap-3 mb-8">
+              <div className="h-12 w-12 rounded-xl gradient-primary flex items-center justify-center">
+                <Shield size={28} className="text-primary-foreground" />
               </div>
-              <h1 className="font-heading text-4xl font-extrabold text-background">WaaZ</h1>
+              <h1 className="font-heading text-3xl font-bold text-primary-foreground">WaaZ</h1>
             </div>
-            <h2 className="font-heading text-5xl font-extrabold text-background leading-[1.1] mb-6 tracking-tight">
-              Warranty as a{' '}
-              <span className="text-accent">Service</span>
+            <h2 className="font-heading text-4xl font-bold text-primary-foreground leading-tight mb-4">
+              Warranty as a Service
             </h2>
-            <p className="text-background/50 text-lg leading-relaxed">
+            <p className="text-primary-foreground/70 text-lg leading-relaxed">
               Complete device protection platform. Manage subscriptions, track claims, and grow your repair partner network — all in one place.
             </p>
-            <div className="mt-12 grid grid-cols-3 gap-8">
+            <div className="mt-10 grid grid-cols-3 gap-6">
               {[
                 { val: '50K+', lab: 'Devices Protected' },
                 { val: '₹899', lab: 'Starting Plan' },
                 { val: '< 5 days', lab: 'Avg. Repair' },
               ].map(s => (
                 <div key={s.lab}>
-                  <p className="font-heading text-3xl font-extrabold text-accent">{s.val}</p>
-                  <p className="text-background/40 text-sm mt-1">{s.lab}</p>
+                  <p className="font-heading text-2xl font-bold text-accent">{s.val}</p>
+                  <p className="text-primary-foreground/50 text-sm">{s.lab}</p>
                 </div>
               ))}
             </div>
           </motion.div>
         </div>
+        <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full bg-primary/10" />
+        <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-accent/5" />
       </div>
 
       {/* Right panel */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
+      <div className="flex-1 flex items-center justify-center p-6 bg-background">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           className="w-full max-w-md"
         >
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <div className="h-12 w-12 rounded-xl bg-accent flex items-center justify-center">
-              <Shield size={24} className="text-accent-foreground" />
+          <div className="lg:hidden flex items-center gap-3 mb-8">
+            <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center">
+              <Shield size={22} className="text-primary-foreground" />
             </div>
-            <h1 className="font-heading text-2xl font-extrabold">WaaZ</h1>
+            <h1 className="font-heading text-2xl font-bold">WaaZ</h1>
           </div>
 
-          <h2 className="font-heading text-3xl font-extrabold mb-2 tracking-tight">
+          <h2 className="font-heading text-2xl font-bold mb-1">
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </h2>
-          <p className="text-muted-foreground mb-10">
+          <p className="text-muted-foreground mb-8">
             {isSignUp ? 'Sign up to start protecting your devices' : 'Sign in to your WaaZ account'}
           </p>
 
@@ -107,7 +112,7 @@ const Login = () => {
                 <Label htmlFor="fullName">Full Name</Label>
                 <div className="relative">
                   <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <Input id="fullName" placeholder="Your full name" value={fullName} onChange={e => setFullName(e.target.value)} className="pl-10 h-12 rounded-xl" required />
+                  <Input id="fullName" placeholder="Your full name" value={fullName} onChange={e => setFullName(e.target.value)} className="pl-10" required />
                 </div>
               </div>
             )}
@@ -115,32 +120,32 @@ const Login = () => {
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} className="pl-10 h-12 rounded-xl" required />
+                <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} className="pl-10" required />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="pl-10 h-12 rounded-xl" required minLength={6} />
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="pl-10" required minLength={6} />
               </div>
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={submitting} className="w-full bg-foreground text-background hover:bg-foreground/90 h-12 rounded-full text-base">
+            <Button type="submit" disabled={submitting} className="w-full gradient-primary text-primary-foreground hover:opacity-90">
               {submitting && <Loader2 size={16} className="mr-2 animate-spin" />}
               {isSignUp ? 'Create Account' : 'Sign In'} <ArrowRight size={16} className="ml-2" />
             </Button>
           </form>
 
-          <div className="relative my-8">
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
-            <div className="relative flex justify-center text-xs"><span className="bg-background px-3 text-muted-foreground">or continue with</span></div>
+            <div className="relative flex justify-center text-xs"><span className="bg-background px-2 text-muted-foreground">or continue with</span></div>
           </div>
 
           <Button
             type="button"
             variant="outline"
-            className="w-full h-12 rounded-full"
+            className="w-full"
             onClick={async () => {
               setError('');
               const { error } = await lovable.auth.signInWithOAuth('google', {
@@ -158,15 +163,15 @@ const Login = () => {
             Continue with Google
           </Button>
 
-          <p className="mt-8 text-center text-sm text-muted-foreground">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button onClick={() => { setIsSignUp(!isSignUp); setError(''); }} className="text-foreground hover:underline font-semibold">
+            <button onClick={() => { setIsSignUp(!isSignUp); setError(''); }} className="text-primary hover:underline font-medium">
               {isSignUp ? 'Sign In' : 'Sign Up'}
             </button>
           </p>
 
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            <Link to="/" className="text-foreground hover:underline font-medium">← Back to Home</Link>
+            <Link to="/" className="text-primary hover:underline">← Back to Home</Link>
           </p>
         </motion.div>
       </div>
