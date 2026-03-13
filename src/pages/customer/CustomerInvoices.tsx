@@ -40,56 +40,7 @@ const CustomerInvoices = () => {
   const handleDownload = (inv: any) => {
     const win = window.open('', '_blank');
     if (!win) return;
-    win.document.write(`
-      <html><head><title>Invoice ${inv.invoice_number}</title>
-      <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 40px; max-width: 800px; margin: auto; color: #1a1a2e; }
-        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #6366f1; padding-bottom: 20px; margin-bottom: 30px; }
-        .logo { font-size: 28px; font-weight: bold; color: #6366f1; }
-        .logo span { font-size: 12px; display: block; color: #666; font-weight: normal; }
-        .meta { text-align: right; font-size: 13px; color: #555; }
-        .meta strong { color: #1a1a2e; }
-        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        th { background: #f8f9fa; text-align: left; padding: 10px; font-size: 13px; border-bottom: 2px solid #e0e0e0; }
-        td { padding: 10px; font-size: 13px; border-bottom: 1px solid #eee; }
-        .totals { margin-top: 20px; text-align: right; }
-        .totals p { margin: 4px 0; font-size: 14px; }
-        .totals .grand { font-size: 18px; font-weight: bold; color: #6366f1; border-top: 2px solid #6366f1; padding-top: 8px; margin-top: 8px; }
-        .sig { margin-top: 50px; text-align: right; }
-        .sig img { max-height: 60px; }
-        .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 15px; }
-        @media print { body { padding: 20px; } }
-      </style></head><body>
-      <div class="header">
-        <div><div class="logo">WaaZ<span>Device Protection Services</span></div></div>
-        <div class="meta">
-          <strong>Invoice #</strong> ${inv.invoice_number}<br/>
-          <strong>Date:</strong> ${format(new Date(inv.created_at), 'dd MMM yyyy')}<br/>
-          ${inv.due_date ? `<strong>Due:</strong> ${format(new Date(inv.due_date), 'dd MMM yyyy')}<br/>` : ''}
-          <strong>Status:</strong> ${inv.status.toUpperCase()}
-        </div>
-      </div>
-      <p><strong>Bill To:</strong><br/>${inv.customer_name}<br/>${inv.customer_email || ''}</p>
-      <table>
-        <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
-        <tbody><tr><td>Service / Subscription</td><td style="text-align:right">₹${Number(inv.subtotal || inv.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td></tr></tbody>
-      </table>
-      <div class="totals">
-        <p>Subtotal: ₹${Number(inv.subtotal || inv.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-        ${Number(inv.cgst_amount) > 0 ? `<p>CGST (${inv.cgst_percent}%): ₹${Number(inv.cgst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>` : ''}
-        ${Number(inv.sgst_amount) > 0 ? `<p>SGST (${inv.sgst_percent}%): ₹${Number(inv.sgst_amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>` : ''}
-        <p class="grand">Total: ₹${Number(inv.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</p>
-      </div>
-      ${inv.notes ? `<p style="margin-top:20px;font-size:13px;color:#666"><strong>Notes:</strong> ${inv.notes}</p>` : ''}
-      <div class="sig">
-        <p style="font-size:12px;color:#666">Authorized Signatory</p>
-        ${signatureUrl ? `<img src="${signatureUrl}" alt="Signature" />` : ''}
-        <p style="font-size:13px;font-weight:bold;margin-top:4px">WaaZ</p>
-      </div>
-      <div class="footer">This is a computer-generated invoice. &copy; WaaZ Device Protection Services</div>
-      <script>window.print();</script>
-      </body></html>
-    `);
+    win.document.write(generateInvoiceHtml(inv, signatureUrl));
     win.document.close();
   };
 
