@@ -21,7 +21,7 @@ const CustomerInvoices = () => {
   useEffect(() => {
     if (!user) return;
     const fetch = async () => {
-      const { data } = await supabase.from('invoices').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+      const { data } = await supabase.from('invoices').select('*, invoice_line_items(id, description, amount)').eq('user_id', user.id).order('created_at', { ascending: false });
       setInvoices(data || []);
       setLoading(false);
     };
