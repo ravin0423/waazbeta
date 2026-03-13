@@ -95,7 +95,7 @@ const SubscriptionActivation = ({ onActivated }: { onActivated: () => void }) =>
 
   const canGoStep2 = selectedCategoryId && selectedPlanId;
   const canGoStep3 = serialNumber.trim().length > 0 && (!isMobile || imeiNumber.trim().length > 0);
-  const canSubmit = whatsappNumber.trim().length > 0 && address.trim().length > 0;
+  const canSubmit = phoneNumber.trim().length > 0 && whatsappNumber.trim().length > 0 && address.trim().length > 0;
 
   const handleSubmit = async () => {
     if (!user) return;
