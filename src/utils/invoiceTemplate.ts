@@ -184,38 +184,42 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
 
 <div class="a4-page">
 <div class="invoice-container">
-  <!-- Header -->
-  <div class="inv-header">
+  <!-- Header Banner -->
+  <div class="inv-header-banner">
     <div class="inv-header-top">
       <div>
         <div class="company-name">WaaZ</div>
         <div class="company-tagline">Device Protection Services</div>
       </div>
-      <div class="inv-title">TAX INVOICE</div>
-    </div>
-
-    <!-- Invoice info -->
-    <div class="inv-info">
-      <div class="inv-info-left">
-        <div class="info-row"><span class="info-label">Invoice No.</span><span class="info-value" style="font-weight:700">${inv.invoice_number}</span></div>
-        <div class="info-row"><span class="info-label">Invoice Date</span><span class="info-value">${format(new Date(inv.created_at), 'dd/MM/yyyy')}</span></div>
-        ${inv.due_date ? `<div class="info-row"><span class="info-label">Due Date</span><span class="info-value">${format(new Date(inv.due_date), 'dd/MM/yyyy')}</span></div>` : ''}
-      </div>
-      <div class="inv-info-right">
-        <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="font-weight:700; text-transform:uppercase">${inv.status}</span></div>
-        <div class="info-row"><span class="info-label">Place of Supply</span><span class="info-value">India</span></div>
+      <div class="inv-title-block">
+        <div class="inv-title">TAX INVOICE</div>
+        <div class="inv-title-sub">Original for Recipient</div>
       </div>
     </div>
+  </div>
+  <div class="accent-bar"></div>
 
-    <!-- Bill To -->
-    <div class="bill-to">
-      <div class="bill-to-label">Bill To</div>
-      <div class="bill-to-name">${inv.customer_name}</div>
-      ${inv.customer_email ? `<div class="bill-to-email">${inv.customer_email}</div>` : ''}
+  <!-- Invoice Info -->
+  <div class="inv-info-section">
+    <div class="inv-info-left">
+      <div class="info-row"><span class="info-label">Invoice No.</span><span class="info-value" style="font-weight:700">${inv.invoice_number}</span></div>
+      <div class="info-row"><span class="info-label">Invoice Date</span><span class="info-value">${format(new Date(inv.created_at), 'dd/MM/yyyy')}</span></div>
+      ${inv.due_date ? `<div class="info-row"><span class="info-label">Due Date</span><span class="info-value">${format(new Date(inv.due_date), 'dd/MM/yyyy')}</span></div>` : ''}
+    </div>
+    <div class="inv-info-right">
+      <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="font-weight:700; text-transform:uppercase">${inv.status}</span></div>
+      <div class="info-row"><span class="info-label">Place of Supply</span><span class="info-value">India</span></div>
     </div>
   </div>
 
-  <!-- Line items -->
+  <!-- Bill To -->
+  <div class="bill-to">
+    <div class="bill-to-label">Bill To</div>
+    <div class="bill-to-name">${inv.customer_name}</div>
+    ${inv.customer_email ? `<div class="bill-to-email">${inv.customer_email}</div>` : ''}
+  </div>
+
+  <!-- Line Items -->
   <table class="items-table">
     <thead>
       <tr>
@@ -251,7 +255,6 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
     <div class="notes-text">${inv.notes}</div>
   </div>` : ''}
 
-
   <!-- Signature -->
   <div class="sig-footer">
     <div class="sig-left">
@@ -265,7 +268,8 @@ export function generateInvoiceHtml(inv: InvoiceData, signatureUrl?: string | nu
     </div>
   </div>
 
-  <div class="footer-bar">WaaZ Device Protection Services &bull; Thank you for your business</div>
+  <!-- Footer -->
+  <div class="footer-bar"><span>WaaZ</span> Device Protection Services &bull; Thank you for your business</div>
 </div>
 </div>
 
