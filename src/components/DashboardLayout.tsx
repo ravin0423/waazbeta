@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Shield, FileText, Ticket, User, LogOut, Package, Receipt,
   Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone,
-  Layers, MapPin, UserCog, Globe
+  Layers, MapPin, UserCog, Globe, ShieldCheck, ListChecks, QrCode
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,6 +43,9 @@ const adminNav: NavItem[] = [
   { label: 'Analytics', path: '/admin/analytics', icon: <TrendingUp size={20} /> },
   { label: 'Fraud Monitor', path: '/admin/fraud-monitoring', icon: <Shield size={20} /> },
   { label: 'Device Verification', path: '/admin/device-verification', icon: <Smartphone size={20} /> },
+  { label: 'Approvals', path: '/admin/device-approvals', icon: <ShieldCheck size={20} /> },
+  { label: 'Approval Checklist', path: '/admin/approval-checklist', icon: <ListChecks size={20} /> },
+  { label: 'Payment Settings', path: '/admin/payment-settings', icon: <QrCode size={20} /> },
   { label: 'Users & Roles', path: '/admin/user-roles', icon: <UserCog size={20} /> },
   { label: 'Landing Page', path: '/admin/landing-page', icon: <Globe size={20} /> },
 ];

@@ -41,49 +41,94 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_checklist_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          label?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_devices: {
         Row: {
           address: string
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
           gadget_category_id: string | null
           google_location_pin: string | null
           id: string
           imei_number: string | null
+          payment_method: string | null
+          payment_status: string
           product_name: string
           serial_number: string
           status: string
           subscription_plan_id: string | null
           updated_at: string
+          upi_transaction_id: string | null
           user_id: string
           whatsapp_number: string
         }
         Insert: {
           address: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           gadget_category_id?: string | null
           google_location_pin?: string | null
           id?: string
           imei_number?: string | null
+          payment_method?: string | null
+          payment_status?: string
           product_name: string
           serial_number: string
           status?: string
           subscription_plan_id?: string | null
           updated_at?: string
+          upi_transaction_id?: string | null
           user_id: string
           whatsapp_number: string
         }
         Update: {
           address?: string
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
           gadget_category_id?: string | null
           google_location_pin?: string | null
           id?: string
           imei_number?: string | null
+          payment_method?: string | null
+          payment_status?: string
           product_name?: string
           serial_number?: string
           status?: string
           subscription_plan_id?: string | null
           updated_at?: string
+          upi_transaction_id?: string | null
           user_id?: string
           whatsapp_number?: string
         }
@@ -100,6 +145,51 @@ export type Database = {
             columns: ["subscription_plan_id"]
             isOneToOne: false
             referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_approval_checks: {
+        Row: {
+          checked_at: string | null
+          checked_by: string | null
+          checklist_item_id: string
+          created_at: string
+          device_id: string
+          id: string
+          is_checked: boolean
+        }
+        Insert: {
+          checked_at?: string | null
+          checked_by?: string | null
+          checklist_item_id: string
+          created_at?: string
+          device_id: string
+          id?: string
+          is_checked?: boolean
+        }
+        Update: {
+          checked_at?: string | null
+          checked_by?: string | null
+          checklist_item_id?: string
+          created_at?: string
+          device_id?: string
+          id?: string
+          is_checked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_approval_checks_checklist_item_id_fkey"
+            columns: ["checklist_item_id"]
+            isOneToOne: false
+            referencedRelation: "approval_checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "device_approval_checks_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "customer_devices"
             referencedColumns: ["id"]
           },
         ]
@@ -258,6 +348,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_settings: {
+        Row: {
+          id: string
+          setting_key: string
+          setting_value: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          setting_key: string
+          setting_value: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          setting_key?: string
+          setting_value?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

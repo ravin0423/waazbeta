@@ -27,6 +27,9 @@ import AdminRegions from "./pages/admin/AdminRegions";
 import AdminPartnersManage from "./pages/admin/AdminPartnersManage";
 import AdminUserRoles from "./pages/admin/AdminUserRoles";
 import AdminLandingPage from "./pages/admin/AdminLandingPage";
+import AdminDeviceApprovals from "./pages/admin/AdminDeviceApprovals";
+import AdminApprovalChecklist from "./pages/admin/AdminApprovalChecklist";
+import AdminPaymentSettings from "./pages/admin/AdminPaymentSettings";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
@@ -75,6 +78,9 @@ const AppRoutes = () => {
       <Route path="/admin/device-verification" element={<ProtectedRoute role="admin"><AdminDeviceVerification /></ProtectedRoute>} />
       <Route path="/admin/user-roles" element={<ProtectedRoute role="admin"><AdminUserRoles /></ProtectedRoute>} />
       <Route path="/admin/landing-page" element={<ProtectedRoute role="admin"><AdminLandingPage /></ProtectedRoute>} />
+      <Route path="/admin/device-approvals" element={<ProtectedRoute role="admin"><AdminDeviceApprovals /></ProtectedRoute>} />
+      <Route path="/admin/approval-checklist" element={<ProtectedRoute role="admin"><AdminApprovalChecklist /></ProtectedRoute>} />
+      <Route path="/admin/payment-settings" element={<ProtectedRoute role="admin"><AdminPaymentSettings /></ProtectedRoute>} />
 
       {/* Partner routes */}
       <Route path="/partner" element={<ProtectedRoute role="partner"><PartnerDashboard /></ProtectedRoute>} />
