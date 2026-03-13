@@ -194,6 +194,11 @@ const AdminPartnersManage = () => {
                   {partners.map(p => (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium">{p.name}</TableCell>
+                      <TableCell>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${p.partner_type === 'technical' ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent-foreground'}`}>
+                          {p.partner_type === 'technical' ? 'Technical' : 'Non-Technical'}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-muted-foreground">{p.city}, {p.state}</TableCell>
                       <TableCell>{p.sla_turnaround_days}</TableCell>
                       <TableCell>{p.commission_rate}%</TableCell>
