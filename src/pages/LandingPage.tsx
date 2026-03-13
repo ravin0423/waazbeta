@@ -273,11 +273,10 @@ const LandingPage = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {items.map((cat: any, i: number) => {
               const Icon = iconMap[cat.icon] || Shield;
-              const isLarge = i < 2;
               return (
                 <motion.div
                   key={cat.label}
-                  className={`group relative p-6 rounded-2xl border border-border bg-card overflow-hidden cursor-default transition-all duration-500 hover:shadow-elevated hover:border-primary/30 ${isLarge && i === 0 ? 'sm:col-span-2 sm:row-span-2' : ''} ${isLarge && i === 1 ? 'sm:col-span-1 sm:row-span-2' : ''}`}
+                  className="group relative p-6 rounded-2xl border border-border bg-card overflow-hidden cursor-default transition-all duration-500 hover:shadow-elevated hover:border-primary/30"
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true }}
@@ -286,11 +285,11 @@ const LandingPage = () => {
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <div className="relative">
-                    <div className={`rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300 ${isLarge ? 'h-16 w-16' : 'h-12 w-12'}`}>
-                      <Icon size={isLarge ? 28 : 22} className="text-primary" />
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
+                      <Icon size={22} className="text-primary" />
                     </div>
-                    <h3 className={`font-heading font-bold text-foreground mb-2 ${isLarge ? 'text-xl' : 'text-sm'}`}>{cat.label}</h3>
-                    <p className={`text-muted-foreground leading-relaxed ${isLarge ? 'text-sm' : 'text-xs'}`}>{cat.desc}</p>
+                    <h3 className="font-heading font-bold text-foreground mb-2 text-sm">{cat.label}</h3>
+                    <p className="text-muted-foreground leading-relaxed text-xs">{cat.desc}</p>
                   </div>
                 </motion.div>
               );
