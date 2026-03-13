@@ -26,6 +26,7 @@ import AdminGadgetCategories from "./pages/admin/AdminGadgetCategories";
 import AdminRegions from "./pages/admin/AdminRegions";
 import AdminPartnersManage from "./pages/admin/AdminPartnersManage";
 import AdminUserRoles from "./pages/admin/AdminUserRoles";
+import AdminLandingPage from "./pages/admin/AdminLandingPage";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
