@@ -137,7 +137,7 @@ const AdminCustomerDatabase = () => {
         @media print { body { padding: 20px; } }
       </style></head><body>
       <div class="header">
-        <div><div class="logo">WaaZ<span>Device Protection Services</span></div></div>
+        <div><div class="logo">WaaZ<span>Gadget Protection Services</span></div></div>
         <div class="meta">
           <strong>Invoice #</strong> ${inv.invoice_number}<br/>
           <strong>Date:</strong> ${format(new Date(inv.created_at), 'dd MMM yyyy')}<br/>
