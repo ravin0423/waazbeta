@@ -68,9 +68,10 @@ const AdminInvoices = () => {
 
   const resetForm = () => {
     setForm({ customer_name: '', customer_email: '', cgst_percent: '9', sgst_percent: '9', status: 'pending', notes: '', due_date: '', user_id: '' });
-    setLineItems([{ type: '', description: '', amount: '' }]);
+    setLineItems([]);
     setEditId(null);
     setCustomerSearch('');
+    setCustomItemText('');
   };
 
   const openEdit = (inv: any) => {
