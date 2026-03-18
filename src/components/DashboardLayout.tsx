@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Shield, FileText, Ticket, User, LogOut, Package, Receipt,
   Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone,
   Layers, MapPin, UserCog, Globe, ShieldCheck, ListChecks, QrCode, IndianRupee,
-  ChevronDown, Wallet, BadgeCheck, Building2, Target
+  ChevronDown, Wallet, BadgeCheck, Building2, Target, Activity
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,6 +53,7 @@ const adminNav: NavItem[] = [
   { label: 'Purchase Orders', path: '/admin/purchase-orders', icon: <Package size={20} /> },
   { label: 'Service Bookings', path: '/admin/services', icon: <Wrench size={20} /> },
   { label: 'Claim Assignment', path: '/admin/claim-assignment', icon: <Target size={20} /> },
+  { label: 'Claims Monitor', path: '/admin/claims-monitoring', icon: <Activity size={20} /> },
   { label: 'Support Tickets', path: '/admin/tickets', icon: <Ticket size={20} /> },
   { label: 'Customer Database', path: '/admin/customer-database', icon: <Users size={20} /> },
   { label: 'Analytics', path: '/admin/analytics', icon: <TrendingUp size={20} /> },
