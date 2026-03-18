@@ -13,6 +13,7 @@ import CustomerClaims from "./pages/customer/CustomerClaims";
 import CustomerTickets from "./pages/customer/CustomerTickets";
 import CustomerProfile from "./pages/customer/CustomerProfile";
 import CustomerInvoices from "./pages/customer/CustomerInvoices";
+import DeviceOnboardingWizard from "./pages/customer/DeviceOnboardingWizard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
