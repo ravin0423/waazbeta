@@ -774,13 +774,6 @@ const AdminDeviceApprovals = () => {
                             </Button>
                             {device.status === 'pending' && (
                               <>
-                                <Button size="sm" className="h-8 bg-success hover:bg-success/90 text-success-foreground" onClick={async () => {
-                                  setSelectedDevice(device);
-                                  setCheckedItems(new Set(checklistItems.map(i => i.id)));
-                                  await handleQuickApprove(device);
-                                }}>
-                                  <CheckCircle2 size={12} />
-                                </Button>
                                 <Button size="sm" variant="destructive" className="h-8" onClick={() => {
                                   setSelectedDevice(device);
                                   setRejectDialogOpen(true);
