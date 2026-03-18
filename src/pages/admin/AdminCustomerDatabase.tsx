@@ -46,6 +46,7 @@ interface CustomerDetail {
   claims: any[];
   subscriptionHistory: any[];
   tickets: any[];
+  activities: any[];
 }
 
 interface LTVMetrics {
