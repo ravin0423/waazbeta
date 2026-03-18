@@ -251,6 +251,45 @@ export type Database = {
           },
         ]
       }
+      customer_activity_log: {
+        Row: {
+          activity_timestamp: string
+          activity_type: string
+          created_at: string
+          customer_id: string
+          description: string
+          id: string
+          metadata: Json | null
+          related_claim_id: string | null
+          related_device_id: string | null
+          related_ticket_id: string | null
+        }
+        Insert: {
+          activity_timestamp?: string
+          activity_type: string
+          created_at?: string
+          customer_id: string
+          description: string
+          id?: string
+          metadata?: Json | null
+          related_claim_id?: string | null
+          related_device_id?: string | null
+          related_ticket_id?: string | null
+        }
+        Update: {
+          activity_timestamp?: string
+          activity_type?: string
+          created_at?: string
+          customer_id?: string
+          description?: string
+          id?: string
+          metadata?: Json | null
+          related_claim_id?: string | null
+          related_device_id?: string | null
+          related_ticket_id?: string | null
+        }
+        Relationships: []
+      }
       customer_devices: {
         Row: {
           address: string
