@@ -1028,6 +1028,75 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_commissions: {
+        Row: {
+          base_commission_amount: number
+          base_commission_rate: number
+          claim_amount: number
+          claim_id: string
+          commission_month: string
+          created_at: string
+          id: string
+          partner_id: string
+          penalty_deduction: number
+          rating_bonus: number
+          sla_bonus: number
+          status: string
+          total_commission: number
+          updated_at: string
+          volume_bonus: number
+        }
+        Insert: {
+          base_commission_amount?: number
+          base_commission_rate?: number
+          claim_amount?: number
+          claim_id: string
+          commission_month: string
+          created_at?: string
+          id?: string
+          partner_id: string
+          penalty_deduction?: number
+          rating_bonus?: number
+          sla_bonus?: number
+          status?: string
+          total_commission?: number
+          updated_at?: string
+          volume_bonus?: number
+        }
+        Update: {
+          base_commission_amount?: number
+          base_commission_rate?: number
+          claim_amount?: number
+          claim_id?: string
+          commission_month?: string
+          created_at?: string
+          id?: string
+          partner_id?: string
+          penalty_deduction?: number
+          rating_bonus?: number
+          sla_bonus?: number
+          status?: string
+          total_commission?: number
+          updated_at?: string
+          volume_bonus?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partner_commissions_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "service_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "partner_commissions_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partners: {
         Row: {
           city: string
