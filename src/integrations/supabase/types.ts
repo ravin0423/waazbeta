@@ -76,6 +76,7 @@ export type Database = {
           address: string
           approved_at: string | null
           approved_by: string | null
+          auto_renew: boolean
           created_at: string
           gadget_category_id: string | null
           google_location_pin: string | null
@@ -87,7 +88,9 @@ export type Database = {
           referred_by_partner_id: string | null
           serial_number: string
           status: string
+          subscription_end: string | null
           subscription_plan_id: string | null
+          subscription_start: string | null
           updated_at: string
           upi_transaction_id: string | null
           user_id: string
@@ -97,6 +100,7 @@ export type Database = {
           address: string
           approved_at?: string | null
           approved_by?: string | null
+          auto_renew?: boolean
           created_at?: string
           gadget_category_id?: string | null
           google_location_pin?: string | null
@@ -108,7 +112,9 @@ export type Database = {
           referred_by_partner_id?: string | null
           serial_number: string
           status?: string
+          subscription_end?: string | null
           subscription_plan_id?: string | null
+          subscription_start?: string | null
           updated_at?: string
           upi_transaction_id?: string | null
           user_id: string
@@ -118,6 +124,7 @@ export type Database = {
           address?: string
           approved_at?: string | null
           approved_by?: string | null
+          auto_renew?: boolean
           created_at?: string
           gadget_category_id?: string | null
           google_location_pin?: string | null
@@ -129,7 +136,9 @@ export type Database = {
           referred_by_partner_id?: string | null
           serial_number?: string
           status?: string
+          subscription_end?: string | null
           subscription_plan_id?: string | null
+          subscription_start?: string | null
           updated_at?: string
           upi_transaction_id?: string | null
           user_id?: string
@@ -995,6 +1004,73 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_history: {
+        Row: {
+          amount_paid: number
+          created_at: string
+          device_id: string
+          id: string
+          new_end_date: string
+          new_plan_id: string
+          old_end_date: string | null
+          old_plan_id: string | null
+          payment_method: string | null
+          renewal_type: string
+          upi_transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_paid?: number
+          created_at?: string
+          device_id: string
+          id?: string
+          new_end_date: string
+          new_plan_id: string
+          old_end_date?: string | null
+          old_plan_id?: string | null
+          payment_method?: string | null
+          renewal_type?: string
+          upi_transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string
+          device_id?: string
+          id?: string
+          new_end_date?: string
+          new_plan_id?: string
+          old_end_date?: string | null
+          old_plan_id?: string | null
+          payment_method?: string | null
+          renewal_type?: string
+          upi_transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_history_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "customer_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_history_new_plan_id_fkey"
+            columns: ["new_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_history_old_plan_id_fkey"
+            columns: ["old_plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscription_plans: {
         Row: {
           annual_price: number
@@ -1047,6 +1123,38 @@ export type Database = {
             columns: ["gadget_category_id"]
             isOneToOne: false
             referencedRelation: "gadget_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_renewal_reminders: {
+        Row: {
+          created_at: string
+          device_id: string
+          id: string
+          reminder_type: string
+          sent_at: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          id?: string
+          reminder_type: string
+          sent_at?: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          reminder_type?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_renewal_reminders_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "customer_devices"
             referencedColumns: ["id"]
           },
         ]
