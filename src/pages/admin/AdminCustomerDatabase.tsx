@@ -289,8 +289,15 @@ const AdminCustomerDatabase = () => {
       c.phone?.includes(search) ||
       c.partnerName?.toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
-    if (segmentFilter === 'all') return true;
-    return customerLTVMap[c.id]?.segment === segmentFilter;
+    if (segmentFilter !== 'all' && customerLTVMap[c.id]?.segment !== segmentFilter) return false;
+    if (churnRiskFilter !== 'all') {
+      const churn = calculateChurnRisk(c, null);
+      if (churnRiskFilter === 'healthy' && churn.totalRisk >= 15) return false;
+      if (churnRiskFilter === 'watch' && (churn.totalRisk < 15 || churn.totalRisk >= 35)) return false;
+      if (churnRiskFilter === 'at-risk' && (churn.totalRisk < 35 || churn.totalRisk >= 60)) return false;
+      if (churnRiskFilter === 'critical' && churn.totalRisk < 60) return false;
+    }
+    return true;
   });
 
   const daysSince = (dateStr: string) => Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
