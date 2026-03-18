@@ -305,7 +305,7 @@ const AdminCustomerDatabase = () => {
 
   // Segment summary
   const segmentCounts = useMemo(() => {
-    const counts: Record<string, number> = { vip: 0, loyal: 0, regular: 0, new: 0, 'at-risk': 0 };
+    const counts: Record<string, number> = { vip: 0, loyal: 0, regular: 0, new: 0, 'at-risk': 0, churned: 0 };
     customers.forEach(c => { const seg = customerLTVMap[c.id]?.segment || 'regular'; counts[seg] = (counts[seg] || 0) + 1; });
     return counts;
   }, [customers, customerLTVMap]);
