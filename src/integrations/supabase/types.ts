@@ -71,6 +71,76 @@ export type Database = {
         }
         Relationships: []
       }
+      claim_feedback: {
+        Row: {
+          claim_id: string
+          created_at: string
+          feedback_text: string | null
+          id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          claim_id: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          claim_id?: string
+          created_at?: string
+          feedback_text?: string | null
+          id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_feedback_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "service_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claim_status_updates: {
+        Row: {
+          claim_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          status: string
+          updated_by: string | null
+        }
+        Insert: {
+          claim_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status: string
+          updated_by?: string | null
+        }
+        Update: {
+          claim_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_status_updates_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "service_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_devices: {
         Row: {
           address: string
