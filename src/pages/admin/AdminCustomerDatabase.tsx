@@ -54,7 +54,7 @@ interface LTVMetrics {
   monthsAsCustomer: number;
   averageRevenuePerMonth: number;
   lifetimeValue: number;
-  segment: 'vip' | 'loyal' | 'regular' | 'new' | 'at-risk';
+  segment: 'vip' | 'loyal' | 'regular' | 'new' | 'at-risk' | 'churned';
 }
 
 interface ChurnRisk {
