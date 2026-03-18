@@ -1,0 +1,1 @@
+UPDATE landing_sections SET description = 'Breathe easy. Your gadgets are protected. From diagnosis to repair to component replacement — it''s all included. The only surprise? Everything is taken care of. Just one subscription and complete peace of mind.', updated_at = now() WHERE section_key = 'hero'
