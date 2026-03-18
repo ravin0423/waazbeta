@@ -173,6 +173,7 @@ const segmentConfig: Record<string, { label: string; variant: 'default' | 'secon
   regular: { label: 'Regular', variant: 'outline' },
   new: { label: 'New', variant: 'secondary' },
   'at-risk': { label: 'At Risk', variant: 'destructive' },
+  churned: { label: '✗ Churned', variant: 'destructive' },
 };
 
 const churnLevelConfig: Record<string, { color: string; bg: string }> = {
