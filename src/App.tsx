@@ -40,6 +40,7 @@ import AdminFinanceTransactions from "./pages/admin/AdminFinanceTransactions";
 import AdminFinancePartnerPayments from "./pages/admin/AdminFinancePartnerPayments";
 import AdminFinanceCompliance from "./pages/admin/AdminFinanceCompliance";
 import ClaimAssignment from "./pages/admin/ClaimAssignment";
+import ClaimsMonitoringDashboard from "./pages/admin/ClaimsMonitoringDashboard";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
