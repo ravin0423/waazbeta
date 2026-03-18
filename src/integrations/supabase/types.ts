@@ -156,6 +156,9 @@ export type Database = {
           payment_status: string
           product_name: string
           referred_by_partner_id: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           serial_number: string
           status: string
           subscription_end: string | null
@@ -180,6 +183,9 @@ export type Database = {
           payment_status?: string
           product_name: string
           referred_by_partner_id?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           serial_number: string
           status?: string
           subscription_end?: string | null
@@ -204,6 +210,9 @@ export type Database = {
           payment_status?: string
           product_name?: string
           referred_by_partner_id?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           serial_number?: string
           status?: string
           subscription_end?: string | null
@@ -276,6 +285,91 @@ export type Database = {
           },
           {
             foreignKeyName: "device_approval_checks_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "customer_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_approval_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          device_id: string
+          id: string
+          notes: string | null
+          reason: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          device_id: string
+          id?: string
+          notes?: string | null
+          reason?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          device_id?: string
+          id?: string
+          notes?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_approval_logs_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "customer_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_info_requests: {
+        Row: {
+          created_at: string
+          customer_response: string | null
+          deadline: string | null
+          device_id: string
+          id: string
+          info_needed: string[]
+          message: string | null
+          requested_by: string | null
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          customer_response?: string | null
+          deadline?: string | null
+          device_id: string
+          id?: string
+          info_needed?: string[]
+          message?: string | null
+          requested_by?: string | null
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          customer_response?: string | null
+          deadline?: string | null
+          device_id?: string
+          id?: string
+          info_needed?: string[]
+          message?: string | null
+          requested_by?: string | null
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_info_requests_device_id_fkey"
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "customer_devices"
@@ -749,6 +843,39 @@ export type Database = {
           subtitle?: string | null
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          related_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          related_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          related_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
