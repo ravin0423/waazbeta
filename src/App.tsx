@@ -13,6 +13,7 @@ import CustomerClaims from "./pages/customer/CustomerClaims";
 import CustomerTickets from "./pages/customer/CustomerTickets";
 import CustomerProfile from "./pages/customer/CustomerProfile";
 import CustomerInvoices from "./pages/customer/CustomerInvoices";
+import DeviceOnboardingWizard from "./pages/customer/DeviceOnboardingWizard";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
@@ -70,6 +71,7 @@ const AppRoutes = () => {
       <Route path="/customer/tickets" element={<ProtectedRoute role="customer"><CustomerTickets /></ProtectedRoute>} />
       <Route path="/customer/invoices" element={<ProtectedRoute role="customer"><CustomerInvoices /></ProtectedRoute>} />
       <Route path="/customer/profile" element={<ProtectedRoute role="customer"><CustomerProfile /></ProtectedRoute>} />
+      <Route path="/customer/register-device" element={<ProtectedRoute role="customer"><DeviceOnboardingWizard /></ProtectedRoute>} />
 
       {/* Admin routes */}
       <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
