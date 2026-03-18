@@ -267,16 +267,18 @@ const AdminCustomerDatabase = () => {
     setDetailOpen(true);
     setDetailLoading(true);
 
-    const [claimsRes, subHistoryRes, ticketsRes] = await Promise.all([
+    const [claimsRes, subHistoryRes, ticketsRes, activitiesRes] = await Promise.all([
       supabase.from('service_claims').select('*, customer_devices(product_name)').eq('user_id', customer.id).order('created_at', { ascending: false }),
       supabase.from('subscription_history').select('*, subscription_plans:new_plan_id(name, annual_price)').eq('user_id', customer.id).order('created_at', { ascending: false }),
       supabase.from('service_tickets').select('*').eq('user_id', customer.id).order('created_at', { ascending: false }),
+      supabase.from('customer_activity_log').select('*').eq('customer_id', customer.id).order('activity_timestamp', { ascending: false }).limit(50),
     ]);
 
     setCustomerDetail({
       claims: claimsRes.data || [],
       subscriptionHistory: subHistoryRes.data || [],
       tickets: ticketsRes.data || [],
+      activities: activitiesRes.data || [],
     });
     setDetailLoading(false);
   };
