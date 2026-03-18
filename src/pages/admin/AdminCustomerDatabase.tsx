@@ -577,12 +577,13 @@ const AdminCustomerDatabase = () => {
                   <div className="flex items-center justify-center py-12"><Loader2 className="animate-spin text-primary" size={24} /></div>
                 ) : (
                   <Tabs defaultValue="devices">
-                    <TabsList className="grid w-full grid-cols-6">
+                    <TabsList className="grid w-full grid-cols-7">
                       <TabsTrigger value="devices" className="text-xs gap-1"><Smartphone size={14} /> Devices</TabsTrigger>
                       <TabsTrigger value="claims" className="text-xs gap-1"><FileText size={14} /> Claims</TabsTrigger>
                       <TabsTrigger value="invoices" className="text-xs gap-1"><Receipt size={14} /> Invoices</TabsTrigger>
                       <TabsTrigger value="history" className="text-xs gap-1"><Clock size={14} /> History</TabsTrigger>
                       <TabsTrigger value="tickets" className="text-xs gap-1"><Activity size={14} /> Tickets</TabsTrigger>
+                      <TabsTrigger value="activity" className="text-xs gap-1"><Clock size={14} /> Timeline</TabsTrigger>
                       <TabsTrigger value="metrics" className="text-xs gap-1"><BarChart3 size={14} /> Metrics</TabsTrigger>
                     </TabsList>
 
