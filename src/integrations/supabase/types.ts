@@ -71,6 +71,57 @@ export type Database = {
         }
         Relationships: []
       }
+      claim_assignments: {
+        Row: {
+          assigned_by: string | null
+          claim_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          partner_id: string
+          sla_deadline: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          claim_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          partner_id: string
+          sla_deadline?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string | null
+          claim_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          partner_id?: string
+          sla_deadline?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_assignments_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "service_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "claim_assignments_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_feedback: {
         Row: {
           claim_id: string

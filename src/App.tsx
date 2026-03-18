@@ -39,6 +39,7 @@ import AdminFinanceGST from "./pages/admin/AdminFinanceGST";
 import AdminFinanceTransactions from "./pages/admin/AdminFinanceTransactions";
 import AdminFinancePartnerPayments from "./pages/admin/AdminFinancePartnerPayments";
 import AdminFinanceCompliance from "./pages/admin/AdminFinanceCompliance";
+import ClaimAssignment from "./pages/admin/ClaimAssignment";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
@@ -100,6 +101,7 @@ const AppRoutes = () => {
       <Route path="/admin/finance-transactions" element={<ProtectedRoute role="admin"><AdminFinanceTransactions /></ProtectedRoute>} />
       <Route path="/admin/finance-partner-payments" element={<ProtectedRoute role="admin"><AdminFinancePartnerPayments /></ProtectedRoute>} />
       <Route path="/admin/finance-compliance" element={<ProtectedRoute role="admin"><AdminFinanceCompliance /></ProtectedRoute>} />
+      <Route path="/admin/claim-assignment" element={<ProtectedRoute role="admin"><ClaimAssignment /></ProtectedRoute>} />
 
       {/* Partner routes */}
       <Route path="/partner" element={<ProtectedRoute role="partner"><PartnerDashboard /></ProtectedRoute>} />
