@@ -910,7 +910,7 @@ const AdminDeviceApprovals = () => {
               {/* Approval Checklist */}
               {selectedDevice.status === 'pending' && checklistItems.length > 0 && (
                 <div>
-                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-1.5"><ListCheck size={14} /> Verification Checklist</h4>
+                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-1.5"><ListChecks size={14} /> Verification Checklist</h4>
                   <div className="space-y-2">
                     {checklistItems.map(item => (
                       <div
