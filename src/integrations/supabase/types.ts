@@ -122,6 +122,65 @@ export type Database = {
           },
         ]
       }
+      claim_eligibility_checks: {
+        Row: {
+          checked_at: string
+          checked_by: string | null
+          claim_details_complete: boolean
+          claim_id: string
+          coverage_includes_issue: boolean
+          created_at: string
+          details: Json
+          device_approved: boolean
+          id: string
+          not_duplicate: boolean
+          recommendation: string
+          risk_level: string
+          risk_score: number
+          subscription_active: boolean
+        }
+        Insert: {
+          checked_at?: string
+          checked_by?: string | null
+          claim_details_complete?: boolean
+          claim_id: string
+          coverage_includes_issue?: boolean
+          created_at?: string
+          details?: Json
+          device_approved?: boolean
+          id?: string
+          not_duplicate?: boolean
+          recommendation?: string
+          risk_level?: string
+          risk_score?: number
+          subscription_active?: boolean
+        }
+        Update: {
+          checked_at?: string
+          checked_by?: string | null
+          claim_details_complete?: boolean
+          claim_id?: string
+          coverage_includes_issue?: boolean
+          created_at?: string
+          details?: Json
+          device_approved?: boolean
+          id?: string
+          not_duplicate?: boolean
+          recommendation?: string
+          risk_level?: string
+          risk_score?: number
+          subscription_active?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_eligibility_checks_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "service_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_feedback: {
         Row: {
           claim_id: string
