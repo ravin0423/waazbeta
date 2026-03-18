@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/DashboardLayout';
 import StatsCard from '@/components/StatsCard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,18 +8,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
-import { format, subDays, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval, isWithinInterval } from 'date-fns';
+import { format, subDays, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval, isWithinInterval, differenceInDays, differenceInHours } from 'date-fns';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, Legend } from 'recharts';
 import type { KPIMetric } from '@/types';
 import type { DateRange } from 'react-day-picker';
 import {
   Users, Shield, MapPin, Wrench, CalendarIcon, Download, Smartphone,
   CheckCircle2, Clock, AlertTriangle, TrendingUp, Layers, Globe, Star,
-  FileText
+  FileText, AlertCircle, ArrowRight, Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const COLORS = [
   'hsl(var(--primary))',
@@ -31,6 +35,19 @@ const COLORS = [
   'hsl(190, 70%, 45%)',
 ];
 
+const PIPELINE_COLORS: Record<string, string> = {
+  pending: 'hsl(217, 91%, 60%)',
+  submitted: 'hsl(217, 91%, 60%)',
+  in_review: 'hsl(45, 93%, 47%)',
+  approved: 'hsl(142, 71%, 45%)',
+  assigned: 'hsl(271, 91%, 65%)',
+  in_repair: 'hsl(24, 95%, 53%)',
+  quality_check: 'hsl(45, 93%, 47%)',
+  ready_for_delivery: 'hsl(142, 71%, 45%)',
+  completed: 'hsl(142, 76%, 36%)',
+  rejected: 'hsl(0, 84%, 60%)',
+};
+
 const presetRanges = [
   { label: 'Last 7 days', value: '7d' },
   { label: 'Last 30 days', value: '30d' },
@@ -42,6 +59,7 @@ const presetRanges = [
 ];
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [preset, setPreset] = useState('all');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -55,33 +73,69 @@ const AdminDashboard = () => {
   const [devices, setDevices] = useState<any[]>([]);
   const [analyticsEvents, setAnalyticsEvents] = useState<any[]>([]);
   const [landingSections, setLandingSections] = useState<any[]>([]);
+  const [claims, setClaims] = useState<any[]>([]);
+  const [claimAssignments, setClaimAssignments] = useState<any[]>([]);
+  const [claimFeedback, setClaimFeedback] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
-      const [profilesRes, plansRes, regionsRes, partnersRes, catsRes, devicesRes, eventsRes, sectionsRes] = await Promise.all([
-        supabase.from('profiles').select('*'),
-        supabase.from('subscription_plans').select('*'),
-        supabase.from('regions').select('*'),
-        supabase.from('partners').select('*'),
-        supabase.from('gadget_categories').select('*'),
-        supabase.from('customer_devices').select('*'),
-        supabase.from('analytics_events').select('*'),
-        supabase.from('landing_sections').select('*'),
-      ]);
-      if (profilesRes.data) setProfiles(profilesRes.data);
-      if (plansRes.data) setPlans(plansRes.data);
-      if (regionsRes.data) setRegions(regionsRes.data);
-      if (partnersRes.data) setPartners(partnersRes.data);
-      if (catsRes.data) setCategories(catsRes.data);
-      if (devicesRes.data) setDevices(devicesRes.data);
-      if (eventsRes.data) setAnalyticsEvents(eventsRes.data);
-      if (sectionsRes.data) setLandingSections(sectionsRes.data);
-      setLoading(false);
-    };
-    fetchAll();
+  const fetchAll = useCallback(async () => {
+    const [profilesRes, plansRes, regionsRes, partnersRes, catsRes, devicesRes, eventsRes, sectionsRes, claimsRes, assignmentsRes, feedbackRes] = await Promise.all([
+      supabase.from('profiles').select('*'),
+      supabase.from('subscription_plans').select('*'),
+      supabase.from('regions').select('*'),
+      supabase.from('partners').select('*'),
+      supabase.from('gadget_categories').select('*'),
+      supabase.from('customer_devices').select('*'),
+      supabase.from('analytics_events').select('*'),
+      supabase.from('landing_sections').select('*'),
+      supabase.from('service_claims').select('*'),
+      supabase.from('claim_assignments').select('*'),
+      supabase.from('claim_feedback').select('*'),
+    ]);
+    if (profilesRes.data) setProfiles(profilesRes.data);
+    if (plansRes.data) setPlans(plansRes.data);
+    if (regionsRes.data) setRegions(regionsRes.data);
+    if (partnersRes.data) setPartners(partnersRes.data);
+    if (catsRes.data) setCategories(catsRes.data);
+    if (devicesRes.data) setDevices(devicesRes.data);
+    if (eventsRes.data) setAnalyticsEvents(eventsRes.data);
+    if (sectionsRes.data) setLandingSections(sectionsRes.data);
+    if (claimsRes.data) setClaims(claimsRes.data);
+    if (assignmentsRes.data) setClaimAssignments(assignmentsRes.data);
+    if (feedbackRes.data) setClaimFeedback(feedbackRes.data);
+    setLastUpdated(new Date());
+    setLoading(false);
   }, []);
+
+  // Initial fetch + real-time subscriptions
+  useEffect(() => {
+    fetchAll();
+
+    const channel = supabase
+      .channel('admin-dashboard-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'service_claims' }, () => {
+        fetchAll();
+        toast.info('Claims data updated', { duration: 2000 });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'claim_assignments' }, () => {
+        fetchAll();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'customer_devices' }, () => {
+        fetchAll();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        fetchAll();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'partners' }, () => {
+        fetchAll();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchAll]);
 
   // Date range logic
   useEffect(() => {
@@ -108,7 +162,121 @@ const AdminDashboard = () => {
   const filteredProfiles = useMemo(() => profiles.filter(p => inRange(p.created_at)), [profiles, dateRange]);
   const filteredDevices = useMemo(() => devices.filter(d => inRange(d.created_at)), [devices, dateRange]);
   const filteredPartners = useMemo(() => partners.filter(p => inRange(p.created_at)), [partners, dateRange]);
-  const filteredEvents = useMemo(() => analyticsEvents.filter(e => inRange(e.event_date)), [analyticsEvents, dateRange]);
+  const filteredClaims = useMemo(() => claims.filter(c => inRange(c.created_at)), [claims, dateRange]);
+
+  // === CLAIM PIPELINE ===
+  const claimPipeline = useMemo(() => {
+    const statusMap: Record<string, number> = {};
+    filteredClaims.forEach(c => {
+      statusMap[c.status] = (statusMap[c.status] || 0) + 1;
+    });
+    const stages = [
+      { stage: 'Submitted', key: 'submitted', alt: 'pending' },
+      { stage: 'In Review', key: 'in_review' },
+      { stage: 'Approved', key: 'approved' },
+      { stage: 'Assigned', key: 'assigned' },
+      { stage: 'In Repair', key: 'in_repair' },
+      { stage: 'Quality Check', key: 'quality_check' },
+      { stage: 'Ready', key: 'ready_for_delivery' },
+      { stage: 'Completed', key: 'completed' },
+      { stage: 'Rejected', key: 'rejected' },
+    ];
+    return stages.map(s => ({
+      stage: s.stage,
+      key: s.key,
+      count: (statusMap[s.key] || 0) + (s.alt ? (statusMap[s.alt] || 0) : 0),
+      fill: PIPELINE_COLORS[s.key] || 'hsl(var(--muted))',
+    }));
+  }, [filteredClaims]);
+
+  // === SLA METRICS ===
+  const slaMetrics = useMemo(() => {
+    const now = new Date();
+    let onTime = 0;
+    let atRisk = 0;
+    let overdue = 0;
+    let total = 0;
+
+    const activeClaims = filteredClaims.filter(c => !['completed', 'rejected'].includes(c.status));
+
+    activeClaims.forEach(claim => {
+      const assignment = claimAssignments.find(a => a.claim_id === claim.id);
+      if (assignment?.sla_deadline) {
+        total++;
+        const deadline = new Date(assignment.sla_deadline);
+        const hoursLeft = differenceInHours(deadline, now);
+        if (hoursLeft < 0) {
+          overdue++;
+        } else if (hoursLeft <= 24) {
+          atRisk++;
+        } else {
+          onTime++;
+        }
+      }
+    });
+
+    const completedClaims = filteredClaims.filter(c => c.status === 'completed');
+    let completedOnTime = 0;
+    completedClaims.forEach(claim => {
+      const assignment = claimAssignments.find(a => a.claim_id === claim.id);
+      if (assignment?.sla_deadline) {
+        const deadline = new Date(assignment.sla_deadline);
+        const completedAt = new Date(claim.updated_at);
+        if (completedAt <= deadline) completedOnTime++;
+      }
+    });
+
+    const complianceRate = completedClaims.length > 0
+      ? Math.round((completedOnTime / completedClaims.length) * 100)
+      : 100;
+
+    return { onTime, atRisk, overdue, total, complianceRate, completedOnTime, completedTotal: completedClaims.length };
+  }, [filteredClaims, claimAssignments]);
+
+  // === ALERTS ===
+  const alerts = useMemo(() => {
+    const alertList: { id: string; message: string; severity: 'critical' | 'warning' | 'info' }[] = [];
+
+    if (slaMetrics.overdue > 0) {
+      alertList.push({
+        id: 'overdue',
+        message: `${slaMetrics.overdue} claim${slaMetrics.overdue > 1 ? 's are' : ' is'} overdue — immediate attention needed`,
+        severity: 'critical',
+      });
+    }
+    if (slaMetrics.atRisk > 0) {
+      alertList.push({
+        id: 'at-risk',
+        message: `${slaMetrics.atRisk} claim${slaMetrics.atRisk > 1 ? 's' : ''} at risk of missing SLA (< 24h remaining)`,
+        severity: 'warning',
+      });
+    }
+
+    const pendingClaims = filteredClaims.filter(c => c.status === 'pending' || c.status === 'submitted');
+    const unassigned = filteredClaims.filter(c => c.status === 'approved' && !claimAssignments.find(a => a.claim_id === c.id));
+    if (unassigned.length > 0) {
+      alertList.push({
+        id: 'unassigned',
+        message: `${unassigned.length} approved claim${unassigned.length > 1 ? 's' : ''} awaiting partner assignment`,
+        severity: 'warning',
+      });
+    }
+    if (pendingClaims.length > 5) {
+      alertList.push({
+        id: 'pending-backlog',
+        message: `${pendingClaims.length} claims pending review — possible backlog`,
+        severity: 'info',
+      });
+    }
+
+    return alertList;
+  }, [filteredClaims, claimAssignments, slaMetrics]);
+
+  // === CUSTOMER SATISFACTION ===
+  const avgRating = useMemo(() => {
+    if (claimFeedback.length === 0) return 0;
+    return Number((claimFeedback.reduce((s, f) => s + f.rating, 0) / claimFeedback.length).toFixed(1));
+  }, [claimFeedback]);
 
   // KPI metrics
   const activePlans = plans.filter(p => p.is_active);
@@ -121,16 +289,16 @@ const AdminDashboard = () => {
 
   const metrics: KPIMetric[] = [
     { label: 'Registered Users', value: filteredProfiles.length, trend: 'up' as const, change: filteredProfiles.length },
-    { label: 'Subscription Plans', value: activePlans.length, trend: 'stable' as const, change: 0 },
-    { label: 'Active Regions', value: activeRegions.length, trend: 'stable' as const, change: 0 },
+    { label: 'Active Claims', value: filteredClaims.filter(c => !['completed', 'rejected'].includes(c.status)).length, trend: 'up' as const, change: filteredClaims.length },
     { label: 'Repair Partners', value: activePartners.length, trend: 'stable' as const, change: 0 },
+    { label: 'SLA Compliance', value: `${slaMetrics.complianceRate}%`, trend: slaMetrics.complianceRate >= 90 ? 'up' as const : 'down' as const, change: slaMetrics.complianceRate },
   ];
 
   const metrics2: KPIMetric[] = [
     { label: 'Registered Devices', value: filteredDevices.length, trend: 'up' as const, change: filteredDevices.length },
     { label: 'Pending Devices', value: pendingDevices.length, trend: pendingDevices.length > 0 ? 'up' as const : 'stable' as const, change: pendingDevices.length },
     { label: 'Gadget Categories', value: activeCategories.length, trend: 'stable' as const, change: 0 },
-    { label: 'Landing Sections', value: enabledSections.length, trend: 'stable' as const, change: 0 },
+    { label: 'Avg Rating', value: avgRating > 0 ? `${avgRating}/5 ★` : 'N/A', trend: avgRating >= 4 ? 'up' as const : 'stable' as const, change: 0 },
   ];
 
   // User registration trend
@@ -171,7 +339,7 @@ const AdminDashboard = () => {
     return Object.entries(map).map(([state, count]) => ({ state, count })).sort((a, b) => b.count - a.count).slice(0, 10);
   }, [partners]);
 
-  // Coverage breakdown (plans with specific coverages)
+  // Coverage breakdown
   const coverageBreakdown = useMemo(() => {
     const active = activePlans;
     return [
@@ -244,6 +412,14 @@ const AdminDashboard = () => {
     exportCSV(rows.length > 0 ? rows : [{ message: 'No data available' }], 'waaz_dashboard_export');
   };
 
+  // Drill-down handler for pipeline chart
+  const handlePipelineClick = (data: any) => {
+    if (data?.activePayload?.[0]?.payload?.key) {
+      const statusKey = data.activePayload[0].payload.key;
+      navigate(`/admin/claims-monitoring?status=${statusKey}`);
+    }
+  };
+
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -251,7 +427,13 @@ const AdminDashboard = () => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="font-heading text-2xl font-bold mb-1">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Overview of WaaZ operations</p>
+            <p className="text-muted-foreground text-sm flex items-center gap-2">
+              Overview of WaaZ operations
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/70">
+                <Activity size={10} className="text-green-500 animate-pulse" />
+                Live · Updated {format(lastUpdated, 'h:mm a')}
+              </span>
+            </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Select value={preset} onValueChange={setPreset}>
@@ -289,6 +471,36 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* === ALERT NOTIFICATIONS === */}
+        {alerts.length > 0 && (
+          <div className="space-y-2 mb-6">
+            {alerts.map(alert => (
+              <Alert
+                key={alert.id}
+                variant={alert.severity === 'critical' ? 'destructive' : 'default'}
+                className={cn(
+                  'cursor-pointer transition-colors',
+                  alert.severity === 'critical' && 'border-destructive/50 bg-destructive/5',
+                  alert.severity === 'warning' && 'border-yellow-500/50 bg-yellow-500/5',
+                  alert.severity === 'info' && 'border-blue-500/50 bg-blue-500/5',
+                )}
+                onClick={() => navigate('/admin/claims-monitoring')}
+              >
+                <AlertCircle className={cn(
+                  'h-4 w-4',
+                  alert.severity === 'critical' && 'text-destructive',
+                  alert.severity === 'warning' && 'text-yellow-600',
+                  alert.severity === 'info' && 'text-blue-600',
+                )} />
+                <AlertDescription className="flex items-center justify-between">
+                  <span>{alert.message}</span>
+                  <ArrowRight size={14} className="text-muted-foreground" />
+                </AlertDescription>
+              </Alert>
+            ))}
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
@@ -303,6 +515,129 @@ const AdminDashboard = () => {
             {/* KPI Row 2 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {metrics2.map((m, i) => <StatsCard key={i} metric={m} />)}
+            </div>
+
+            {/* === SLA METRICS CARD === */}
+            <Card className="shadow-card mb-6">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="font-heading text-base flex items-center gap-2">
+                    <Shield size={16} className="text-primary" />
+                    SLA Compliance Overview
+                  </CardTitle>
+                  <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => navigate('/admin/claims-monitoring')}>
+                    View Details <ArrowRight size={12} />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500" />
+                      <span className="text-sm text-muted-foreground">Compliance Rate</span>
+                    </div>
+                    <p className={cn(
+                      "text-2xl font-bold",
+                      slaMetrics.complianceRate >= 90 ? 'text-green-600' : slaMetrics.complianceRate >= 80 ? 'text-yellow-600' : 'text-destructive'
+                    )}>
+                      {slaMetrics.complianceRate}%
+                    </p>
+                    <Progress
+                      value={slaMetrics.complianceRate}
+                      className="mt-2 h-1.5"
+                    />
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <CheckCircle2 size={14} className="text-green-500" />
+                      <span className="text-sm text-muted-foreground">On Track</span>
+                    </div>
+                    <p className="text-2xl font-bold text-green-600">{slaMetrics.onTime}</p>
+                    <p className="text-xs text-muted-foreground mt-1">claims within SLA</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock size={14} className="text-yellow-500" />
+                      <span className="text-sm text-muted-foreground">At Risk (&lt; 24h)</span>
+                    </div>
+                    <p className={cn("text-2xl font-bold", slaMetrics.atRisk > 0 ? 'text-yellow-600' : 'text-muted-foreground')}>
+                      {slaMetrics.atRisk}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">need monitoring</p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-muted/50 border">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertTriangle size={14} className="text-destructive" />
+                      <span className="text-sm text-muted-foreground">Overdue</span>
+                    </div>
+                    <p className={cn("text-2xl font-bold", slaMetrics.overdue > 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                      {slaMetrics.overdue}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">immediate action</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* === CLAIM PIPELINE CHART === */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <Card className="shadow-card">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="font-heading text-base flex items-center gap-2">
+                    <Activity size={16} className="text-primary" />
+                    Claim Pipeline (Real-Time)
+                  </CardTitle>
+                  <Button variant="ghost" size="sm" onClick={() => exportCSV(claimPipeline, 'claim_pipeline')} className="gap-1 text-xs">
+                    <Download size={12} />CSV
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  {filteredClaims.length === 0 ? (
+                    <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">No claims yet</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <BarChart data={claimPipeline} onClick={handlePipelineClick} className="cursor-pointer">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                        <XAxis dataKey="stage" fontSize={10} angle={-25} textAnchor="end" height={60} className="fill-muted-foreground" />
+                        <YAxis fontSize={12} className="fill-muted-foreground" />
+                        <Tooltip
+                          formatter={(value: number, name: string) => [value, 'Claims']}
+                          labelFormatter={(label: string) => `Stage: ${label}`}
+                        />
+                        <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                          {claimPipeline.map((entry, i) => (
+                            <Cell key={i} fill={entry.fill} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                  <p className="text-xs text-muted-foreground text-center mt-2">Click a bar to drill down into that status</p>
+                </CardContent>
+              </Card>
+
+              {/* Devices by Status */}
+              <Card className="shadow-card">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="font-heading text-base">Devices by Status</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={() => exportCSV(devicesByStatus, 'devices_by_status')} className="gap-1 text-xs"><Download size={12} />CSV</Button>
+                </CardHeader>
+                <CardContent>
+                  {devicesByStatus.length === 0 ? (
+                    <div className="h-[280px] flex items-center justify-center text-muted-foreground text-sm">No devices registered yet</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={280}>
+                      <PieChart>
+                        <Pie data={devicesByStatus} cx="50%" cy="50%" innerRadius={55} outerRadius={95} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                          {devicesByStatus.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
             </div>
 
             {/* Quick Info Cards */}
@@ -346,14 +681,14 @@ const AdminDashboard = () => {
                     <FileText size={22} className="text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Landing Sections</p>
-                    <p className="text-xl font-heading font-bold">{enabledSections.length} / {landingSections.length}</p>
+                    <p className="text-sm text-muted-foreground">Total Claims</p>
+                    <p className="text-xl font-heading font-bold">{filteredClaims.length}</p>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
-            {/* Charts Row 1: User & Device Growth + Devices by Status */}
+            {/* Charts Row 1: User & Device Growth */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <Card className="shadow-card">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -385,30 +720,7 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-card">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="font-heading text-base">Devices by Status</CardTitle>
-                  <Button variant="ghost" size="sm" onClick={() => exportCSV(devicesByStatus, 'devices_by_status')} className="gap-1 text-xs"><Download size={12} />CSV</Button>
-                </CardHeader>
-                <CardContent>
-                  {devicesByStatus.length === 0 ? (
-                    <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">No devices registered yet</div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={260}>
-                      <PieChart>
-                        <Pie data={devicesByStatus} cx="50%" cy="50%" innerRadius={55} outerRadius={95} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
-                          {devicesByStatus.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Charts Row 2: Coverage Breakdown + Plans by Category */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* Coverage Breakdown */}
               <Card className="shadow-card">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="font-heading text-base">Plan Coverage Breakdown</CardTitle>
@@ -426,7 +738,10 @@ const AdminDashboard = () => {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
+            </div>
 
+            {/* Charts Row 2: Plans by Category + Partners by State */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <Card className="shadow-card">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="font-heading text-base">Plans by Category</CardTitle>
@@ -447,10 +762,7 @@ const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Charts Row 3: Partners by State + Partner Quality */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <Card className="shadow-card">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="font-heading text-base">Partners by State</CardTitle>
@@ -472,7 +784,10 @@ const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
+            </div>
 
+            {/* Partner Quality + Summary */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               <Card className="shadow-card">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="font-heading text-base">Partner Quality Distribution</CardTitle>
@@ -494,36 +809,36 @@ const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Summary cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="shadow-card">
-                <CardContent className="p-8 text-center">
-                  <Shield size={40} className="text-primary mx-auto mb-3" />
-                  <h3 className="font-heading font-semibold mb-1">Subscription Plans</h3>
-                  <p className="text-sm text-muted-foreground">{activePlans.length} active plans across {activeCategories.length} gadget categories</p>
-                  <div className="flex flex-wrap gap-2 justify-center mt-3">
-                    {activePlans.slice(0, 5).map(p => (
-                      <Badge key={p.id} variant="secondary" className="text-xs">{p.name}</Badge>
-                    ))}
-                    {activePlans.length > 5 && <Badge variant="outline" className="text-xs">+{activePlans.length - 5} more</Badge>}
-                  </div>
-                </CardContent>
-              </Card>
-              <Card className="shadow-card">
-                <CardContent className="p-8 text-center">
-                  <Wrench size={40} className="text-primary mx-auto mb-3" />
-                  <h3 className="font-heading font-semibold mb-1">Partner Network</h3>
-                  <p className="text-sm text-muted-foreground">{activePartners.length} active partners across {activeRegions.length} regions</p>
-                  <div className="flex flex-wrap gap-2 justify-center mt-3">
-                    {activePartners.slice(0, 5).map(p => (
-                      <Badge key={p.id} variant="secondary" className="text-xs">{p.name} ({p.city})</Badge>
-                    ))}
-                    {activePartners.length > 5 && <Badge variant="outline" className="text-xs">+{activePartners.length - 5} more</Badge>}
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Summary cards stacked */}
+              <div className="space-y-6">
+                <Card className="shadow-card">
+                  <CardContent className="p-8 text-center">
+                    <Shield size={40} className="text-primary mx-auto mb-3" />
+                    <h3 className="font-heading font-semibold mb-1">Subscription Plans</h3>
+                    <p className="text-sm text-muted-foreground">{activePlans.length} active plans across {activeCategories.length} gadget categories</p>
+                    <div className="flex flex-wrap gap-2 justify-center mt-3">
+                      {activePlans.slice(0, 5).map(p => (
+                        <Badge key={p.id} variant="secondary" className="text-xs">{p.name}</Badge>
+                      ))}
+                      {activePlans.length > 5 && <Badge variant="outline" className="text-xs">+{activePlans.length - 5} more</Badge>}
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-card">
+                  <CardContent className="p-8 text-center">
+                    <Wrench size={40} className="text-primary mx-auto mb-3" />
+                    <h3 className="font-heading font-semibold mb-1">Partner Network</h3>
+                    <p className="text-sm text-muted-foreground">{activePartners.length} active partners across {activeRegions.length} regions</p>
+                    <div className="flex flex-wrap gap-2 justify-center mt-3">
+                      {activePartners.slice(0, 5).map(p => (
+                        <Badge key={p.id} variant="secondary" className="text-xs">{p.name} ({p.city})</Badge>
+                      ))}
+                      {activePartners.length > 5 && <Badge variant="outline" className="text-xs">+{activePartners.length - 5} more</Badge>}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </>
         )}
