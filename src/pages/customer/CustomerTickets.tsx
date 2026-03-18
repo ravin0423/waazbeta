@@ -141,6 +141,11 @@ const CustomerTickets = () => {
 
     setSubject(''); setDescription(''); setPriority('medium'); setImages([]); setPreviews([]);
     setOpen(false);
+
+    // Log activity
+    const { logCustomerActivity } = await import('@/services/activityLogService');
+    await logCustomerActivity(user.id, 'support_ticket', `Created support ticket: ${subject}`);
+
     toast.success('Service ticket created successfully!');
     fetchTickets();
   };

@@ -473,6 +473,11 @@ const DeviceOnboardingWizard = () => {
       // Clear draft
       sessionStorage.removeItem(DRAFT_KEY);
       setSubmitted(true);
+
+      // Log activity
+      const { logCustomerActivity } = await import('@/services/activityLogService');
+      await logCustomerActivity(user.id, 'device_submitted', `Registered device: ${s1.brand} ${s1.model}`, { relatedDeviceId: deviceId });
+
       toast.success('Device registered successfully! Awaiting admin approval.');
 
       setTimeout(() => navigate('/customer'), 3000);

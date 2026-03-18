@@ -170,6 +170,12 @@ const RenewalModal = ({ open, onOpenChange, device, onRenewed }: RenewalModalPro
       } as any);
 
       setStep('success');
+
+      // Log activity
+      const { logCustomerActivity } = await import('@/services/activityLogService');
+      const planName = plans.find(p => p.id === selectedPlanId)?.name || 'plan';
+      await logCustomerActivity(user.id, 'subscription_changed', `${isUpgrade ? 'Upgraded' : 'Renewed'} subscription: ${planName} (₹${renewalPrice})`, { relatedDeviceId: device.id });
+
       toast.success(isUpgrade ? 'Plan upgraded successfully!' : 'Subscription renewed successfully!');
 
       setTimeout(() => {

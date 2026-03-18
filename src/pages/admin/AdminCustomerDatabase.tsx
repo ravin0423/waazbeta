@@ -3,6 +3,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -46,6 +47,7 @@ interface CustomerDetail {
   claims: any[];
   subscriptionHistory: any[];
   tickets: any[];
+  activities: any[];
 }
 
 interface LTVMetrics {
@@ -53,7 +55,7 @@ interface LTVMetrics {
   monthsAsCustomer: number;
   averageRevenuePerMonth: number;
   lifetimeValue: number;
-  segment: 'vip' | 'loyal' | 'regular' | 'new' | 'at-risk';
+  segment: 'vip' | 'loyal' | 'regular' | 'new' | 'at-risk' | 'churned';
 }
 
 interface ChurnRisk {
@@ -85,7 +87,11 @@ const calculateLTV = (customer: CustomerRow): LTVMetrics => {
   const lifetimeValue = effectiveTotal;
 
   let segment: LTVMetrics['segment'] = 'regular';
-  if (lifetimeValue >= 5000) segment = 'vip';
+  const activeDeviceCount = customer.devices.filter(d => d.status === 'active').length;
+  const hasExpiredAll = customer.devices.length > 0 && activeDeviceCount === 0 && monthsAsCustomer > 1;
+
+  if (hasExpiredAll && monthsAsCustomer > 3) segment = 'churned';
+  else if (lifetimeValue >= 5000) segment = 'vip';
   else if (lifetimeValue >= 2000 && monthsAsCustomer >= 6) segment = 'loyal';
   else if (monthsAsCustomer < 1) segment = 'new';
   else if (lifetimeValue < 500 && monthsAsCustomer > 3) segment = 'at-risk';
@@ -168,6 +174,7 @@ const segmentConfig: Record<string, { label: string; variant: 'default' | 'secon
   regular: { label: 'Regular', variant: 'outline' },
   new: { label: 'New', variant: 'secondary' },
   'at-risk': { label: 'At Risk', variant: 'destructive' },
+  churned: { label: '✗ Churned', variant: 'destructive' },
 };
 
 const churnLevelConfig: Record<string, { color: string; bg: string }> = {
@@ -184,10 +191,11 @@ const AdminCustomerDatabase = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [customerDetail, setCustomerDetail] = useState<CustomerDetail>({ claims: [], subscriptionHistory: [], tickets: [] });
+  const [customerDetail, setCustomerDetail] = useState<CustomerDetail>({ claims: [], subscriptionHistory: [], tickets: [], activities: [] });
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
   const [segmentFilter, setSegmentFilter] = useState<string>('all');
+  const [churnRiskFilter, setChurnRiskFilter] = useState<string>('all');
 
   // Pre-computed LTV for all customers (for list view)
   const customerLTVMap = useMemo(() => {
@@ -260,16 +268,18 @@ const AdminCustomerDatabase = () => {
     setDetailOpen(true);
     setDetailLoading(true);
 
-    const [claimsRes, subHistoryRes, ticketsRes] = await Promise.all([
+    const [claimsRes, subHistoryRes, ticketsRes, activitiesRes] = await Promise.all([
       supabase.from('service_claims').select('*, customer_devices(product_name)').eq('user_id', customer.id).order('created_at', { ascending: false }),
       supabase.from('subscription_history').select('*, subscription_plans:new_plan_id(name, annual_price)').eq('user_id', customer.id).order('created_at', { ascending: false }),
       supabase.from('service_tickets').select('*').eq('user_id', customer.id).order('created_at', { ascending: false }),
+      supabase.from('customer_activity_log').select('*').eq('customer_id', customer.id).order('activity_timestamp', { ascending: false }).limit(50),
     ]);
 
     setCustomerDetail({
       claims: claimsRes.data || [],
       subscriptionHistory: subHistoryRes.data || [],
       tickets: ticketsRes.data || [],
+      activities: activitiesRes.data || [],
     });
     setDetailLoading(false);
   };
@@ -280,8 +290,15 @@ const AdminCustomerDatabase = () => {
       c.phone?.includes(search) ||
       c.partnerName?.toLowerCase().includes(search.toLowerCase());
     if (!matchesSearch) return false;
-    if (segmentFilter === 'all') return true;
-    return customerLTVMap[c.id]?.segment === segmentFilter;
+    if (segmentFilter !== 'all' && customerLTVMap[c.id]?.segment !== segmentFilter) return false;
+    if (churnRiskFilter !== 'all') {
+      const churn = calculateChurnRisk(c, null);
+      if (churnRiskFilter === 'healthy' && churn.totalRisk >= 15) return false;
+      if (churnRiskFilter === 'watch' && (churn.totalRisk < 15 || churn.totalRisk >= 35)) return false;
+      if (churnRiskFilter === 'at-risk' && (churn.totalRisk < 35 || churn.totalRisk >= 60)) return false;
+      if (churnRiskFilter === 'critical' && churn.totalRisk < 60) return false;
+    }
+    return true;
   });
 
   const daysSince = (dateStr: string) => Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
@@ -289,7 +306,7 @@ const AdminCustomerDatabase = () => {
 
   // Segment summary
   const segmentCounts = useMemo(() => {
-    const counts: Record<string, number> = { vip: 0, loyal: 0, regular: 0, new: 0, 'at-risk': 0 };
+    const counts: Record<string, number> = { vip: 0, loyal: 0, regular: 0, new: 0, 'at-risk': 0, churned: 0 };
     customers.forEach(c => { const seg = customerLTVMap[c.id]?.segment || 'regular'; counts[seg] = (counts[seg] || 0) + 1; });
     return counts;
   }, [customers, customerLTVMap]);
@@ -368,13 +385,14 @@ const AdminCustomerDatabase = () => {
         </div>
 
         {/* Segment Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
           {[
             { key: 'all', label: 'All', icon: Users, count: customers.length },
             { key: 'vip', label: '⭐ VIP', icon: Star, count: segmentCounts.vip },
             { key: 'loyal', label: 'Loyal', icon: TrendingUp, count: segmentCounts.loyal },
             { key: 'regular', label: 'Regular', icon: Users, count: segmentCounts.regular },
             { key: 'at-risk', label: 'At Risk', icon: AlertTriangle, count: segmentCounts['at-risk'] + (segmentCounts.new || 0) },
+            { key: 'churned', label: 'Churned', icon: AlertTriangle, count: segmentCounts.churned },
           ].map(s => (
             <Card
               key={s.key}
@@ -390,6 +408,28 @@ const AdminCustomerDatabase = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Churn Risk Filter */}
+        <div className="flex items-center gap-3 mb-4">
+          <Select value={churnRiskFilter} onValueChange={setChurnRiskFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by churn risk" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Risk Levels</SelectItem>
+              <SelectItem value="healthy">✅ Healthy (&lt; 15%)</SelectItem>
+              <SelectItem value="watch">👀 Watch (15-35%)</SelectItem>
+              <SelectItem value="at-risk">⚠️ At-Risk (35-60%)</SelectItem>
+              <SelectItem value="critical">🚨 Critical (&gt; 60%)</SelectItem>
+            </SelectContent>
+          </Select>
+          {(segmentFilter !== 'all' || churnRiskFilter !== 'all') && (
+            <Button variant="ghost" size="sm" onClick={() => { setSegmentFilter('all'); setChurnRiskFilter('all'); }}>
+              Clear filters
+            </Button>
+          )}
+          <span className="text-xs text-muted-foreground ml-auto">{filtered.length} customers</span>
         </div>
 
         <Card className="shadow-card">
@@ -537,12 +577,13 @@ const AdminCustomerDatabase = () => {
                   <div className="flex items-center justify-center py-12"><Loader2 className="animate-spin text-primary" size={24} /></div>
                 ) : (
                   <Tabs defaultValue="devices">
-                    <TabsList className="grid w-full grid-cols-6">
+                    <TabsList className="grid w-full grid-cols-7">
                       <TabsTrigger value="devices" className="text-xs gap-1"><Smartphone size={14} /> Devices</TabsTrigger>
                       <TabsTrigger value="claims" className="text-xs gap-1"><FileText size={14} /> Claims</TabsTrigger>
                       <TabsTrigger value="invoices" className="text-xs gap-1"><Receipt size={14} /> Invoices</TabsTrigger>
                       <TabsTrigger value="history" className="text-xs gap-1"><Clock size={14} /> History</TabsTrigger>
                       <TabsTrigger value="tickets" className="text-xs gap-1"><Activity size={14} /> Tickets</TabsTrigger>
+                      <TabsTrigger value="activity" className="text-xs gap-1"><Clock size={14} /> Timeline</TabsTrigger>
                       <TabsTrigger value="metrics" className="text-xs gap-1"><BarChart3 size={14} /> Metrics</TabsTrigger>
                     </TabsList>
 
@@ -682,6 +723,48 @@ const AdminCustomerDatabase = () => {
                             </CardContent>
                           </Card>
                         ))
+                      )}
+                    </TabsContent>
+
+                    {/* Activity Timeline Tab */}
+                    <TabsContent value="activity" className="space-y-3 mt-4">
+                      {customerDetail.activities.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-6">No activity recorded yet</p>
+                      ) : (
+                        <div className="relative">
+                          <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+                          {customerDetail.activities.map((activity: any) => {
+                            const iconMap: Record<string, string> = {
+                              device_submitted: '📱',
+                              claim_submitted: '📋',
+                              subscription_changed: '🔄',
+                              payment_made: '💳',
+                              support_ticket: '🆘',
+                              login: '🔐',
+                            };
+                            return (
+                              <div key={activity.id} className="relative pl-10 pb-4">
+                                <div className="absolute left-2.5 top-1 w-3 h-3 rounded-full bg-primary border-2 border-background" />
+                                <Card>
+                                  <CardContent className="p-3">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-lg">{iconMap[activity.activity_type] || '📌'}</span>
+                                        <div>
+                                          <p className="text-sm font-medium">{activity.description}</p>
+                                          <p className="text-xs text-muted-foreground capitalize">{activity.activity_type.replace(/_/g, ' ')}</p>
+                                        </div>
+                                      </div>
+                                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                        {formatDistanceToNow(new Date(activity.activity_timestamp), { addSuffix: true })}
+                                      </span>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </div>
+                            );
+                          })}
+                        </div>
                       )}
                     </TabsContent>
 
