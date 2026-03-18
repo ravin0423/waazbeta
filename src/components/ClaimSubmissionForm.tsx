@@ -74,6 +74,11 @@ const ClaimSubmissionForm = ({ onClose, onSubmit }: { onClose: () => void; onSub
       });
 
       if (error) throw error;
+
+      // Log activity
+      const { logCustomerActivity } = await import('@/services/activityLogService');
+      await logCustomerActivity(user.id, 'claim_submitted', `Submitted claim: ${issueType}`, { relatedDeviceId: devices?.[0]?.id });
+
       toast.success('Claim submitted successfully! Our admin team will review it shortly.');
       onSubmit();
     } catch (err: any) {
