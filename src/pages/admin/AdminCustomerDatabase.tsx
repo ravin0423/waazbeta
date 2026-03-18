@@ -86,7 +86,11 @@ const calculateLTV = (customer: CustomerRow): LTVMetrics => {
   const lifetimeValue = effectiveTotal;
 
   let segment: LTVMetrics['segment'] = 'regular';
-  if (lifetimeValue >= 5000) segment = 'vip';
+  const activeDeviceCount = customer.devices.filter(d => d.status === 'active').length;
+  const hasExpiredAll = customer.devices.length > 0 && activeDeviceCount === 0 && monthsAsCustomer > 1;
+
+  if (hasExpiredAll && monthsAsCustomer > 3) segment = 'churned';
+  else if (lifetimeValue >= 5000) segment = 'vip';
   else if (lifetimeValue >= 2000 && monthsAsCustomer >= 6) segment = 'loyal';
   else if (monthsAsCustomer < 1) segment = 'new';
   else if (lifetimeValue < 500 && monthsAsCustomer > 3) segment = 'at-risk';
