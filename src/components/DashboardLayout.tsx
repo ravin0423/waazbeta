@@ -10,6 +10,7 @@ import {
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
+import NotificationBell from '@/components/NotificationBell';
 
 interface NavItem {
   label: string;
