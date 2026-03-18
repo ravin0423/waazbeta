@@ -385,13 +385,14 @@ const AdminCustomerDatabase = () => {
         </div>
 
         {/* Segment Summary Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
           {[
             { key: 'all', label: 'All', icon: Users, count: customers.length },
             { key: 'vip', label: '⭐ VIP', icon: Star, count: segmentCounts.vip },
             { key: 'loyal', label: 'Loyal', icon: TrendingUp, count: segmentCounts.loyal },
             { key: 'regular', label: 'Regular', icon: Users, count: segmentCounts.regular },
             { key: 'at-risk', label: 'At Risk', icon: AlertTriangle, count: segmentCounts['at-risk'] + (segmentCounts.new || 0) },
+            { key: 'churned', label: 'Churned', icon: AlertTriangle, count: segmentCounts.churned },
           ].map(s => (
             <Card
               key={s.key}
@@ -407,6 +408,28 @@ const AdminCustomerDatabase = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        {/* Churn Risk Filter */}
+        <div className="flex items-center gap-3 mb-4">
+          <Select value={churnRiskFilter} onValueChange={setChurnRiskFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by churn risk" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Risk Levels</SelectItem>
+              <SelectItem value="healthy">✅ Healthy (&lt; 15%)</SelectItem>
+              <SelectItem value="watch">👀 Watch (15-35%)</SelectItem>
+              <SelectItem value="at-risk">⚠️ At-Risk (35-60%)</SelectItem>
+              <SelectItem value="critical">🚨 Critical (&gt; 60%)</SelectItem>
+            </SelectContent>
+          </Select>
+          {(segmentFilter !== 'all' || churnRiskFilter !== 'all') && (
+            <Button variant="ghost" size="sm" onClick={() => { setSegmentFilter('all'); setChurnRiskFilter('all'); }}>
+              Clear filters
+            </Button>
+          )}
+          <span className="text-xs text-muted-foreground ml-auto">{filtered.length} customers</span>
         </div>
 
         <Card className="shadow-card">
