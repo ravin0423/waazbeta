@@ -58,8 +58,15 @@ const CustomerDashboard = () => {
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-        <h1 className="font-heading text-2xl font-bold mb-1">Welcome back, {user?.fullName || 'User'}</h1>
-        <p className="text-muted-foreground mb-6">Here's your gadget protection overview</p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="font-heading text-2xl font-bold mb-1">Welcome back, {user?.fullName || 'User'}</h1>
+            <p className="text-muted-foreground">Here's your gadget protection overview</p>
+          </div>
+          <Button onClick={() => navigate('/customer/register-device')} className="gap-2">
+            <Smartphone size={16} /> Register New Device
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {devices.map(device => (
