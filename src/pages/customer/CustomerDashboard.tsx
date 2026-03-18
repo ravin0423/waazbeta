@@ -99,11 +99,12 @@ const CustomerDashboard = () => {
                     "ml-auto text-xs px-2 py-0.5 rounded-full font-medium",
                     device.status === 'active' && !isExpired && !isExpiring && 'bg-success/10 text-success',
                     device.status === 'pending' && 'bg-warning/10 text-warning',
+                    device.status === 'rejected' && 'bg-destructive/10 text-destructive',
                     isExpired && 'bg-destructive/10 text-destructive',
                     isExpiring && 'bg-warning/10 text-warning',
-                    device.status !== 'active' && device.status !== 'pending' && 'bg-muted text-muted-foreground',
+                    device.status !== 'active' && device.status !== 'pending' && device.status !== 'rejected' && 'bg-muted text-muted-foreground',
                   )}>
-                    {device.subscription_end ? subStatus.label : device.status}
+                    {device.status === 'rejected' ? 'Rejected' : device.subscription_end ? subStatus.label : device.status}
                   </span>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
