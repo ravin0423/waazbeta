@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 
 const CustomerDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [devices, setDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
