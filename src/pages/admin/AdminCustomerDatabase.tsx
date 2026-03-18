@@ -726,6 +726,48 @@ const AdminCustomerDatabase = () => {
                       )}
                     </TabsContent>
 
+                    {/* Activity Timeline Tab */}
+                    <TabsContent value="activity" className="space-y-3 mt-4">
+                      {customerDetail.activities.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-6">No activity recorded yet</p>
+                      ) : (
+                        <div className="relative">
+                          <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
+                          {customerDetail.activities.map((activity: any) => {
+                            const iconMap: Record<string, string> = {
+                              device_submitted: '📱',
+                              claim_submitted: '📋',
+                              subscription_changed: '🔄',
+                              payment_made: '💳',
+                              support_ticket: '🆘',
+                              login: '🔐',
+                            };
+                            return (
+                              <div key={activity.id} className="relative pl-10 pb-4">
+                                <div className="absolute left-2.5 top-1 w-3 h-3 rounded-full bg-primary border-2 border-background" />
+                                <Card>
+                                  <CardContent className="p-3">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex items-start gap-2">
+                                        <span className="text-lg">{iconMap[activity.activity_type] || '📌'}</span>
+                                        <div>
+                                          <p className="text-sm font-medium">{activity.description}</p>
+                                          <p className="text-xs text-muted-foreground capitalize">{activity.activity_type.replace(/_/g, ' ')}</p>
+                                        </div>
+                                      </div>
+                                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                        {formatDistanceToNow(new Date(activity.activity_timestamp), { addSuffix: true })}
+                                      </span>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </TabsContent>
+
                     {/* Metrics Tab - LTV & Churn */}
                     <TabsContent value="metrics" className="space-y-4 mt-4">
                       {/* LTV Breakdown */}
