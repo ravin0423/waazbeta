@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -9,16 +9,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Search, MapPin, ExternalLink, Download, Eye, Smartphone, FileText, Shield, Receipt, Clock, Activity, Users } from 'lucide-react';
+import { Loader2, Search, MapPin, ExternalLink, Download, Eye, Smartphone, FileText, Shield, Receipt, Clock, Activity, Users, TrendingUp, AlertTriangle, Star, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { format, formatDistanceToNow, differenceInDays } from 'date-fns';
+import { format, formatDistanceToNow, differenceInDays, differenceInMonths } from 'date-fns';
 
 interface CustomerRow {
   id: string;
   full_name: string;
   email: string;
   phone: string | null;
+  created_at: string;
   devices: {
     id: string;
     product_name: string;
@@ -46,6 +48,135 @@ interface CustomerDetail {
   tickets: any[];
 }
 
+interface LTVMetrics {
+  totalSpent: number;
+  monthsAsCustomer: number;
+  averageRevenuePerMonth: number;
+  lifetimeValue: number;
+  segment: 'vip' | 'loyal' | 'regular' | 'new' | 'at-risk';
+}
+
+interface ChurnRisk {
+  inactivityScore: number;
+  ticketScore: number;
+  rejectionScore: number;
+  expiryScore: number;
+  paymentScore: number;
+  totalRisk: number;
+  level: 'healthy' | 'watch' | 'at-risk' | 'critical';
+}
+
+const calculateLTV = (customer: CustomerRow): LTVMetrics => {
+  const joinDate = new Date(customer.created_at);
+  const monthsAsCustomer = Math.max(1, differenceInMonths(new Date(), joinDate));
+
+  // Total from paid invoices
+  const totalSpent = customer.invoices
+    .filter(i => i.status === 'paid')
+    .reduce((sum, i) => sum + Number(i.amount || 0), 0);
+
+  // Add annual subscription value for active devices
+  const activeSubValue = customer.devices
+    .filter(d => d.status === 'active' && d.subscription_plans)
+    .reduce((sum, d) => sum + Number(d.subscription_plans?.annual_price || 0), 0);
+
+  const effectiveTotal = totalSpent > 0 ? totalSpent : activeSubValue;
+  const averageRevenuePerMonth = effectiveTotal / monthsAsCustomer;
+  const lifetimeValue = effectiveTotal;
+
+  let segment: LTVMetrics['segment'] = 'regular';
+  if (lifetimeValue >= 5000) segment = 'vip';
+  else if (lifetimeValue >= 2000 && monthsAsCustomer >= 6) segment = 'loyal';
+  else if (monthsAsCustomer < 1) segment = 'new';
+  else if (lifetimeValue < 500 && monthsAsCustomer > 3) segment = 'at-risk';
+
+  return { totalSpent: effectiveTotal, monthsAsCustomer, averageRevenuePerMonth, lifetimeValue, segment };
+};
+
+const calculateChurnRisk = (customer: CustomerRow, detail: CustomerDetail | null): ChurnRisk => {
+  // Factor 1: Subscription expiry proximity (0-30)
+  let expiryScore = 0;
+  const activeDevices = customer.devices.filter(d => d.status === 'active');
+  if (activeDevices.length === 0) {
+    expiryScore = 30;
+  } else {
+    const soonestExpiry = activeDevices
+      .filter(d => d.subscription_end)
+      .map(d => differenceInDays(new Date(d.subscription_end!), new Date()))
+      .sort((a, b) => a - b)[0];
+    if (soonestExpiry !== undefined) {
+      if (soonestExpiry < 0) expiryScore = 30;
+      else if (soonestExpiry <= 7) expiryScore = 25;
+      else if (soonestExpiry <= 30) expiryScore = 15;
+      else if (soonestExpiry <= 60) expiryScore = 5;
+    }
+  }
+
+  // Factor 2: Support tickets (0-25)
+  let ticketScore = 0;
+  const ticketCount = detail?.tickets.length || 0;
+  if (ticketCount > 5) ticketScore = 25;
+  else if (ticketCount > 3) ticketScore = 15;
+  else if (ticketCount > 1) ticketScore = 5;
+
+  // Factor 3: Claim rejection rate (0-20)
+  let rejectionScore = 0;
+  const claims = detail?.claims || [];
+  if (claims.length > 0) {
+    const rejectedCount = claims.filter(c => c.status === 'rejected').length;
+    const rejectionRate = (rejectedCount / claims.length) * 100;
+    if (rejectionRate > 50) rejectionScore = 20;
+    else if (rejectionRate > 25) rejectionScore = 15;
+    else if (rejectionRate > 0) rejectionScore = 5;
+  }
+
+  // Factor 4: Inactivity - days since last device registration or claim (0-15)
+  let inactivityScore = 0;
+  const latestDeviceDate = customer.devices.length > 0
+    ? Math.max(...customer.devices.map(d => new Date(d.created_at).getTime()))
+    : 0;
+  const latestClaimDate = claims.length > 0
+    ? Math.max(...claims.map((c: any) => new Date(c.created_at).getTime()))
+    : 0;
+  const lastActivityTime = Math.max(latestDeviceDate, latestClaimDate);
+  if (lastActivityTime > 0) {
+    const daysSince = differenceInDays(new Date(), new Date(lastActivityTime));
+    if (daysSince > 180) inactivityScore = 15;
+    else if (daysSince > 90) inactivityScore = 10;
+    else if (daysSince > 60) inactivityScore = 5;
+  }
+
+  // Factor 5: Payment issues (0-10)
+  let paymentScore = 0;
+  const overdueInvoices = customer.invoices.filter(i => i.status === 'overdue').length;
+  if (overdueInvoices > 2) paymentScore = 10;
+  else if (overdueInvoices > 0) paymentScore = 5;
+
+  const totalRisk = Math.min(100, expiryScore + ticketScore + rejectionScore + inactivityScore + paymentScore);
+
+  let level: ChurnRisk['level'] = 'healthy';
+  if (totalRisk >= 60) level = 'critical';
+  else if (totalRisk >= 35) level = 'at-risk';
+  else if (totalRisk >= 15) level = 'watch';
+
+  return { inactivityScore, ticketScore, rejectionScore, expiryScore, paymentScore, totalRisk, level };
+};
+
+const segmentConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  vip: { label: '⭐ VIP', variant: 'default' },
+  loyal: { label: 'Loyal', variant: 'default' },
+  regular: { label: 'Regular', variant: 'outline' },
+  new: { label: 'New', variant: 'secondary' },
+  'at-risk': { label: 'At Risk', variant: 'destructive' },
+};
+
+const churnLevelConfig: Record<string, { color: string; bg: string }> = {
+  healthy: { color: 'text-success', bg: 'bg-success' },
+  watch: { color: 'text-warning', bg: 'bg-warning' },
+  'at-risk': { color: 'text-orange-500', bg: 'bg-orange-500' },
+  critical: { color: 'text-destructive', bg: 'bg-destructive' },
+};
+
 const AdminCustomerDatabase = () => {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,11 +187,30 @@ const AdminCustomerDatabase = () => {
   const [customerDetail, setCustomerDetail] = useState<CustomerDetail>({ claims: [], subscriptionHistory: [], tickets: [] });
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
+  const [segmentFilter, setSegmentFilter] = useState<string>('all');
+
+  // Pre-computed LTV for all customers (for list view)
+  const customerLTVMap = useMemo(() => {
+    const map: Record<string, LTVMetrics> = {};
+    customers.forEach(c => { map[c.id] = calculateLTV(c); });
+    return map;
+  }, [customers]);
+
+  // Churn for selected customer (computed when detail loaded)
+  const selectedChurnRisk = useMemo(() => {
+    if (!selectedCustomer) return null;
+    return calculateChurnRisk(selectedCustomer, customerDetail);
+  }, [selectedCustomer, customerDetail]);
+
+  const selectedLTV = useMemo(() => {
+    if (!selectedCustomer) return null;
+    return calculateLTV(selectedCustomer);
+  }, [selectedCustomer]);
 
   useEffect(() => {
     const fetchData = async () => {
       const [profilesRes, devicesRes, claimsRes, invoicesRes, partnersRes] = await Promise.all([
-        supabase.from('profiles').select('id, full_name, email, phone').order('full_name'),
+        supabase.from('profiles').select('id, full_name, email, phone, created_at').order('created_at', { ascending: false }),
         supabase.from('customer_devices').select('id, user_id, product_name, status, created_at, google_location_pin, whatsapp_number, referred_by_partner_id, serial_number, imei_number, subscription_start, subscription_end, address, subscription_plans(name, annual_price), gadget_categories(name)'),
         supabase.from('service_claims').select('id, user_id'),
         supabase.from('invoices').select('*').order('created_at', { ascending: false }),
@@ -124,15 +274,25 @@ const AdminCustomerDatabase = () => {
     setDetailLoading(false);
   };
 
-  const filtered = customers.filter(c =>
-    c.full_name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone?.includes(search) ||
-    c.partnerName?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = customers.filter(c => {
+    const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
+      c.email.toLowerCase().includes(search.toLowerCase()) ||
+      c.phone?.includes(search) ||
+      c.partnerName?.toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+    if (segmentFilter === 'all') return true;
+    return customerLTVMap[c.id]?.segment === segmentFilter;
+  });
 
   const daysSince = (dateStr: string) => Math.floor((Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24));
   const statusColor = (s: string) => s === 'paid' ? 'default' : s === 'overdue' ? 'destructive' : 'secondary';
+
+  // Segment summary
+  const segmentCounts = useMemo(() => {
+    const counts: Record<string, number> = { vip: 0, loyal: 0, regular: 0, new: 0, 'at-risk': 0 };
+    customers.forEach(c => { const seg = customerLTVMap[c.id]?.segment || 'regular'; counts[seg] = (counts[seg] || 0) + 1; });
+    return counts;
+  }, [customers, customerLTVMap]);
 
   const handleDownloadInvoice = (inv: any) => {
     const win = window.open('', '_blank');
@@ -185,33 +345,51 @@ const AdminCustomerDatabase = () => {
     win.document.close();
   };
 
-  // Compute metrics for selected customer
   const getCustomerMetrics = () => {
     if (!selectedCustomer) return { totalRevenue: 0, activeDevices: 0, totalClaims: 0, activeSince: null, daysActive: 0 };
     const totalRevenue = selectedCustomer.invoices.filter(i => i.status === 'paid').reduce((s, i) => s + Number(i.amount || 0), 0);
     const activeDevices = selectedCustomer.devices.filter(d => d.status === 'active').length;
     const earliest = selectedCustomer.devices.reduce((min, d) => d.created_at < min ? d.created_at : min, selectedCustomer.devices[0]?.created_at || new Date().toISOString());
-    return {
-      totalRevenue,
-      activeDevices,
-      totalClaims: selectedCustomer.claimsCount,
-      activeSince: earliest,
-      daysActive: daysSince(earliest),
-    };
+    return { totalRevenue, activeDevices, totalClaims: selectedCustomer.claimsCount, activeSince: earliest, daysActive: daysSince(earliest) };
   };
 
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="font-heading text-2xl font-bold">Customer Database</h1>
-            <p className="text-muted-foreground">Complete customer information — click a row to view 360° profile</p>
+            <p className="text-muted-foreground text-sm">360° customer profiles with LTV & churn insights</p>
           </div>
           <div className="relative w-72">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder="Search customers or partners..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
+        </div>
+
+        {/* Segment Summary Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
+          {[
+            { key: 'all', label: 'All', icon: Users, count: customers.length },
+            { key: 'vip', label: '⭐ VIP', icon: Star, count: segmentCounts.vip },
+            { key: 'loyal', label: 'Loyal', icon: TrendingUp, count: segmentCounts.loyal },
+            { key: 'regular', label: 'Regular', icon: Users, count: segmentCounts.regular },
+            { key: 'at-risk', label: 'At Risk', icon: AlertTriangle, count: segmentCounts['at-risk'] + (segmentCounts.new || 0) },
+          ].map(s => (
+            <Card
+              key={s.key}
+              className={`cursor-pointer transition-all ${segmentFilter === s.key ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
+              onClick={() => setSegmentFilter(s.key)}
+            >
+              <CardContent className="p-3 flex items-center gap-3">
+                <s.icon size={18} className="text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">{s.label}</p>
+                  <p className="text-lg font-bold">{s.count}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         <Card className="shadow-card">
@@ -225,11 +403,10 @@ const AdminCustomerDatabase = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Name</TableHead>
-                    <TableHead>Phone / WhatsApp</TableHead>
-                    <TableHead>Location</TableHead>
                     <TableHead>Active Subscriptions</TableHead>
+                    <TableHead>LTV</TableHead>
+                    <TableHead>Segment</TableHead>
                     <TableHead>Onboarded By</TableHead>
-                    <TableHead>Active Since</TableHead>
                     <TableHead>Days Active</TableHead>
                     <TableHead>Claims</TableHead>
                     <TableHead>Invoices</TableHead>
@@ -238,12 +415,11 @@ const AdminCustomerDatabase = () => {
                 <TableBody>
                   {filtered.map(c => {
                     const activeDevices = c.devices.filter(d => d.status === 'active');
-                    const allDevices = c.devices;
                     const earliest = activeDevices.length > 0
                       ? activeDevices.reduce((min, d) => d.created_at < min ? d.created_at : min, activeDevices[0].created_at)
                       : null;
-                    const googleLink = allDevices.find(d => d.google_location_pin)?.google_location_pin;
-                    const whatsapp = allDevices[0]?.whatsapp_number || c.phone || '—';
+                    const ltv = customerLTVMap[c.id];
+                    const seg = segmentConfig[ltv?.segment || 'regular'];
 
                     return (
                       <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50" onClick={() => openCustomerDetail(c)}>
@@ -252,14 +428,6 @@ const AdminCustomerDatabase = () => {
                             <p className="font-medium">{c.full_name}</p>
                             <p className="text-xs text-muted-foreground">{c.email}</p>
                           </div>
-                        </TableCell>
-                        <TableCell className="text-sm">{whatsapp}</TableCell>
-                        <TableCell>
-                          {googleLink ? (
-                            <a href={googleLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary text-sm hover:underline" onClick={e => e.stopPropagation()}>
-                              <MapPin size={14} /> Map <ExternalLink size={12} />
-                            </a>
-                          ) : <span className="text-muted-foreground text-sm">—</span>}
                         </TableCell>
                         <TableCell>
                           <div className="space-y-0.5">
@@ -272,16 +440,19 @@ const AdminCustomerDatabase = () => {
                             )}
                           </div>
                         </TableCell>
+                        <TableCell>
+                          <span className="font-bold text-sm">₹{(ltv?.lifetimeValue || 0).toLocaleString('en-IN')}</span>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={seg?.variant || 'outline'} className="text-[10px]">{seg?.label || 'Regular'}</Badge>
+                        </TableCell>
                         <TableCell className="text-sm">
                           {c.partnerName ? (
                             <Badge variant="outline" className="text-xs">{c.partnerName}</Badge>
                           ) : <span className="text-muted-foreground text-xs">Direct</span>}
                         </TableCell>
-                        <TableCell className="text-sm">
-                          {earliest ? new Date(earliest).toLocaleDateString('en-IN') : '—'}
-                        </TableCell>
                         <TableCell className="text-sm font-medium">
-                          {earliest ? `${daysSince(earliest)} days` : '—'}
+                          {earliest ? `${daysSince(earliest)}d` : '—'}
                         </TableCell>
                         <TableCell className="text-sm font-medium">{c.claimsCount}</TableCell>
                         <TableCell className="text-sm font-medium">{c.invoices.length}</TableCell>
@@ -328,9 +499,22 @@ const AdminCustomerDatabase = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <Receipt size={18} className="mx-auto text-primary mb-1" />
-                      <p className="text-xs text-muted-foreground">Revenue</p>
-                      <p className="text-lg font-bold">₹{getCustomerMetrics().totalRevenue.toLocaleString('en-IN')}</p>
+                      <TrendingUp size={18} className="mx-auto text-primary mb-1" />
+                      <p className="text-xs text-muted-foreground">Lifetime Value</p>
+                      <p className="text-lg font-bold">₹{(selectedLTV?.lifetimeValue || 0).toLocaleString('en-IN')}</p>
+                      <Badge variant={segmentConfig[selectedLTV?.segment || 'regular']?.variant || 'outline'} className="text-[10px] mt-1">
+                        {segmentConfig[selectedLTV?.segment || 'regular']?.label}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4 text-center">
+                      <AlertTriangle size={18} className={`mx-auto mb-1 ${churnLevelConfig[selectedChurnRisk?.level || 'healthy']?.color || 'text-success'}`} />
+                      <p className="text-xs text-muted-foreground">Churn Risk</p>
+                      <p className="text-lg font-bold">{selectedChurnRisk?.totalRisk || 0}%</p>
+                      <Badge variant={selectedChurnRisk?.level === 'critical' || selectedChurnRisk?.level === 'at-risk' ? 'destructive' : 'secondary'} className="text-[10px] mt-1 capitalize">
+                        {selectedChurnRisk?.level || 'healthy'}
+                      </Badge>
                     </CardContent>
                   </Card>
                   <Card>
@@ -342,16 +526,9 @@ const AdminCustomerDatabase = () => {
                   </Card>
                   <Card>
                     <CardContent className="p-4 text-center">
-                      <FileText size={18} className="mx-auto text-primary mb-1" />
-                      <p className="text-xs text-muted-foreground">Claims</p>
-                      <p className="text-lg font-bold">{getCustomerMetrics().totalClaims}</p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4 text-center">
-                      <Shield size={18} className="mx-auto text-primary mb-1" />
-                      <p className="text-xs text-muted-foreground">Total Devices</p>
-                      <p className="text-lg font-bold">{selectedCustomer?.devices.length || 0}</p>
+                      <Receipt size={18} className="mx-auto text-primary mb-1" />
+                      <p className="text-xs text-muted-foreground">Revenue</p>
+                      <p className="text-lg font-bold">₹{getCustomerMetrics().totalRevenue.toLocaleString('en-IN')}</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -360,12 +537,13 @@ const AdminCustomerDatabase = () => {
                   <div className="flex items-center justify-center py-12"><Loader2 className="animate-spin text-primary" size={24} /></div>
                 ) : (
                   <Tabs defaultValue="devices">
-                    <TabsList className="grid w-full grid-cols-5">
+                    <TabsList className="grid w-full grid-cols-6">
                       <TabsTrigger value="devices" className="text-xs gap-1"><Smartphone size={14} /> Devices</TabsTrigger>
                       <TabsTrigger value="claims" className="text-xs gap-1"><FileText size={14} /> Claims</TabsTrigger>
                       <TabsTrigger value="invoices" className="text-xs gap-1"><Receipt size={14} /> Invoices</TabsTrigger>
                       <TabsTrigger value="history" className="text-xs gap-1"><Clock size={14} /> History</TabsTrigger>
                       <TabsTrigger value="tickets" className="text-xs gap-1"><Activity size={14} /> Tickets</TabsTrigger>
+                      <TabsTrigger value="metrics" className="text-xs gap-1"><BarChart3 size={14} /> Metrics</TabsTrigger>
                     </TabsList>
 
                     {/* Devices Tab */}
@@ -505,6 +683,81 @@ const AdminCustomerDatabase = () => {
                           </Card>
                         ))
                       )}
+                    </TabsContent>
+
+                    {/* Metrics Tab - LTV & Churn */}
+                    <TabsContent value="metrics" className="space-y-4 mt-4">
+                      {/* LTV Breakdown */}
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2"><TrendingUp size={16} /> Lifetime Value Analysis</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground">Total Revenue</p>
+                              <p className="text-base font-bold">₹{(selectedLTV?.totalSpent || 0).toLocaleString('en-IN')}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground">Avg Revenue / Month</p>
+                              <p className="text-base font-bold">₹{(selectedLTV?.averageRevenuePerMonth || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground">Months as Customer</p>
+                              <p className="text-base font-bold">{selectedLTV?.monthsAsCustomer || 0}</p>
+                            </div>
+                            <div className="p-3 rounded-lg bg-muted/50">
+                              <p className="text-xs text-muted-foreground">Segment</p>
+                              <Badge variant={segmentConfig[selectedLTV?.segment || 'regular']?.variant || 'outline'} className="mt-1">
+                                {segmentConfig[selectedLTV?.segment || 'regular']?.label}
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Churn Risk Breakdown */}
+                      <Card>
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <AlertTriangle size={16} className={churnLevelConfig[selectedChurnRisk?.level || 'healthy']?.color} />
+                            Churn Risk Score: {selectedChurnRisk?.totalRisk || 0}/100
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <Progress value={selectedChurnRisk?.totalRisk || 0} className="h-2" />
+
+                          <div className="space-y-3">
+                            {[
+                              { label: 'Subscription Expiry', score: selectedChurnRisk?.expiryScore || 0, max: 30, desc: 'How close subscriptions are to expiring' },
+                              { label: 'Support Tickets', score: selectedChurnRisk?.ticketScore || 0, max: 25, desc: 'Volume of support requests' },
+                              { label: 'Claim Rejections', score: selectedChurnRisk?.rejectionScore || 0, max: 20, desc: 'Rate of rejected claims' },
+                              { label: 'Inactivity', score: selectedChurnRisk?.inactivityScore || 0, max: 15, desc: 'Days since last activity' },
+                              { label: 'Payment Issues', score: selectedChurnRisk?.paymentScore || 0, max: 10, desc: 'Overdue invoices' },
+                            ].map(factor => (
+                              <div key={factor.label} className="space-y-1">
+                                <div className="flex items-center justify-between text-sm">
+                                  <span>{factor.label}</span>
+                                  <span className="font-mono text-xs font-medium">{factor.score}/{factor.max}</span>
+                                </div>
+                                <Progress value={(factor.score / factor.max) * 100} className="h-1.5" />
+                                <p className="text-[10px] text-muted-foreground">{factor.desc}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="p-3 rounded-lg bg-muted/50 text-center">
+                            <p className="text-xs text-muted-foreground mb-1">Overall Assessment</p>
+                            <Badge variant={selectedChurnRisk?.level === 'critical' || selectedChurnRisk?.level === 'at-risk' ? 'destructive' : selectedChurnRisk?.level === 'watch' ? 'secondary' : 'default'} className="capitalize text-sm">
+                              {selectedChurnRisk?.level === 'healthy' && '✅ '}
+                              {selectedChurnRisk?.level === 'watch' && '👀 '}
+                              {selectedChurnRisk?.level === 'at-risk' && '⚠️ '}
+                              {selectedChurnRisk?.level === 'critical' && '🚨 '}
+                              {selectedChurnRisk?.level || 'healthy'}
+                            </Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </TabsContent>
                   </Tabs>
                 )}
