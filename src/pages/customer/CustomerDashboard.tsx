@@ -156,6 +156,22 @@ const CustomerDashboard = () => {
                     </Button>
                   )}
 
+                  {/* Rejection reason */}
+                  {device.status === 'rejected' && device.rejection_reason && (
+                    <div className="mt-2 p-2.5 rounded-lg bg-destructive/5 border border-destructive/20">
+                      <p className="text-xs font-medium text-destructive mb-0.5">Rejection Reason</p>
+                      <p className="text-xs text-muted-foreground">{device.rejection_reason}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-2 w-full text-xs h-7"
+                        onClick={() => navigate('/customer/register-device')}
+                      >
+                        Resubmit Device
+                      </Button>
+                    </div>
+                  )}
+
                   {device.status === 'pending' && (
                     <Button variant="destructive" size="sm" className="mt-3 w-full" onClick={() => handleDelete(device.id)}>
                       <Trash2 size={14} className="mr-1" /> Delete Request
