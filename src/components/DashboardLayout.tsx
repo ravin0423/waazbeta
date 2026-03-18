@@ -52,6 +52,7 @@ const adminNav: NavItem[] = [
   },
   { label: 'Purchase Orders', path: '/admin/purchase-orders', icon: <Package size={20} /> },
   { label: 'Service Bookings', path: '/admin/services', icon: <Wrench size={20} /> },
+  { label: 'Claim Assignment', path: '/admin/claim-assignment', icon: <Target size={20} /> },
   { label: 'Support Tickets', path: '/admin/tickets', icon: <Ticket size={20} /> },
   { label: 'Customer Database', path: '/admin/customer-database', icon: <Users size={20} /> },
   { label: 'Analytics', path: '/admin/analytics', icon: <TrendingUp size={20} /> },
