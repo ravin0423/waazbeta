@@ -51,6 +51,41 @@ const PartnerDashboard = () => {
     fetchData();
   }, [user]);
 
+  // Real-time subscription for partner claim updates
+  useEffect(() => {
+    if (!partner) return;
+    const channel = supabase
+      .channel('partner-claims-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'service_claims',
+        filter: `assigned_partner_id=eq.${partner.id}`,
+      }, async () => {
+        const { data: claimsData } = await supabase
+          .from('service_claims')
+          .select('*')
+          .eq('assigned_partner_id', partner.id)
+          .order('created_at', { ascending: false });
+        setClaims(claimsData || []);
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'claim_assignments',
+        filter: `partner_id=eq.${partner.id}`,
+      }, async () => {
+        const { data: claimsData } = await supabase
+          .from('service_claims')
+          .select('*')
+          .eq('assigned_partner_id', partner.id)
+          .order('created_at', { ascending: false });
+        setClaims(claimsData || []);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [partner]);
+
   if (loading) {
     return (
       <DashboardLayout>

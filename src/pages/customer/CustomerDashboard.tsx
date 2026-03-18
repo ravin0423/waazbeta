@@ -44,6 +44,27 @@ const CustomerDashboard = () => {
 
   useEffect(() => { fetchDevices(); }, [user]);
 
+  // Real-time subscription for device updates
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('customer-devices-realtime')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'customer_devices',
+        filter: `user_id=eq.${user.id}`,
+      }, () => { fetchDevices(); })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'service_claims',
+        filter: `user_id=eq.${user.id}`,
+      }, () => { fetchDevices(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user]);
+
   const handleDelete = async (deviceId: string) => {
     if (!confirm('Are you sure you want to delete this pending subscription request?')) return;
     const { error } = await supabase.from('customer_devices').delete().eq('id', deviceId).eq('status', 'pending');

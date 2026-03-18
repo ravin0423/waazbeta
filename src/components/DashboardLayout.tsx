@@ -10,6 +10,7 @@ import {
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
+import NotificationBell from '@/components/NotificationBell';
 
 interface NavItem {
   label: string;
@@ -264,6 +265,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
             <Menu size={22} />
           </button>
           <div className="flex-1" />
+          <NotificationBell />
           <span className="text-sm text-muted-foreground">{new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
         </header>
 
