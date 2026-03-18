@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/DashboardLayout';
 import ClaimSubmissionForm from '@/components/ClaimSubmissionForm';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, Clock, CheckCircle, XCircle, Wrench } from 'lucide-react';
+import { FileText, Plus, Clock, CheckCircle, XCircle, Wrench, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -17,6 +18,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
 };
 
 const CustomerClaims = () => {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,7 +75,7 @@ const CustomerClaims = () => {
               const sc = statusConfig[claim.status] || statusConfig.pending;
               const Icon = sc.icon;
               return (
-                <Card key={claim.id} className="shadow-card">
+                <Card key={claim.id} className="shadow-card cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate(`/customer/claims/${claim.id}`)}>
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -89,19 +91,8 @@ const CustomerClaims = () => {
                           <span>{format(new Date(claim.created_at), 'dd MMM yyyy')}</span>
                         </div>
                       </div>
-                      {claim.image_urls?.length > 0 && (
-                        <div className="flex gap-1">
-                          {claim.image_urls.map((url: string, i: number) => (
-                            <img key={i} src={url} alt="" className="w-12 h-12 rounded border border-border object-cover" />
-                          ))}
-                        </div>
-                      )}
+                      <ChevronRight size={18} className="text-muted-foreground flex-shrink-0 mt-1" />
                     </div>
-                    {claim.admin_notes && (
-                      <div className="mt-3 p-2 rounded bg-muted/50 text-sm text-muted-foreground">
-                        <span className="font-medium">Admin Notes:</span> {claim.admin_notes}
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               );
