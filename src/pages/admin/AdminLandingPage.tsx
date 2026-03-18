@@ -434,6 +434,138 @@ const AdminLandingPage = () => {
       );
     }
 
+    // HERO — subtitle (badge text), description, subtext (checkmarks), floating badges
+    if (key === 'hero') {
+      const content = parsed && typeof parsed === 'object' ? parsed : {};
+      const badges = Array.isArray(content.floating_badges) ? content.floating_badges : [];
+      const updateHeroContent = (updates: any) => {
+        updateContent({ ...content, ...updates });
+      };
+      return (
+        <div className="space-y-4">
+          <div>
+            <Label className="mb-1 block">Subtext (checkmark items, separated by ✓)</Label>
+            <Input
+              value={content.subtext || ''}
+              onChange={e => updateHeroContent({ subtext: e.target.value })}
+              placeholder="✓ No hidden costs ✓ Instant claims ✓ All devices"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Use ✓ to separate items shown as checkmark badges</p>
+          </div>
+          <div>
+            <Label className="mb-3 block">Floating Badges (on hero image)</Label>
+            <div className="space-y-2">
+              {badges.map((badge: any, i: number) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    value={badge.icon || ''}
+                    onChange={e => {
+                      const updated = [...badges];
+                      updated[i] = { ...updated[i], icon: e.target.value };
+                      updateHeroContent({ floating_badges: updated });
+                    }}
+                    placeholder="Icon (e.g. Shield)"
+                    className="w-32"
+                  />
+                  <Input
+                    value={badge.text || ''}
+                    onChange={e => {
+                      const updated = [...badges];
+                      updated[i] = { ...updated[i], text: e.target.value };
+                      updateHeroContent({ floating_badges: updated });
+                    }}
+                    placeholder="Badge text"
+                    className="flex-1"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive shrink-0"
+                    onClick={() => updateHeroContent({ floating_badges: badges.filter((_: any, j: number) => j !== i) })}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => updateHeroContent({ floating_badges: [...badges, { icon: 'Shield', text: '' }] })}
+            >
+              <Plus size={14} className="mr-1" /> Add Badge
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    // NUMBERS BANNER — items with number and label
+    if (key === 'numbers_banner') {
+      const content = parsed && typeof parsed === 'object' ? parsed : {};
+      const items = Array.isArray(content.items) ? content.items : [];
+      const updateItems = (newItems: any[]) => {
+        updateContent({ ...content, items: newItems });
+      };
+      return (
+        <div>
+          <Label className="mb-3 block">Number Statistics</Label>
+          <div className="space-y-2">
+            {items.map((item: any, i: number) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={item.number || ''}
+                  onChange={e => {
+                    const u = [...items];
+                    u[i] = { ...u[i], number: e.target.value };
+                    updateItems(u);
+                  }}
+                  placeholder="Number (e.g. 50,000+)"
+                  className="w-40"
+                />
+                <Input
+                  value={item.label || ''}
+                  onChange={e => {
+                    const u = [...items];
+                    u[i] = { ...u[i], label: e.target.value };
+                    updateItems(u);
+                  }}
+                  placeholder="Label"
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive shrink-0"
+                  onClick={() => updateItems(items.filter((_: any, j: number) => j !== i))}
+                >
+                  <Trash2 size={14} />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={() => updateItems([...items, { number: '', label: '' }])}
+          >
+            <Plus size={14} className="mr-1" /> Add Number
+          </Button>
+        </div>
+      );
+    }
+
+    // CTA — title and description are already in main fields; content has button config
+    if (key === 'cta') {
+      return (
+        <div>
+          <p className="text-sm text-muted-foreground">The CTA section uses the <strong>Title</strong> and <strong>Description</strong> fields above. Button text and links are hardcoded to "Get Started Today" → Login and "View Plans" → Plans section.</p>
+        </div>
+      );
+    }
+
     // Default: show raw JSON
     return (
       <div>
