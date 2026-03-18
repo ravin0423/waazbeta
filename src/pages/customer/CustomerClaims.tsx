@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/DashboardLayout';
 import ClaimSubmissionForm from '@/components/ClaimSubmissionForm';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Plus, Clock, CheckCircle, XCircle, Wrench } from 'lucide-react';
+import { FileText, Plus, Clock, CheckCircle, XCircle, Wrench, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
