@@ -16,9 +16,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Loader2, ShieldCheck, Clock, CheckCircle2, XCircle, QrCode, Banknote, Eye,
-  AlertTriangle, TrendingUp, TrendingDown, Download, RefreshCw, Search,
-  Phone, Mail, MessageSquare, Image, Calendar, ChevronLeft, ChevronRight,
-  Info, Flag, ExternalLink
+  AlertTriangle, TrendingUp, Download, RefreshCw, Search,
+  Mail, MessageSquare, Image, ChevronLeft, ChevronRight,
+  Info, ExternalLink, User, Shield, ListChecks
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
