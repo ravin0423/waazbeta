@@ -18,6 +18,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'second
 };
 
 const CustomerClaims = () => {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
