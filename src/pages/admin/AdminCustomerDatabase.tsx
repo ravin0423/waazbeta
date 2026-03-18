@@ -190,10 +190,11 @@ const AdminCustomerDatabase = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRow | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [customerDetail, setCustomerDetail] = useState<CustomerDetail>({ claims: [], subscriptionHistory: [], tickets: [] });
+  const [customerDetail, setCustomerDetail] = useState<CustomerDetail>({ claims: [], subscriptionHistory: [], tickets: [], activities: [] });
   const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
   const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
   const [segmentFilter, setSegmentFilter] = useState<string>('all');
+  const [churnRiskFilter, setChurnRiskFilter] = useState<string>('all');
 
   // Pre-computed LTV for all customers (for list view)
   const customerLTVMap = useMemo(() => {
