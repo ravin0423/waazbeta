@@ -1110,6 +1110,6 @@ const AdminDeviceApprovals = () => {
       </Dialog>
     </DashboardLayout>
   );
-
+};
 
 export default AdminDeviceApprovals;
