@@ -12,7 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Search, MapPin, ExternalLink, Download, Eye, Smartphone, FileText, Shield, Receipt, Clock, Activity, Users, TrendingUp, AlertTriangle, Star, BarChart3 } from 'lucide-react';
+import { Loader2, Search, MapPin, ExternalLink, Download, Eye, Smartphone, FileText, Shield, Receipt, Clock, Activity, Users, TrendingUp, AlertTriangle, Star, BarChart3, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { format, formatDistanceToNow, differenceInDays, differenceInMonths } from 'date-fns';
 
@@ -197,6 +199,8 @@ const AdminCustomerDatabase = () => {
   const [segmentFilter, setSegmentFilter] = useState<string>('all');
   const [churnRiskFilter, setChurnRiskFilter] = useState<string>('all');
 
+  const [deletingUser, setDeletingUser] = useState(false);
+
   // Pre-computed LTV for all customers (for list view)
   const customerLTVMap = useMemo(() => {
     const map: Record<string, LTVMetrics> = {};
@@ -284,6 +288,27 @@ const AdminCustomerDatabase = () => {
     setDetailLoading(false);
   };
 
+  const handleDeleteUser = async (customer: CustomerRow) => {
+    setDeletingUser(true);
+    try {
+      const res = await supabase.functions.invoke('delete-account-admin', {
+        body: { userId: customer.id },
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || 'Failed to delete user');
+        return;
+      }
+      toast.success(`Account for ${customer.full_name} has been deleted`);
+      setDetailOpen(false);
+      setSelectedCustomer(null);
+      // Remove from list
+      setCustomers(prev => prev.filter(c => c.id !== customer.id));
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setDeletingUser(false);
+    }
+  };
   const filtered = customers.filter(c => {
     const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -509,8 +534,40 @@ const AdminCustomerDatabase = () => {
         <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
           <SheetContent className="w-full sm:max-w-3xl p-0 flex flex-col">
             <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
-              <SheetTitle className="font-heading text-lg">{selectedCustomer?.full_name}</SheetTitle>
-              <SheetDescription>{selectedCustomer?.email}</SheetDescription>
+              <div className="flex items-start justify-between">
+                <div>
+                  <SheetTitle className="font-heading text-lg">{selectedCustomer?.full_name}</SheetTitle>
+                  <SheetDescription>{selectedCustomer?.email}</SheetDescription>
+                </div>
+                {selectedCustomer && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="gap-1 shrink-0">
+                        <Trash2 size={14} /> Delete User
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete User Account?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete <strong>{selectedCustomer.full_name}</strong> ({selectedCustomer.email}) and all their data. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteUser(selectedCustomer)}
+                          disabled={deletingUser}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deletingUser ? <Loader2 size={14} className="mr-2 animate-spin" /> : <Trash2 size={14} className="mr-2" />}
+                          Confirm Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
             </SheetHeader>
 
             <ScrollArea className="flex-1">
