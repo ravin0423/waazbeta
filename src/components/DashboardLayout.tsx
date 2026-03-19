@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Shield, FileText, Ticket, User, LogOut, Package, Receipt,
   Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone,
   Layers, MapPin, UserCog, Globe, ShieldCheck, ListChecks, QrCode, IndianRupee,
-  ChevronDown, Wallet, BadgeCheck, Building2, Target, Activity, Bell, Star
+  ChevronDown, Wallet, BadgeCheck, Building2, Target, Activity, Bell, Star, UserX
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -68,6 +68,7 @@ const adminNav: NavItem[] = [
   { label: 'Payment Settings', path: '/admin/payment-settings', icon: <QrCode size={20} /> },
   { label: 'Users & Roles', path: '/admin/user-roles', icon: <UserCog size={20} /> },
   { label: 'Landing Page', path: '/admin/landing-page', icon: <Globe size={20} /> },
+  { label: 'Account Deletions', path: '/admin/account-deletions', icon: <UserX size={20} /> },
 ];
 
 const partnerNav: NavItem[] = [

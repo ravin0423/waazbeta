@@ -44,6 +44,7 @@ import AdminFinancePartnerPayments from "./pages/admin/AdminFinancePartnerPaymen
 import AdminFinanceCompliance from "./pages/admin/AdminFinanceCompliance";
 import ClaimAssignment from "./pages/admin/ClaimAssignment";
 import ClaimsMonitoringDashboard from "./pages/admin/ClaimsMonitoringDashboard";
+import AdminAccountDeletions from "./pages/admin/AdminAccountDeletions";
 import PartnerDashboard from "./pages/partner/PartnerDashboard";
 import PartnerSales from "./pages/partner/PartnerSales";
 import PartnerCommissions from "./pages/partner/PartnerCommissions";
@@ -112,6 +113,7 @@ const AppRoutes = () => {
       <Route path="/admin/finance-compliance" element={<ProtectedRoute role="admin"><AdminFinanceCompliance /></ProtectedRoute>} />
       <Route path="/admin/claim-assignment" element={<ProtectedRoute role="admin"><ClaimAssignment /></ProtectedRoute>} />
       <Route path="/admin/claims-monitoring" element={<ProtectedRoute role="admin"><ClaimsMonitoringDashboard /></ProtectedRoute>} />
+      <Route path="/admin/account-deletions" element={<ProtectedRoute role="admin"><AdminAccountDeletions /></ProtectedRoute>} />
 
       {/* Partner routes */}
       <Route path="/partner" element={<ProtectedRoute role="partner"><PartnerDashboard /></ProtectedRoute>} />

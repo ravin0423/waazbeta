@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { Save, Loader2, User, Building2, Bell, CreditCard, Edit2, X } from 'lucide-react';
+import { Save, Loader2, User, Building2, Bell, CreditCard, Edit2, X, AlertTriangle, Trash2, Clock } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +22,9 @@ const PartnerSettings = () => {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [deletionReason, setDeletionReason] = useState('');
+  const [existingRequest, setExistingRequest] = useState<any>(null);
 
   // Editable fields
   const [formData, setFormData] = useState({
@@ -48,9 +53,10 @@ const PartnerSettings = () => {
     const fetchData = async () => {
       if (!user) return;
 
-      const [partnerRes, profileRes] = await Promise.all([
+      const [partnerRes, profileRes, deletionRes] = await Promise.all([
         supabase.from('partners').select('*').eq('user_id', user.id).maybeSingle(),
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+        supabase.from('account_deletion_requests').select('*').eq('user_id', user.id).in('status', ['pending', 'approved']).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ]);
 
       if (partnerRes.data) {
@@ -72,6 +78,8 @@ const PartnerSettings = () => {
           company: profileRes.data.company || '',
         });
       }
+
+      setExistingRequest(deletionRes.data);
 
       setLoading(false);
     };
@@ -141,6 +149,39 @@ const PartnerSettings = () => {
       toast.success('Password reset email sent! Check your inbox.');
     }
   };
+  const handleRequestDeletion = async () => {
+    if (!deletionReason.trim()) {
+      toast.error('Please provide a reason for account deletion');
+      return;
+    }
+    if (!user) return;
+    setSubmittingRequest(true);
+    const { error } = await supabase
+      .from('account_deletion_requests')
+      .insert({
+        user_id: user.id,
+        user_email: user.email,
+        user_name: user.fullName,
+        user_role: 'partner',
+        reason: deletionReason.trim(),
+      });
+    setSubmittingRequest(false);
+    if (error) {
+      toast.error('Failed to submit deletion request');
+      return;
+    }
+    toast.success('Deletion request submitted. An admin will review it.');
+    setDeletionReason('');
+    const { data } = await supabase
+      .from('account_deletion_requests')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('status', ['pending', 'approved'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setExistingRequest(data);
+  };
 
   if (loading) {
     return (
@@ -164,6 +205,7 @@ const PartnerSettings = () => {
               <TabsTrigger value="profile" className="gap-2"><User size={14} /> Profile</TabsTrigger>
               <TabsTrigger value="account" className="gap-2"><Building2 size={14} /> Account</TabsTrigger>
               <TabsTrigger value="notifications" className="gap-2"><Bell size={14} /> Notifications</TabsTrigger>
+              <TabsTrigger value="danger" className="gap-2 text-destructive"><AlertTriangle size={14} /> Danger Zone</TabsTrigger>
             </TabsList>
 
             {/* === PARTNER PROFILE TAB === */}
@@ -345,6 +387,80 @@ const PartnerSettings = () => {
                   <p className="text-xs text-muted-foreground pt-2 border-t border-border">
                     Notification preferences are applied locally. Contact admin for email/SMS delivery configuration.
                   </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* === DANGER ZONE TAB === */}
+            <TabsContent value="danger" className="space-y-6">
+              <Card className="border-destructive/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle size={20} />
+                    Delete Account
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {existingRequest ? (
+                    <div className="flex items-start gap-3 p-4 rounded-lg bg-muted">
+                      <Clock size={20} className="text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="font-medium">Deletion request {existingRequest.status === 'approved' ? 'approved' : 'pending'}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          You submitted a deletion request on {new Date(existingRequest.created_at).toLocaleDateString()}.
+                          {existingRequest.status === 'pending' && ' An admin will review it shortly.'}
+                          {existingRequest.status === 'approved' && ' Your account will be deleted by an admin soon.'}
+                        </p>
+                        <Badge variant="outline" className="mt-2">
+                          {existingRequest.status === 'pending' ? 'Pending Review' : 'Approved'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Request permanent deletion of your account. An admin will review and process your request.
+                      </p>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="gap-2">
+                            <Trash2 size={16} />
+                            Request Account Deletion
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Request Account Deletion</AlertDialogTitle>
+                            <AlertDialogDescription asChild>
+                              <div className="space-y-3">
+                                <span className="block">Please provide a reason for deleting your account. An admin will review and process your request.</span>
+                                <div className="space-y-2">
+                                  <Label className="text-foreground font-medium">Reason for deletion *</Label>
+                                  <Textarea
+                                    value={deletionReason}
+                                    onChange={(e) => setDeletionReason(e.target.value)}
+                                    placeholder="Please explain why you want to delete your account..."
+                                    rows={4}
+                                  />
+                                </div>
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setDeletionReason('')}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleRequestDeletion}
+                              disabled={!deletionReason.trim() || submittingRequest}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {submittingRequest ? <Loader2 size={14} className="mr-2 animate-spin" /> : <Trash2 size={14} className="mr-2" />}
+                              Submit Request
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
