@@ -42,13 +42,39 @@ const CustomerProfile = () => {
     toast.success('Profile updated successfully!');
   };
 
+  const handleDeleteAccount = async () => {
+    if (confirmText !== 'DELETE') return;
+    setDeleting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('You must be logged in');
+        return;
+      }
+      const res = await supabase.functions.invoke('delete-account', {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || 'Failed to delete account');
+        return;
+      }
+      toast.success('Your account has been deleted');
+      await logout();
+      navigate('/');
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
         <h1 className="font-heading text-2xl font-bold mb-1">My Profile</h1>
         <p className="text-muted-foreground mb-6">Manage your account details</p>
 
-        <div className="max-w-2xl">
+        <div className="max-w-2xl space-y-6">
           <Card className="shadow-card">
             <CardContent className="p-6">
               <form onSubmit={handleSave} className="space-y-6">
@@ -96,6 +122,55 @@ const CustomerProfile = () => {
                   Save Changes
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+
+          {/* Danger Zone */}
+          <Card className="border-destructive/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle size={20} />
+                Danger Zone
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="gap-2">
+                    <Trash2 size={16} />
+                    Delete My Account
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription className="space-y-3">
+                      <span className="block">This will permanently delete your account, devices, claims, tickets, and all associated data. This action is <strong>irreversible</strong>.</span>
+                      <span className="block font-medium text-foreground">Type <strong>DELETE</strong> to confirm:</span>
+                      <Input
+                        value={confirmText}
+                        onChange={(e) => setConfirmText(e.target.value)}
+                        placeholder="Type DELETE"
+                        className="mt-1"
+                      />
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setConfirmText('')}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAccount}
+                      disabled={confirmText !== 'DELETE' || deleting}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {deleting ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Trash2 size={16} className="mr-2" />}
+                      Delete Account
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </div>
