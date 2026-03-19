@@ -534,8 +534,40 @@ const AdminCustomerDatabase = () => {
         <Sheet open={detailOpen} onOpenChange={setDetailOpen}>
           <SheetContent className="w-full sm:max-w-3xl p-0 flex flex-col">
             <SheetHeader className="px-6 pt-6 pb-4 border-b border-border">
-              <SheetTitle className="font-heading text-lg">{selectedCustomer?.full_name}</SheetTitle>
-              <SheetDescription>{selectedCustomer?.email}</SheetDescription>
+              <div className="flex items-start justify-between">
+                <div>
+                  <SheetTitle className="font-heading text-lg">{selectedCustomer?.full_name}</SheetTitle>
+                  <SheetDescription>{selectedCustomer?.email}</SheetDescription>
+                </div>
+                {selectedCustomer && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm" className="gap-1 shrink-0">
+                        <Trash2 size={14} /> Delete User
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete User Account?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will permanently delete <strong>{selectedCustomer.full_name}</strong> ({selectedCustomer.email}) and all their data. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDeleteUser(selectedCustomer)}
+                          disabled={deletingUser}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {deletingUser ? <Loader2 size={14} className="mr-2 animate-spin" /> : <Trash2 size={14} className="mr-2" />}
+                          Confirm Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
             </SheetHeader>
 
             <ScrollArea className="flex-1">
