@@ -820,7 +820,7 @@ const DeviceOnboardingWizard = () => {
                     <h3 className="text-sm font-heading font-semibold flex items-center gap-2"><Smartphone size={14} /> Device Information</h3>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
                       <span className="text-muted-foreground">Type:</span>
-                      <span>{DEVICE_TYPES.find(d => d.value === form1.getValues('deviceType'))?.label}</span>
+                      <span>{categories.find(c => c.id === form1.getValues('deviceType'))?.name || '—'}</span>
                       <span className="text-muted-foreground">Brand:</span><span>{form1.getValues('brand')}</span>
                       <span className="text-muted-foreground">Model:</span><span>{form1.getValues('model')}</span>
                       {form1.getValues('color') && <><span className="text-muted-foreground">Color:</span><span>{form1.getValues('color')}</span></>}
