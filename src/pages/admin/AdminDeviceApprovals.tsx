@@ -449,18 +449,26 @@ const AdminDeviceApprovals = () => {
     const fullReason = rejectReason === 'Other' ? rejectMessage : rejectReason;
     const message = rejectMessage || `Your device was rejected: ${fullReason}. Please fix the issue and resubmit.`;
 
-    const { error } = await supabase.from('customer_devices').update({
-      status: 'rejected', payment_status: 'rejected', rejection_reason: fullReason,
-      rejected_at: new Date().toISOString(), rejected_by: user.id,
-    } as any).eq('id', selectedDevice.id);
+    const { error, data, count } = await supabase.from('customer_devices').update({
+      status: 'rejected',
+      payment_status: 'rejected',
+      rejection_reason: fullReason,
+      rejected_at: new Date().toISOString(),
+      rejected_by: user.id,
+    }).eq('id', selectedDevice.id).select();
 
-    if (!error) {
+    console.log('Reject result:', { error, data, count, deviceId: selectedDevice.id });
+
+    if (!error && data && data.length > 0) {
       await Promise.all([
         createAuditLog(selectedDevice.id, 'rejected', fullReason, message),
         createNotification(selectedDevice.user_id, 'device_rejected', 'Device Rejected', message, selectedDevice.id),
       ]);
       toast.success('Device rejected');
-    } else toast.error('Failed to reject');
+    } else {
+      console.error('Reject failed:', error, 'Rows affected:', data?.length);
+      toast.error(error?.message || 'Failed to reject device — no rows updated');
+    }
 
     setProcessing(false); setRejectDialogOpen(false); setDrawerOpen(false);
     setRejectReason(''); setRejectMessage(''); fetchDevices(); fetchStats();
