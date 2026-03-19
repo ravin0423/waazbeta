@@ -21,6 +21,7 @@ interface NavItem {
 
 const customerNavFull: NavItem[] = [
   { label: 'Dashboard', path: '/customer', icon: <LayoutDashboard size={20} /> },
+  { label: 'My Devices', path: '/customer/devices', icon: <Smartphone size={20} /> },
   { label: 'Subscriptions', path: '/customer/subscriptions', icon: <Shield size={20} /> },
   { label: 'Claims', path: '/customer/claims', icon: <FileText size={20} /> },
   { label: 'Invoices', path: '/customer/invoices', icon: <Receipt size={20} /> },
