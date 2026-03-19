@@ -112,6 +112,7 @@ const AppRoutes = () => {
       <Route path="/partner/commissions" element={<ProtectedRoute role="partner"><PartnerCommissions /></ProtectedRoute>} />
       <Route path="/partner/finance" element={<ProtectedRoute role="partner"><PartnerFinance /></ProtectedRoute>} />
       <Route path="/partner/customers" element={<ProtectedRoute role="partner"><PartnerCustomers /></ProtectedRoute>} />
+      <Route path="/partner/performance" element={<ProtectedRoute role="partner"><PartnerPerformance /></ProtectedRoute>} />
       <Route path="/partner/settings" element={<ProtectedRoute role="partner"><PartnerSettings /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
