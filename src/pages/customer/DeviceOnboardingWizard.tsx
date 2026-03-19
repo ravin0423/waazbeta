@@ -579,19 +579,19 @@ const DeviceOnboardingWizard = () => {
                     <Label>Device Type <span className="text-destructive">*</span></Label>
                     <Controller control={form1.control} name="deviceType" render={({ field }) => (
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
-                        {DEVICE_TYPES.map(dt => {
-                          const Icon = dt.icon;
+                        {categories.map(cat => {
+                          const Icon = getCategoryIcon(cat.name);
                           return (
                             <div
-                              key={dt.value}
-                              onClick={() => field.onChange(dt.value)}
+                              key={cat.id}
+                              onClick={() => field.onChange(cat.id)}
                               className={cn(
                                 "border rounded-lg p-3 text-center cursor-pointer transition-all",
-                                field.value === dt.value ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/40"
+                                field.value === cat.id ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/40"
                               )}
                             >
                               <Icon size={24} className="mx-auto mb-1" />
-                              <p className="text-xs font-medium">{dt.label}</p>
+                              <p className="text-xs font-medium">{cat.name}</p>
                             </div>
                           );
                         })}
