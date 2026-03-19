@@ -1030,6 +1030,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          app_notifications: boolean
+          created_at: string
+          email_digest: string
+          email_notifications: boolean
+          id: string
+          sms_notifications: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_notifications?: boolean
+          created_at?: string
+          email_digest?: string
+          email_notifications?: boolean
+          id?: string
+          sms_notifications?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_notifications?: boolean
+          created_at?: string
+          email_digest?: string
+          email_notifications?: boolean
+          id?: string
+          sms_notifications?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
