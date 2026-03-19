@@ -26,6 +26,7 @@ const customerNavFull: NavItem[] = [
   { label: 'Claims', path: '/customer/claims', icon: <FileText size={20} /> },
   { label: 'Invoices', path: '/customer/invoices', icon: <Receipt size={20} /> },
   { label: 'Service Tickets', path: '/customer/tickets', icon: <Ticket size={20} /> },
+  { label: 'Notifications', path: '/customer/notifications', icon: <Bell size={20} /> },
   { label: 'Profile', path: '/customer/profile', icon: <User size={20} /> },
 ];
 
