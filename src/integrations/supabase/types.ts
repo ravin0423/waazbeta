@@ -216,6 +216,41 @@ export type Database = {
           },
         ]
       }
+      claim_messages: {
+        Row: {
+          claim_id: string
+          created_at: string
+          id: string
+          message: string
+          sender_id: string
+          sender_role: string
+        }
+        Insert: {
+          claim_id: string
+          created_at?: string
+          id?: string
+          message: string
+          sender_id: string
+          sender_role?: string
+        }
+        Update: {
+          claim_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claim_messages_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "service_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       claim_status_updates: {
         Row: {
           claim_id: string
@@ -1376,6 +1411,66 @@ export type Database = {
             columns: ["device_id"]
             isOneToOne: false
             referencedRelation: "customer_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_schedules: {
+        Row: {
+          claim_id: string
+          confirmed_at: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          partner_id: string | null
+          partner_response: string | null
+          preferred_date: string
+          preferred_time: string
+          special_requests: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          claim_id: string
+          confirmed_at?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          partner_id?: string | null
+          partner_response?: string | null
+          preferred_date: string
+          preferred_time: string
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          claim_id?: string
+          confirmed_at?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          partner_id?: string | null
+          partner_response?: string | null
+          preferred_date?: string
+          preferred_time?: string
+          special_requests?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_schedules_claim_id_fkey"
+            columns: ["claim_id"]
+            isOneToOne: false
+            referencedRelation: "service_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_schedules_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
