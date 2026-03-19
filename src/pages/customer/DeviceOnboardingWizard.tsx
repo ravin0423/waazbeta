@@ -68,13 +68,26 @@ type Step1Data = z.infer<typeof step1Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
 type Step4Data = z.infer<typeof step4Schema>;
 
-// ─── Constants ─────────────────────────────────────────────────
-const DEVICE_TYPES = [
-  { value: 'mobile_phone', label: 'Mobile Phone', icon: Smartphone },
-  { value: 'tablet', label: 'Tablet', icon: Tablet },
-  { value: 'laptop', label: 'Laptop', icon: Laptop },
-  { value: 'smartwatch', label: 'Smartwatch', icon: Watch },
-];
+// ─── Icon mapping for gadget categories ────────────────────────
+const CATEGORY_ICON_MAP: Record<string, any> = {
+  smartphone: Smartphone, 'mobile phone': Smartphone, mobile: Smartphone, phone: Smartphone,
+  tablet: Tablet, laptop: Laptop, smartwatch: Watch, 'smart watch': Watch, watch: Watch,
+  desktop: Monitor, computer: Monitor, pc: Monitor,
+  cctv: Camera, camera: Camera, dslr: Camera,
+  'gaming console': Gamepad2, gaming: Gamepad2,
+  printer: Printer, projector: Projector,
+  television: Tv, tv: Tv,
+  headphones: Headphones, earbuds: Headphones,
+  speaker: Speaker, soundbar: Speaker,
+};
+
+const getCategoryIcon = (name: string) => {
+  const lower = name.toLowerCase();
+  for (const [key, icon] of Object.entries(CATEGORY_ICON_MAP)) {
+    if (lower.includes(key)) return icon;
+  }
+  return HardDrive; // default icon
+};
 
 const POPULAR_BRANDS = [
   'Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo', 'Realme',
