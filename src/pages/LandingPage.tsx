@@ -91,16 +91,40 @@ const LandingPage = () => {
                 {s.subtitle}
               </motion.span>
 
-              {/* Tagline */}
-              <motion.p
-                initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ delay: 0.35, duration: 0.8, ease: 'easeOut' }}
-                className="text-sm sm:text-base font-bold tracking-[0.25em] uppercase mb-4 bg-clip-text text-transparent"
-                style={{ backgroundImage: 'var(--gradient-accent)' }}
-              >
-                Innovating Your Warranty Experience
-              </motion.p>
+              {/* Tagline — cinematic word-by-word reveal */}
+              <div className="mb-5 overflow-hidden">
+                <motion.div className="flex flex-wrap gap-x-[0.35em] text-[0.65rem] sm:text-xs font-bold tracking-[0.35em] uppercase">
+                  {'Innovating Your Warranty Experience'.split(' ').map((word, i) => (
+                    <motion.span
+                      key={word + i}
+                      initial={{ y: '100%', opacity: 0 }}
+                      animate={{ y: '0%', opacity: 1 }}
+                      transition={{ delay: 0.3 + i * 0.12, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                      className="inline-block"
+                    >
+                      <span
+                        className={
+                          i === 0
+                            ? 'bg-clip-text text-transparent bg-gradient-to-r from-accent to-[hsl(25,95%,55%)]'
+                            : i === 3
+                              ? 'bg-clip-text text-transparent bg-gradient-to-r from-primary to-[hsl(180,70%,42%)]'
+                              : 'text-primary-foreground/50'
+                        }
+                      >
+                        {word}
+                      </span>
+                    </motion.span>
+                  ))}
+                </motion.div>
+                {/* Animated underline sweep */}
+                <motion.div
+                  initial={{ scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
+                  transition={{ delay: 0.9, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  className="h-[2px] mt-2 origin-left w-48 sm:w-64"
+                  style={{ backgroundImage: 'linear-gradient(90deg, hsl(var(--accent)), hsl(var(--primary)), transparent)' }}
+                />
+              </div>
 
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-extrabold text-primary-foreground leading-[1.1] mb-6 tracking-tight">
                 Every device
