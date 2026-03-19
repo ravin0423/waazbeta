@@ -647,7 +647,7 @@ const DeviceOnboardingWizard = () => {
                   </div>
 
                   {/* IMEI (mobile only) */}
-                  {(deviceType === 'mobile_phone' || deviceType === 'tablet') && (
+                  {(() => { const cat = categories.find(c => c.id === deviceType); const catName = cat?.name?.toLowerCase() || ''; return catName.includes('mobile') || catName.includes('phone') || catName.includes('smartphone') || catName.includes('tablet'); })() && (
                     <div>
                       <Label htmlFor="imei">IMEI Number <span className="text-muted-foreground text-xs">(optional)</span></Label>
                       <Input id="imei" {...form1.register('imeiNumber')} placeholder="15-digit IMEI" maxLength={15} className="mt-1" />
