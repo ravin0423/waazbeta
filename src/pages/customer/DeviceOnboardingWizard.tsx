@@ -434,8 +434,13 @@ const DeviceOnboardingWizard = () => {
     }
     if (step === 2 && !devicePhoto) { setPhotoError('Device photo is required'); return; }
     if (step === 3) { const valid = await form3.trigger(); if (!valid) return; }
-    if (step === 4) { const valid = await form4.trigger(); if (!valid) return; }
-    setStep(s => Math.min(s + 1, 5));
+    if (step === 4) {
+      if (!paymentMethod) { setPaymentError('Please select a payment method'); return; }
+      if (paymentMethod === 'upi' && !upiTransactionId.trim()) { setPaymentError('Please enter the UPI Transaction ID'); return; }
+      setPaymentError('');
+    }
+    if (step === 5) { const valid = await form4.trigger(); if (!valid) return; }
+    setStep(s => Math.min(s + 1, 6));
   };
   const goBack = () => setStep(s => Math.max(s - 1, 1));
 
