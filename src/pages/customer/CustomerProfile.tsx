@@ -1,28 +1,45 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { Camera, Save, Loader2, Trash2, AlertTriangle } from 'lucide-react';
+import { Camera, Save, Loader2, Trash2, AlertTriangle, Clock } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 const CustomerProfile = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [name, setName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [email] = useState(user?.email || '');
   const [company, setCompany] = useState(user?.company || '');
   const [avatar, setAvatar] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [confirmText, setConfirmText] = useState('');
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [deletionReason, setDeletionReason] = useState('');
+  const [existingRequest, setExistingRequest] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchDeletionRequest = async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('account_deletion_requests')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('status', ['pending', 'approved'])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      setExistingRequest(data);
+    };
+    fetchDeletionRequest();
+  }, [user]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,30 +59,39 @@ const CustomerProfile = () => {
     toast.success('Profile updated successfully!');
   };
 
-  const handleDeleteAccount = async () => {
-    if (confirmText !== 'DELETE') return;
-    setDeleting(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        toast.error('You must be logged in');
-        return;
-      }
-      const res = await supabase.functions.invoke('delete-account', {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      if (res.error || res.data?.error) {
-        toast.error(res.data?.error || 'Failed to delete account');
-        return;
-      }
-      toast.success('Your account has been deleted');
-      await logout();
-      navigate('/');
-    } catch {
-      toast.error('Something went wrong');
-    } finally {
-      setDeleting(false);
+  const handleRequestDeletion = async () => {
+    if (!deletionReason.trim()) {
+      toast.error('Please provide a reason for account deletion');
+      return;
     }
+    if (!user) return;
+    setSubmittingRequest(true);
+    const { error } = await supabase
+      .from('account_deletion_requests')
+      .insert({
+        user_id: user.id,
+        user_email: user.email,
+        user_name: user.fullName,
+        user_role: 'customer',
+        reason: deletionReason.trim(),
+      });
+    setSubmittingRequest(false);
+    if (error) {
+      toast.error('Failed to submit deletion request');
+      return;
+    }
+    toast.success('Deletion request submitted. An admin will review it.');
+    setDeletionReason('');
+    // Refresh
+    const { data } = await supabase
+      .from('account_deletion_requests')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('status', ['pending', 'approved'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setExistingRequest(data);
   };
 
   return (
@@ -134,43 +160,66 @@ const CustomerProfile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                Permanently delete your account and all associated data. This action cannot be undone.
-              </p>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="gap-2">
-                    <Trash2 size={16} />
-                    Delete My Account
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-3">
-                      <span className="block">This will permanently delete your account, devices, claims, tickets, and all associated data. This action is <strong>irreversible</strong>.</span>
-                      <span className="block font-medium text-foreground">Type <strong>DELETE</strong> to confirm:</span>
-                      <Input
-                        value={confirmText}
-                        onChange={(e) => setConfirmText(e.target.value)}
-                        placeholder="Type DELETE"
-                        className="mt-1"
-                      />
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setConfirmText('')}>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handleDeleteAccount}
-                      disabled={confirmText !== 'DELETE' || deleting}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {deleting ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Trash2 size={16} className="mr-2" />}
-                      Delete Account
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              {existingRequest ? (
+                <div className="flex items-start gap-3 p-4 rounded-lg bg-muted">
+                  <Clock size={20} className="text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="font-medium">Deletion request {existingRequest.status === 'approved' ? 'approved' : 'pending'}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      You submitted a deletion request on {new Date(existingRequest.created_at).toLocaleDateString()}.
+                      {existingRequest.status === 'pending' && ' An admin will review it shortly.'}
+                      {existingRequest.status === 'approved' && ' Your account will be deleted by an admin soon.'}
+                    </p>
+                    <Badge variant="outline" className="mt-2">
+                      {existingRequest.status === 'pending' ? 'Pending Review' : 'Approved'}
+                    </Badge>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Request permanent deletion of your account. An admin will review and process your request.
+                  </p>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="gap-2">
+                        <Trash2 size={16} />
+                        Request Account Deletion
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Request Account Deletion</AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                          <div className="space-y-3">
+                            <span className="block">Please provide a reason for deleting your account. An admin will review and process your request.</span>
+                            <div className="space-y-2">
+                              <Label className="text-foreground font-medium">Reason for deletion *</Label>
+                              <Textarea
+                                value={deletionReason}
+                                onChange={(e) => setDeletionReason(e.target.value)}
+                                placeholder="Please explain why you want to delete your account..."
+                                rows={4}
+                              />
+                            </div>
+                          </div>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setDeletionReason('')}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleRequestDeletion}
+                          disabled={!deletionReason.trim() || submittingRequest}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          {submittingRequest ? <Loader2 size={16} className="mr-2 animate-spin" /> : <Trash2 size={16} className="mr-2" />}
+                          Submit Request
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
