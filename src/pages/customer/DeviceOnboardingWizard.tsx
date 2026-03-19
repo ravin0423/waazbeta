@@ -328,10 +328,16 @@ const DeviceOnboardingWizard = () => {
   // Load plans when device type (category ID) changes
   const deviceType = form1.watch('deviceType');
   useEffect(() => {
+    // Clear previous plan selection and plans when device type changes
+    setPlans([]);
+    form3.setValue('planId', '');
+    
     if (!deviceType) return;
     // deviceType is now a category ID directly
+    console.log('Fetching plans for category ID:', deviceType);
     supabase.from('subscription_plans').select('*').eq('is_active', true).eq('gadget_category_id', deviceType).order('annual_price')
       .then(({ data }) => {
+        console.log('Plans found for category:', data?.length, data?.map(p => p.name));
         if (data?.length) { setPlans(data as Plan[]); }
         else {
           supabase.from('subscription_plans').select('*').eq('is_active', true).is('gadget_category_id', null).order('annual_price')
@@ -354,13 +360,19 @@ const DeviceOnboardingWizard = () => {
     return () => clearInterval(interval);
   }, [step]);
 
-  // Restore draft
+  // Restore draft (only if deviceType looks like a UUID - skip stale drafts from old format)
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DRAFT_KEY);
       if (!raw) return;
       const draft = JSON.parse(raw);
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (draft.step1) {
+        // Skip restoring if deviceType is not a valid UUID (stale draft)
+        if (draft.step1.deviceType && !uuidRegex.test(draft.step1.deviceType)) {
+          sessionStorage.removeItem(DRAFT_KEY);
+          return;
+        }
         Object.entries(draft.step1).forEach(([k, v]) => {
           if (k === 'purchaseDate' && v) form1.setValue(k as any, new Date(v as string));
           else if (v) form1.setValue(k as any, v as any);
