@@ -17,6 +17,7 @@ import DeviceOnboardingWizard from "./pages/customer/DeviceOnboardingWizard";
 import CustomerDevices from "./pages/customer/CustomerDevices";
 import ClaimDetailPage from "./pages/customer/ClaimDetailPage";
 import CustomerNotifications from "./pages/customer/CustomerNotifications";
+import CustomerFeedback from "./pages/customer/CustomerFeedback";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
