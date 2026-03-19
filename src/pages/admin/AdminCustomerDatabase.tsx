@@ -240,19 +240,31 @@ const AdminCustomerDatabase = () => {
       const claimsByUser = claims.reduce((acc: Record<string, number>, c) => { acc[c.user_id] = (acc[c.user_id] || 0) + 1; return acc; }, {});
       const invoicesByUser = invoices.reduce((acc: Record<string, any[]>, inv) => { if (inv.user_id) { if (!acc[inv.user_id]) acc[inv.user_id] = []; acc[inv.user_id].push(inv); } return acc; }, {});
 
-      const rows: CustomerRow[] = profiles
-        .filter(p => devicesByUser[p.id]?.length > 0)
-        .map(p => {
-          const userDevices = devicesByUser[p.id] || [];
-          const referrerId = userDevices.find((d: any) => d.referred_by_partner_id)?.referred_by_partner_id;
-          return {
-            ...p,
-            devices: userDevices,
-            claimsCount: claimsByUser[p.id] || 0,
-            invoices: invoicesByUser[p.id] || [],
-            partnerName: referrerId ? partnerMap[referrerId] || null : null,
-          };
-        });
+      // Build profile map for quick lookup
+      const profileMap = profiles.reduce((acc: Record<string, any>, p) => { acc[p.id] = p; return acc; }, {});
+
+      // Get all unique user IDs that have devices
+      const allUserIdsWithDevices = Object.keys(devicesByUser);
+
+      const rows: CustomerRow[] = allUserIdsWithDevices.map(userId => {
+        const profile = profileMap[userId];
+        const userDevices = devicesByUser[userId] || [];
+        const referrerId = userDevices.find((d: any) => d.referred_by_partner_id)?.referred_by_partner_id;
+        return {
+          id: userId,
+          full_name: profile?.full_name || userDevices[0]?.whatsapp_number || 'Unknown',
+          email: profile?.email || '',
+          phone: profile?.phone || userDevices[0]?.whatsapp_number || null,
+          created_at: profile?.created_at || userDevices[0]?.created_at || new Date().toISOString(),
+          devices: userDevices,
+          claimsCount: claimsByUser[userId] || 0,
+          invoices: invoicesByUser[userId] || [],
+          partnerName: referrerId ? partnerMap[referrerId] || null : null,
+        };
+      });
+
+      // Sort by created_at descending
+      rows.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setCustomers(rows);
       setLoading(false);
