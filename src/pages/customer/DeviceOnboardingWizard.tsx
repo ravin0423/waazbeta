@@ -108,6 +108,7 @@ const STEPS = [
   { label: 'Device Info', icon: Smartphone },
   { label: 'Proof & Docs', icon: Upload },
   { label: 'Select Plan', icon: Shield },
+  { label: 'Payment', icon: CreditCard },
   { label: 'Address', icon: MapPin },
   { label: 'Review', icon: Eye },
 ];
