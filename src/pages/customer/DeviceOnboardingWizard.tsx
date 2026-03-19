@@ -318,10 +318,15 @@ const DeviceOnboardingWizard = () => {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [termsError, setTermsError] = useState('');
 
-  // Load categories on mount
+  // Load categories and UPI QR on mount
   useEffect(() => {
     supabase.from('gadget_categories').select('id, name').eq('is_active', true).order('name')
       .then(({ data }) => setCategories(data || []));
+    supabase.from('payment_settings').select('setting_key, setting_value').eq('setting_key', 'upi_qr_url')
+      .then(({ data }) => {
+        const qr = (data as any[])?.find((s: any) => s.setting_key === 'upi_qr_url');
+        if (qr) setUpiQrUrl(qr.setting_value);
+      });
   }, []);
 
   // Pre-fill from profile
