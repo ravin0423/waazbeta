@@ -946,8 +946,8 @@ const DeviceOnboardingWizard = () => {
           )}
 
           {/* ─── Step 6: Review & Confirm ─── */}
-          {step === 5 && (
-            <motion.div key="s5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+          {step === 6 && (
+            <motion.div key="s6" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
               <Card>
                 <CardHeader>
                   <CardTitle className="font-heading text-lg flex items-center gap-2"><Eye size={20} className="text-primary" /> Review & Confirm</CardTitle>
