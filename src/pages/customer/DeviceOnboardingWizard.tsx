@@ -1010,7 +1010,7 @@ const DeviceOnboardingWizard = () => {
                         <><span className="text-muted-foreground">Transaction ID:</span><span className="font-mono text-xs">{upiTransactionId}</span></>
                       )}
                       {paymentMethod === 'cash' && (
-                        <><span className="text-muted-foreground">Status:</span><span className="text-amber-500">Pending collection</span></>
+                        <><span className="text-muted-foreground">Status:</span><span className="text-accent-foreground">Pending collection</span></>
                       )}
                     </div>
                   </div>
