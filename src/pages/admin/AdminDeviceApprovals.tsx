@@ -424,21 +424,26 @@ const AdminDeviceApprovals = () => {
     const endDate = new Date(now);
     endDate.setFullYear(endDate.getFullYear() + 1);
 
-    const { error } = await supabase.from('customer_devices').update({
-      status: 'active', payment_status: 'confirmed', approved_by: user.id,
+    const { error, data } = await supabase.from('customer_devices').update({
+      status: 'active',
+      payment_status: 'confirmed',
+      approved_by: user.id,
       approved_at: now.toISOString(),
       subscription_start: now.toISOString().split('T')[0],
       subscription_end: endDate.toISOString().split('T')[0],
-    } as any).eq('id', selectedDevice.id);
+    }).eq('id', selectedDevice.id).select();
 
-    if (!error) {
+    if (!error && data && data.length > 0) {
       await Promise.all([
         createAuditLog(selectedDevice.id, 'approved', undefined, 'Approved by admin'),
         createNotification(selectedDevice.user_id, 'device_approved', 'Device Approved! 🎉',
           `Your device ${selectedDevice.product_name} has been approved. You can now file claims.`, selectedDevice.id),
       ]);
       toast.success(`Device approved for ${selectedDevice.customer_name}`);
-    } else toast.error('Failed to approve device');
+    } else {
+      console.error('Approve failed:', error, 'Rows:', data?.length);
+      toast.error(error?.message || 'Failed to approve device');
+    }
 
     setProcessing(false); setDrawerOpen(false); fetchDevices(); fetchStats();
   };
@@ -449,18 +454,26 @@ const AdminDeviceApprovals = () => {
     const fullReason = rejectReason === 'Other' ? rejectMessage : rejectReason;
     const message = rejectMessage || `Your device was rejected: ${fullReason}. Please fix the issue and resubmit.`;
 
-    const { error } = await supabase.from('customer_devices').update({
-      status: 'rejected', payment_status: 'rejected', rejection_reason: fullReason,
-      rejected_at: new Date().toISOString(), rejected_by: user.id,
-    } as any).eq('id', selectedDevice.id);
+    const { error, data, count } = await supabase.from('customer_devices').update({
+      status: 'rejected',
+      payment_status: 'rejected',
+      rejection_reason: fullReason,
+      rejected_at: new Date().toISOString(),
+      rejected_by: user.id,
+    }).eq('id', selectedDevice.id).select();
 
-    if (!error) {
+    console.log('Reject result:', { error, data, count, deviceId: selectedDevice.id });
+
+    if (!error && data && data.length > 0) {
       await Promise.all([
         createAuditLog(selectedDevice.id, 'rejected', fullReason, message),
         createNotification(selectedDevice.user_id, 'device_rejected', 'Device Rejected', message, selectedDevice.id),
       ]);
       toast.success('Device rejected');
-    } else toast.error('Failed to reject');
+    } else {
+      console.error('Reject failed:', error, 'Rows affected:', data?.length);
+      toast.error(error?.message || 'Failed to reject device — no rows updated');
+    }
 
     setProcessing(false); setRejectDialogOpen(false); setDrawerOpen(false);
     setRejectReason(''); setRejectMessage(''); fetchDevices(); fetchStats();
@@ -514,10 +527,13 @@ const AdminDeviceApprovals = () => {
     const sel = devices.filter(d => selectedIds.has(d.id));
 
     const { error } = await supabase.from('customer_devices').update({
-      status: 'active', payment_status: 'confirmed', approved_by: user.id,
-      approved_at: now.toISOString(), subscription_start: now.toISOString().split('T')[0],
+      status: 'active',
+      payment_status: 'confirmed',
+      approved_by: user.id,
+      approved_at: now.toISOString(),
+      subscription_start: now.toISOString().split('T')[0],
       subscription_end: endDate.toISOString().split('T')[0],
-    } as any).in('id', ids);
+    }).in('id', ids);
 
     if (!error) {
       await Promise.all(sel.flatMap(d => [
@@ -537,9 +553,12 @@ const AdminDeviceApprovals = () => {
     const sel = devices.filter(d => selectedIds.has(d.id));
 
     const { error } = await supabase.from('customer_devices').update({
-      status: 'rejected', payment_status: 'rejected', rejection_reason: bulkRejectReason,
-      rejected_at: new Date().toISOString(), rejected_by: user.id,
-    } as any).in('id', ids);
+      status: 'rejected',
+      payment_status: 'rejected',
+      rejection_reason: bulkRejectReason,
+      rejected_at: new Date().toISOString(),
+      rejected_by: user.id,
+    }).in('id', ids);
 
     if (!error) {
       await Promise.all(sel.flatMap(d => [
