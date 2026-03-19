@@ -181,8 +181,8 @@ const PartnerSettings = () => {
       .limit(1)
       .maybeSingle();
     setExistingRequest(data);
-  };
 
+  if (loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-20">
