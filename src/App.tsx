@@ -113,6 +113,7 @@ const AppRoutes = () => {
       <Route path="/admin/finance-compliance" element={<ProtectedRoute role="admin"><AdminFinanceCompliance /></ProtectedRoute>} />
       <Route path="/admin/claim-assignment" element={<ProtectedRoute role="admin"><ClaimAssignment /></ProtectedRoute>} />
       <Route path="/admin/claims-monitoring" element={<ProtectedRoute role="admin"><ClaimsMonitoringDashboard /></ProtectedRoute>} />
+      <Route path="/admin/account-deletions" element={<ProtectedRoute role="admin"><AdminAccountDeletions /></ProtectedRoute>} />
 
       {/* Partner routes */}
       <Route path="/partner" element={<ProtectedRoute role="partner"><PartnerDashboard /></ProtectedRoute>} />
