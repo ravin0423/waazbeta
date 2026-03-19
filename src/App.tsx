@@ -48,6 +48,7 @@ import PartnerCustomers from "./pages/partner/PartnerCustomers";
 import PartnerSettings from "./pages/partner/PartnerSettings";
 import PartnerFinance from "./pages/partner/PartnerFinance";
 import PartnerPerformance from "./pages/partner/PartnerPerformance";
+import PartnerTickets from "./pages/partner/PartnerTickets";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
