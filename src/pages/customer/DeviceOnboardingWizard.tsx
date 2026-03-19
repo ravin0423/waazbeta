@@ -516,7 +516,7 @@ const DeviceOnboardingWizard = () => {
   };
 
   const selectedPlan = plans.find(p => p.id === form3.watch('planId'));
-  const progressPercent = (step / 5) * 100;
+  const progressPercent = (step / 6) * 100;
 
   // ─── Success Screen ───
   if (submitted) {
