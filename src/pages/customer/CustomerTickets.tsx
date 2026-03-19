@@ -256,13 +256,35 @@ const CustomerTickets = () => {
           </Dialog>
         </div>
 
+        {/* Filter Buttons */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'open', label: 'Open' },
+            { key: 'in_progress', label: 'In Progress' },
+            { key: 'resolved', label: 'Resolved' },
+            { key: 'closed', label: 'Closed' },
+          ].map(f => (
+            <Button
+              key={f.key}
+              variant={filter === f.key ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label}
+            </Button>
+          ))}
+        </div>
+
         {loading ? (
           <Card className="shadow-card"><CardContent className="p-12 text-center"><Loader2 className="animate-spin text-primary mx-auto" size={24} /></CardContent></Card>
         ) : tickets.length === 0 ? (
           <Card className="shadow-card">
             <CardContent className="p-12 text-center">
               <Ticket size={40} className="text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">No tickets yet. Click "New Ticket" to create one.</p>
+              <p className="text-muted-foreground">
+                {filter === 'all' ? 'No tickets yet. Click "New Ticket" to create one.' : `No ${filter.replace('_', ' ')} tickets found.`}
+              </p>
             </CardContent>
           </Card>
         ) : (
