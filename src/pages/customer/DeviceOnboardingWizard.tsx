@@ -431,7 +431,7 @@ const DeviceOnboardingWizard = () => {
 
       const { data: device, error: insertError } = await supabase.from('customer_devices').insert({
         user_id: user.id,
-        gadget_category_id: matched?.id || null,
+        gadget_category_id: selectedCategory?.id || null,
         subscription_plan_id: s3.planId,
         product_name: `${s1.brand} ${s1.model}`,
         serial_number: s1.serialNumber,
