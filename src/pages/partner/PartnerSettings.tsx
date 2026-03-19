@@ -149,8 +149,40 @@ const PartnerSettings = () => {
       toast.success('Password reset email sent! Check your inbox.');
     }
   };
+  const handleRequestDeletion = async () => {
+    if (!deletionReason.trim()) {
+      toast.error('Please provide a reason for account deletion');
+      return;
+    }
+    if (!user) return;
+    setSubmittingRequest(true);
+    const { error } = await supabase
+      .from('account_deletion_requests')
+      .insert({
+        user_id: user.id,
+        user_email: user.email,
+        user_name: user.fullName,
+        user_role: 'partner',
+        reason: deletionReason.trim(),
+      });
+    setSubmittingRequest(false);
+    if (error) {
+      toast.error('Failed to submit deletion request');
+      return;
+    }
+    toast.success('Deletion request submitted. An admin will review it.');
+    setDeletionReason('');
+    const { data } = await supabase
+      .from('account_deletion_requests')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('status', ['pending', 'approved'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setExistingRequest(data);
+  };
 
-  if (loading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center py-20">
