@@ -389,6 +389,80 @@ const PartnerSettings = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* === DANGER ZONE TAB === */}
+            <TabsContent value="danger" className="space-y-6">
+              <Card className="border-destructive/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-destructive">
+                    <AlertTriangle size={20} />
+                    Delete Account
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {existingRequest ? (
+                    <div className="flex items-start gap-3 p-4 rounded-lg bg-muted">
+                      <Clock size={20} className="text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="font-medium">Deletion request {existingRequest.status === 'approved' ? 'approved' : 'pending'}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          You submitted a deletion request on {new Date(existingRequest.created_at).toLocaleDateString()}.
+                          {existingRequest.status === 'pending' && ' An admin will review it shortly.'}
+                          {existingRequest.status === 'approved' && ' Your account will be deleted by an admin soon.'}
+                        </p>
+                        <Badge variant="outline" className="mt-2">
+                          {existingRequest.status === 'pending' ? 'Pending Review' : 'Approved'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Request permanent deletion of your account. An admin will review and process your request.
+                      </p>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="gap-2">
+                            <Trash2 size={16} />
+                            Request Account Deletion
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Request Account Deletion</AlertDialogTitle>
+                            <AlertDialogDescription asChild>
+                              <div className="space-y-3">
+                                <span className="block">Please provide a reason for deleting your account. An admin will review and process your request.</span>
+                                <div className="space-y-2">
+                                  <Label className="text-foreground font-medium">Reason for deletion *</Label>
+                                  <Textarea
+                                    value={deletionReason}
+                                    onChange={(e) => setDeletionReason(e.target.value)}
+                                    placeholder="Please explain why you want to delete your account..."
+                                    rows={4}
+                                  />
+                                </div>
+                              </div>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={() => setDeletionReason('')}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={handleRequestDeletion}
+                              disabled={!deletionReason.trim() || submittingRequest}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              {submittingRequest ? <Loader2 size={14} className="mr-2 animate-spin" /> : <Trash2 size={14} className="mr-2" />}
+                              Submit Request
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </motion.div>
