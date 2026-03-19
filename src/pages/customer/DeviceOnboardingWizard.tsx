@@ -469,7 +469,9 @@ const DeviceOnboardingWizard = () => {
         address: `${s4.address}, ${s4.city}, ${s4.state} - ${s4.pincode}`,
         google_location_pin: s4.googleLocationPin || null,
         status: 'pending',
-        payment_status: 'pending',
+        payment_method: paymentMethod || null,
+        upi_transaction_id: paymentMethod === 'upi' ? upiTransactionId : null,
+        payment_status: paymentMethod === 'cash' ? 'pending' : 'pending',
       } as any).select('id').single();
 
       if (insertError) throw insertError;
