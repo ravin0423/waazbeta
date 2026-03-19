@@ -353,7 +353,7 @@ const AdminDeviceApprovals = () => {
     setPhotoQualityChecks(new Set());
     setDuplicates([]);
     setDrawerOpen(true);
-    await Promise.all([fetchDevicePhotos(device.id), fetchDuplicates(device)]);
+    await Promise.all([fetchDevicePhotos(device.id, device.user_id), fetchDuplicates(device)]);
   };
 
   const toggleCheck = (id: string) => {
