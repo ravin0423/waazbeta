@@ -288,6 +288,27 @@ const AdminCustomerDatabase = () => {
     setDetailLoading(false);
   };
 
+  const handleDeleteUser = async (customer: CustomerRow) => {
+    setDeletingUser(true);
+    try {
+      const res = await supabase.functions.invoke('delete-account-admin', {
+        body: { userId: customer.id },
+      });
+      if (res.error || res.data?.error) {
+        toast.error(res.data?.error || 'Failed to delete user');
+        return;
+      }
+      toast.success(`Account for ${customer.full_name} has been deleted`);
+      setDetailOpen(false);
+      setSelectedCustomer(null);
+      // Remove from list
+      setCustomers(prev => prev.filter(c => c.id !== customer.id));
+    } catch {
+      toast.error('Something went wrong');
+    } finally {
+      setDeletingUser(false);
+    }
+  };
   const filtered = customers.filter(c => {
     const matchesSearch = c.full_name.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase()) ||
