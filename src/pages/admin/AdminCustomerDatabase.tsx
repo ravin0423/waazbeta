@@ -199,6 +199,8 @@ const AdminCustomerDatabase = () => {
   const [segmentFilter, setSegmentFilter] = useState<string>('all');
   const [churnRiskFilter, setChurnRiskFilter] = useState<string>('all');
 
+  const [deletingUser, setDeletingUser] = useState(false);
+
   // Pre-computed LTV for all customers (for list view)
   const customerLTVMap = useMemo(() => {
     const map: Record<string, LTVMetrics> = {};
