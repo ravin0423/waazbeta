@@ -43,6 +43,7 @@ const CustomerTickets = () => {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [filter, setFilter] = useState('all');
 
   // Conversation state
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
@@ -52,15 +53,53 @@ const CustomerTickets = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
 
   const fetchTickets = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('service_tickets')
       .select('*')
       .order('created_at', { ascending: false });
+
+    if (filter !== 'all') {
+      query = query.eq('status', filter);
+    }
+
+    const { data } = await query;
     setTickets(data || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchTickets(); }, []);
+  useEffect(() => { fetchTickets(); }, [filter]);
+
+  // Real-time subscription for ticket updates and messages
+  useEffect(() => {
+    const channel = supabase
+      .channel('customer-tickets-rt')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'service_tickets',
+      }, () => {
+        fetchTickets();
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'ticket_messages',
+      }, (payload) => {
+        const newMsg = payload.new as TicketMessage;
+        if (selectedTicket && newMsg.ticket_id === selectedTicket.id) {
+          setMessages(prev => {
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+          if (newMsg.sender_role !== 'customer') {
+            toast.info('New reply from support!');
+          }
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedTicket]);
 
   const fetchMessages = async (ticketId: string) => {
     setLoadingMessages(true);
@@ -217,13 +256,35 @@ const CustomerTickets = () => {
           </Dialog>
         </div>
 
+        {/* Filter Buttons */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'open', label: 'Open' },
+            { key: 'in_progress', label: 'In Progress' },
+            { key: 'resolved', label: 'Resolved' },
+            { key: 'closed', label: 'Closed' },
+          ].map(f => (
+            <Button
+              key={f.key}
+              variant={filter === f.key ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFilter(f.key)}
+            >
+              {f.label}
+            </Button>
+          ))}
+        </div>
+
         {loading ? (
           <Card className="shadow-card"><CardContent className="p-12 text-center"><Loader2 className="animate-spin text-primary mx-auto" size={24} /></CardContent></Card>
         ) : tickets.length === 0 ? (
           <Card className="shadow-card">
             <CardContent className="p-12 text-center">
               <Ticket size={40} className="text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">No tickets yet. Click "New Ticket" to create one.</p>
+              <p className="text-muted-foreground">
+                {filter === 'all' ? 'No tickets yet. Click "New Ticket" to create one.' : `No ${filter.replace('_', ' ')} tickets found.`}
+              </p>
             </CardContent>
           </Card>
         ) : (
