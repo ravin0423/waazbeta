@@ -294,6 +294,12 @@ const DeviceOnboardingWizard = () => {
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [brandSearch, setBrandSearch] = useState('');
 
+  // Payment state
+  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'cash' | ''>('');
+  const [upiTransactionId, setUpiTransactionId] = useState('');
+  const [upiQrUrl, setUpiQrUrl] = useState('');
+  const [paymentError, setPaymentError] = useState('');
+
   // File state
   const [devicePhoto, setDevicePhoto] = useState<File | null>(null);
   const [devicePhotoPreview, setDevicePhotoPreview] = useState<string | null>(null);
