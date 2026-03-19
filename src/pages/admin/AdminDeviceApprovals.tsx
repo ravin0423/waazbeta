@@ -553,9 +553,12 @@ const AdminDeviceApprovals = () => {
     const sel = devices.filter(d => selectedIds.has(d.id));
 
     const { error } = await supabase.from('customer_devices').update({
-      status: 'rejected', payment_status: 'rejected', rejection_reason: bulkRejectReason,
-      rejected_at: new Date().toISOString(), rejected_by: user.id,
-    } as any).in('id', ids);
+      status: 'rejected',
+      payment_status: 'rejected',
+      rejection_reason: bulkRejectReason,
+      rejected_at: new Date().toISOString(),
+      rejected_by: user.id,
+    }).in('id', ids);
 
     if (!error) {
       await Promise.all(sel.flatMap(d => [
