@@ -16,6 +16,7 @@ import CustomerInvoices from "./pages/customer/CustomerInvoices";
 import DeviceOnboardingWizard from "./pages/customer/DeviceOnboardingWizard";
 import CustomerDevices from "./pages/customer/CustomerDevices";
 import ClaimDetailPage from "./pages/customer/ClaimDetailPage";
+import CustomerNotifications from "./pages/customer/CustomerNotifications";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminSubscriptions from "./pages/admin/AdminSubscriptions";
 import AdminSubscriptionPlans from "./pages/admin/AdminSubscriptionPlans";
@@ -80,6 +81,7 @@ const AppRoutes = () => {
       <Route path="/customer/profile" element={<ProtectedRoute role="customer"><CustomerProfile /></ProtectedRoute>} />
       <Route path="/customer/register-device" element={<ProtectedRoute role="customer"><DeviceOnboardingWizard /></ProtectedRoute>} />
       <Route path="/customer/devices" element={<ProtectedRoute role="customer"><CustomerDevices /></ProtectedRoute>} />
+      <Route path="/customer/notifications" element={<ProtectedRoute role="customer"><CustomerNotifications /></ProtectedRoute>} />
 
       {/* Admin routes */}
       <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
