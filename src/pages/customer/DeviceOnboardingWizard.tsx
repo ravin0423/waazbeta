@@ -1001,6 +1001,20 @@ const DeviceOnboardingWizard = () => {
                     </div>
                   )}
 
+                  {/* Payment */}
+                  <div className="bg-muted/40 rounded-lg p-4 space-y-2">
+                    <h3 className="text-sm font-heading font-semibold flex items-center gap-2"><CreditCard size={14} /> Payment</h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                      <span className="text-muted-foreground">Method:</span><span className="capitalize">{paymentMethod || '—'}</span>
+                      {paymentMethod === 'upi' && upiTransactionId && (
+                        <><span className="text-muted-foreground">Transaction ID:</span><span className="font-mono text-xs">{upiTransactionId}</span></>
+                      )}
+                      {paymentMethod === 'cash' && (
+                        <><span className="text-muted-foreground">Status:</span><span className="text-amber-500">Pending collection</span></>
+                      )}
+                    </div>
+                  </div>
+
                   {/* Address */}
                   <div className="bg-muted/40 rounded-lg p-4 space-y-2">
                     <h3 className="text-sm font-heading font-semibold flex items-center gap-2"><MapPin size={14} /> Address & Contact</h3>
