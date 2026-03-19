@@ -22,6 +22,9 @@ const PartnerSettings = () => {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [deletionReason, setDeletionReason] = useState('');
+  const [existingRequest, setExistingRequest] = useState<any>(null);
 
   // Editable fields
   const [formData, setFormData] = useState({
