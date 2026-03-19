@@ -48,6 +48,7 @@ import PartnerCustomers from "./pages/partner/PartnerCustomers";
 import PartnerSettings from "./pages/partner/PartnerSettings";
 import PartnerFinance from "./pages/partner/PartnerFinance";
 import PartnerPerformance from "./pages/partner/PartnerPerformance";
+import PartnerTickets from "./pages/partner/PartnerTickets";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -113,6 +114,7 @@ const AppRoutes = () => {
       <Route path="/partner/finance" element={<ProtectedRoute role="partner"><PartnerFinance /></ProtectedRoute>} />
       <Route path="/partner/customers" element={<ProtectedRoute role="partner"><PartnerCustomers /></ProtectedRoute>} />
       <Route path="/partner/performance" element={<ProtectedRoute role="partner"><PartnerPerformance /></ProtectedRoute>} />
+      <Route path="/partner/tickets" element={<ProtectedRoute role="partner"><PartnerTickets /></ProtectedRoute>} />
       <Route path="/partner/settings" element={<ProtectedRoute role="partner"><PartnerSettings /></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
