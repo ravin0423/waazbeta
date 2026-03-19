@@ -83,6 +83,7 @@ const AppRoutes = () => {
       <Route path="/customer/register-device" element={<ProtectedRoute role="customer"><DeviceOnboardingWizard /></ProtectedRoute>} />
       <Route path="/customer/devices" element={<ProtectedRoute role="customer"><CustomerDevices /></ProtectedRoute>} />
       <Route path="/customer/notifications" element={<ProtectedRoute role="customer"><CustomerNotifications /></ProtectedRoute>} />
+      <Route path="/customer/feedback" element={<ProtectedRoute role="customer"><CustomerFeedback /></ProtectedRoute>} />
 
       {/* Admin routes */}
       <Route path="/admin" element={<ProtectedRoute role="admin"><AdminDashboard /></ProtectedRoute>} />
