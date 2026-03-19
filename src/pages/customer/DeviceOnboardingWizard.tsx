@@ -26,7 +26,8 @@ import {
   Shield, ArrowRight, ArrowLeft, CheckCircle2, Loader2,
   Smartphone, Tablet, Laptop, Watch, Upload, X, Image as ImageIcon,
   FileText, RefreshCw, CalendarIcon, Info, ChevronDown, Check,
-  MapPin, CreditCard, Eye, Sparkles
+  MapPin, CreditCard, Eye, Sparkles, Monitor, Camera, Gamepad2,
+  Printer, Projector, Tv, Headphones, Speaker, HardDrive
 } from 'lucide-react';
 
 // ─── Schemas ───────────────────────────────────────────────────
@@ -67,13 +68,26 @@ type Step1Data = z.infer<typeof step1Schema>;
 type Step3Data = z.infer<typeof step3Schema>;
 type Step4Data = z.infer<typeof step4Schema>;
 
-// ─── Constants ─────────────────────────────────────────────────
-const DEVICE_TYPES = [
-  { value: 'mobile_phone', label: 'Mobile Phone', icon: Smartphone },
-  { value: 'tablet', label: 'Tablet', icon: Tablet },
-  { value: 'laptop', label: 'Laptop', icon: Laptop },
-  { value: 'smartwatch', label: 'Smartwatch', icon: Watch },
-];
+// ─── Icon mapping for gadget categories ────────────────────────
+const CATEGORY_ICON_MAP: Record<string, any> = {
+  smartphone: Smartphone, 'mobile phone': Smartphone, mobile: Smartphone, phone: Smartphone,
+  tablet: Tablet, laptop: Laptop, smartwatch: Watch, 'smart watch': Watch, watch: Watch,
+  desktop: Monitor, computer: Monitor, pc: Monitor,
+  cctv: Camera, camera: Camera, dslr: Camera,
+  'gaming console': Gamepad2, gaming: Gamepad2,
+  printer: Printer, projector: Projector,
+  television: Tv, tv: Tv,
+  headphones: Headphones, earbuds: Headphones,
+  speaker: Speaker, soundbar: Speaker,
+};
+
+const getCategoryIcon = (name: string) => {
+  const lower = name.toLowerCase();
+  for (const [key, icon] of Object.entries(CATEGORY_ICON_MAP)) {
+    if (lower.includes(key)) return icon;
+  }
+  return HardDrive; // default icon
+};
 
 const POPULAR_BRANDS = [
   'Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo', 'Realme',
@@ -311,33 +325,20 @@ const DeviceOnboardingWizard = () => {
     });
   }, [user]);
 
-  // Load plans when device type changes
+  // Load plans when device type (category ID) changes
   const deviceType = form1.watch('deviceType');
   useEffect(() => {
     if (!deviceType) return;
-    // Match device type to a gadget category
-    const mapping: Record<string, string[]> = {
-      mobile_phone: ['mobile', 'smartphone', 'phone', 'mobile phone'],
-      tablet: ['tablet'],
-      laptop: ['laptop'],
-      smartwatch: ['smartwatch', 'smart watch', 'watch'],
-    };
-    const matchNames = mapping[deviceType] || [];
-    const matched = categories.find(c => matchNames.includes(c.name.toLowerCase()));
-    if (matched) {
-      supabase.from('subscription_plans').select('*').eq('is_active', true).eq('gadget_category_id', matched.id).order('annual_price')
-        .then(({ data }) => {
-          if (data?.length) { setPlans(data as Plan[]); }
-          else {
-            supabase.from('subscription_plans').select('*').eq('is_active', true).is('gadget_category_id', null).order('annual_price')
-              .then(({ data: fallback }) => setPlans((fallback || []) as Plan[]));
-          }
-        });
-    } else {
-      supabase.from('subscription_plans').select('*').eq('is_active', true).is('gadget_category_id', null).order('annual_price')
-        .then(({ data }) => setPlans((data || []) as Plan[]));
-    }
-  }, [deviceType, categories]);
+    // deviceType is now a category ID directly
+    supabase.from('subscription_plans').select('*').eq('is_active', true).eq('gadget_category_id', deviceType).order('annual_price')
+      .then(({ data }) => {
+        if (data?.length) { setPlans(data as Plan[]); }
+        else {
+          supabase.from('subscription_plans').select('*').eq('is_active', true).is('gadget_category_id', null).order('annual_price')
+            .then(({ data: fallback }) => setPlans((fallback || []) as Plan[]));
+        }
+      });
+  }, [deviceType]);
 
   // Auto-save draft
   useEffect(() => {
@@ -425,17 +426,12 @@ const DeviceOnboardingWizard = () => {
       const s3 = form3.getValues();
       const s4 = form4.getValues();
 
-      // Find matching category
-      const mapping: Record<string, string[]> = {
-        mobile_phone: ['mobile', 'smartphone', 'phone', 'mobile phone'],
-        tablet: ['tablet'], laptop: ['laptop'], smartwatch: ['smartwatch', 'smart watch', 'watch'],
-      };
-      const matchNames = mapping[s1.deviceType] || [];
-      const matched = categories.find(c => matchNames.includes(c.name.toLowerCase()));
+      // deviceType is the category ID directly
+      const selectedCategory = categories.find(c => c.id === s1.deviceType);
 
       const { data: device, error: insertError } = await supabase.from('customer_devices').insert({
         user_id: user.id,
-        gadget_category_id: matched?.id || null,
+        gadget_category_id: selectedCategory?.id || null,
         subscription_plan_id: s3.planId,
         product_name: `${s1.brand} ${s1.model}`,
         serial_number: s1.serialNumber,
@@ -565,19 +561,19 @@ const DeviceOnboardingWizard = () => {
                     <Label>Device Type <span className="text-destructive">*</span></Label>
                     <Controller control={form1.control} name="deviceType" render={({ field }) => (
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1.5">
-                        {DEVICE_TYPES.map(dt => {
-                          const Icon = dt.icon;
+                        {categories.map(cat => {
+                          const Icon = getCategoryIcon(cat.name);
                           return (
                             <div
-                              key={dt.value}
-                              onClick={() => field.onChange(dt.value)}
+                              key={cat.id}
+                              onClick={() => field.onChange(cat.id)}
                               className={cn(
                                 "border rounded-lg p-3 text-center cursor-pointer transition-all",
-                                field.value === dt.value ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/40"
+                                field.value === cat.id ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/40"
                               )}
                             >
                               <Icon size={24} className="mx-auto mb-1" />
-                              <p className="text-xs font-medium">{dt.label}</p>
+                              <p className="text-xs font-medium">{cat.name}</p>
                             </div>
                           );
                         })}
@@ -651,7 +647,7 @@ const DeviceOnboardingWizard = () => {
                   </div>
 
                   {/* IMEI (mobile only) */}
-                  {(deviceType === 'mobile_phone' || deviceType === 'tablet') && (
+                  {(() => { const cat = categories.find(c => c.id === deviceType); const catName = cat?.name?.toLowerCase() || ''; return catName.includes('mobile') || catName.includes('phone') || catName.includes('smartphone') || catName.includes('tablet'); })() && (
                     <div>
                       <Label htmlFor="imei">IMEI Number <span className="text-muted-foreground text-xs">(optional)</span></Label>
                       <Input id="imei" {...form1.register('imeiNumber')} placeholder="15-digit IMEI" maxLength={15} className="mt-1" />
@@ -824,7 +820,7 @@ const DeviceOnboardingWizard = () => {
                     <h3 className="text-sm font-heading font-semibold flex items-center gap-2"><Smartphone size={14} /> Device Information</h3>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
                       <span className="text-muted-foreground">Type:</span>
-                      <span>{DEVICE_TYPES.find(d => d.value === form1.getValues('deviceType'))?.label}</span>
+                      <span>{categories.find(c => c.id === form1.getValues('deviceType'))?.name || '—'}</span>
                       <span className="text-muted-foreground">Brand:</span><span>{form1.getValues('brand')}</span>
                       <span className="text-muted-foreground">Model:</span><span>{form1.getValues('model')}</span>
                       {form1.getValues('color') && <><span className="text-muted-foreground">Color:</span><span>{form1.getValues('color')}</span></>}

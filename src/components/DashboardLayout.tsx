@@ -31,10 +31,6 @@ const customerNavFull: NavItem[] = [
   { label: 'Profile', path: '/customer/profile', icon: <User size={20} /> },
 ];
 
-const customerNavMinimal: NavItem[] = [
-  { label: 'Activate Subscription', path: '/customer', icon: <Shield size={20} /> },
-  { label: 'Profile', path: '/customer/profile', icon: <User size={20} /> },
-];
 
 const adminNav: NavItem[] = [
   { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
@@ -88,25 +84,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [hasDevices, setHasDevices] = useState<boolean | null>(null);
+  
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (user?.role !== 'customer') { setHasDevices(true); return; }
-    const check = async () => {
-      const { count } = await supabase
-        .from('customer_devices')
-        .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id);
-      setHasDevices((count || 0) > 0);
-    };
-    check();
-  }, [user]);
 
   const getNavItems = () => {
     if (user?.role === 'admin') return adminNav;
     if (user?.role === 'partner') return partnerNav;
-    if (hasDevices === false) return customerNavMinimal;
     return customerNavFull;
   };
 
