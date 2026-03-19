@@ -431,6 +431,78 @@ export type Database = {
           },
         ]
       }
+      customer_engagement: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      customer_feedback: {
+        Row: {
+          created_at: string
+          feedback_text: string | null
+          feedback_type: string
+          id: string
+          rating: number
+          related_claim_id: string | null
+          related_device_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_text?: string | null
+          feedback_type?: string
+          id?: string
+          rating: number
+          related_claim_id?: string | null
+          related_device_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_text?: string | null
+          feedback_type?: string
+          id?: string
+          rating?: number
+          related_claim_id?: string | null
+          related_device_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_feedback_related_claim_id_fkey"
+            columns: ["related_claim_id"]
+            isOneToOne: false
+            referencedRelation: "service_claims"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_feedback_related_device_id_fkey"
+            columns: ["related_device_id"]
+            isOneToOne: false
+            referencedRelation: "customer_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_approval_checks: {
         Row: {
           checked_at: string | null
@@ -1092,6 +1164,30 @@ export type Database = {
           related_id?: string | null
           title?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      nps_surveys: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          score?: number
           user_id?: string
         }
         Relationships: []

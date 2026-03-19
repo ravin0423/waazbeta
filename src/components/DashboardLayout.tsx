@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Shield, FileText, Ticket, User, LogOut, Package, Receipt,
   Wrench, TrendingUp, Users, ShoppingCart, Settings, ChevronLeft, Menu, Smartphone,
   Layers, MapPin, UserCog, Globe, ShieldCheck, ListChecks, QrCode, IndianRupee,
-  ChevronDown, Wallet, BadgeCheck, Building2, Target, Activity, Bell
+  ChevronDown, Wallet, BadgeCheck, Building2, Target, Activity, Bell, Star
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,6 +27,7 @@ const customerNavFull: NavItem[] = [
   { label: 'Invoices', path: '/customer/invoices', icon: <Receipt size={20} /> },
   { label: 'Service Tickets', path: '/customer/tickets', icon: <Ticket size={20} /> },
   { label: 'Notifications', path: '/customer/notifications', icon: <Bell size={20} /> },
+  { label: 'Feedback', path: '/customer/feedback', icon: <Star size={20} /> },
   { label: 'Profile', path: '/customer/profile', icon: <User size={20} /> },
 ];
 
