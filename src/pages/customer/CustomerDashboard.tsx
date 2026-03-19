@@ -7,7 +7,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Shield, Smartphone, Loader2, Check, X, Trash2, RefreshCw, Clock, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
-import SubscriptionActivation from '@/components/SubscriptionActivation';
 import RenewalModal from '@/components/RenewalModal';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
