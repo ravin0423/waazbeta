@@ -181,6 +181,7 @@ const PartnerSettings = () => {
       .limit(1)
       .maybeSingle();
     setExistingRequest(data);
+  };
 
   if (loading) {
     return (
