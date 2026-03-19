@@ -53,9 +53,10 @@ const PartnerSettings = () => {
     const fetchData = async () => {
       if (!user) return;
 
-      const [partnerRes, profileRes] = await Promise.all([
+      const [partnerRes, profileRes, deletionRes] = await Promise.all([
         supabase.from('partners').select('*').eq('user_id', user.id).maybeSingle(),
         supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+        supabase.from('account_deletion_requests').select('*').eq('user_id', user.id).in('status', ['pending', 'approved']).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ]);
 
       if (partnerRes.data) {
@@ -77,6 +78,8 @@ const PartnerSettings = () => {
           company: profileRes.data.company || '',
         });
       }
+
+      setExistingRequest(deletionRes.data);
 
       setLoading(false);
     };
