@@ -773,9 +773,117 @@ const DeviceOnboardingWizard = () => {
             </motion.div>
           )}
 
-          {/* ─── Step 4: Address & Details ─── */}
+          {/* ─── Step 4: Payment ─── */}
           {step === 4 && (
             <motion.div key="s4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-heading text-lg flex items-center gap-2"><CreditCard size={20} className="text-primary" /> Payment</CardTitle>
+                  <CardDescription>Choose your preferred payment method</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Plan summary */}
+                  {selectedPlan && (
+                    <div className="bg-muted/40 rounded-lg p-4 flex justify-between items-center">
+                      <div>
+                        <p className="font-medium text-sm">{selectedPlan.name}</p>
+                        <p className="text-xs text-muted-foreground">{selectedPlan.code}</p>
+                      </div>
+                      <p className="text-xl font-bold text-primary">₹{Number(selectedPlan.annual_price).toLocaleString('en-IN')}<span className="text-xs font-normal text-muted-foreground">/yr</span></p>
+                    </div>
+                  )}
+
+                  {/* Payment method selection */}
+                  <div>
+                    <Label>Payment Method <span className="text-destructive">*</span></Label>
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      <div
+                        onClick={() => { setPaymentMethod('upi'); setPaymentError(''); }}
+                        className={cn(
+                          "border rounded-lg p-4 text-center cursor-pointer transition-all",
+                          paymentMethod === 'upi' ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/40"
+                        )}
+                      >
+                        <CreditCard size={28} className="mx-auto mb-2 text-primary" />
+                        <p className="font-medium text-sm">UPI Payment</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Scan QR & pay instantly</p>
+                      </div>
+                      <div
+                        onClick={() => { setPaymentMethod('cash'); setPaymentError(''); setUpiTransactionId(''); }}
+                        className={cn(
+                          "border rounded-lg p-4 text-center cursor-pointer transition-all",
+                          paymentMethod === 'cash' ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/40"
+                        )}
+                      >
+                        <span className="inline-flex items-center justify-center h-7 w-7 mx-auto mb-2 text-lg">💵</span>
+                        <p className="font-medium text-sm">Cash</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Pay during service visit</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* UPI section */}
+                  {paymentMethod === 'upi' && (
+                    <div className="space-y-4 border border-border rounded-lg p-4 bg-muted/20">
+                      {upiQrUrl ? (
+                        <div className="text-center">
+                          <p className="text-sm font-medium mb-3">Scan QR Code to Pay</p>
+                          <div className="inline-block bg-white p-3 rounded-xl shadow-sm">
+                            <img src={upiQrUrl} alt="UPI QR Code" className="w-48 h-48 object-contain" />
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Amount: <span className="font-bold text-foreground">₹{selectedPlan ? Number(selectedPlan.annual_price).toLocaleString('en-IN') : '—'}</span>
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-muted-foreground">UPI QR code not available. Please contact support or choose Cash.</p>
+                        </div>
+                      )}
+
+                      <div>
+                        <Label htmlFor="upiTxn">UPI Transaction ID <span className="text-destructive">*</span></Label>
+                        <Input
+                          id="upiTxn"
+                          value={upiTransactionId}
+                          onChange={(e) => { setUpiTransactionId(e.target.value); setPaymentError(''); }}
+                          placeholder="Enter 12-digit UPI transaction ID"
+                          className="mt-1"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">Enter the transaction ID from your UPI app after completing the payment</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cash section */}
+                  {paymentMethod === 'cash' && (
+                    <div className="border border-border rounded-lg p-4 bg-muted/20">
+                      <div className="flex items-start gap-3">
+                        <Info size={18} className="text-primary mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium">Cash Payment</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Payment will be collected during the service visit. Your device registration will be marked as "Payment Pending" until cash is received and verified by admin.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {paymentError && <p className="text-xs text-destructive">{paymentError}</p>}
+
+                  <div className="flex justify-between pt-2">
+                    <Button variant="outline" onClick={goBack}><ArrowLeft size={16} className="mr-1" /> Back</Button>
+                    <Button onClick={goNext} disabled={!paymentMethod}>Next <ArrowRight size={16} className="ml-1" /></Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* ─── Step 5: Address & Details ─── */}
+          {step === 5 && (
+            <motion.div key="s5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
               <Card>
                 <CardHeader>
                   <CardTitle className="font-heading text-lg flex items-center gap-2"><MapPin size={20} className="text-primary" /> Delivery Address</CardTitle>
@@ -837,7 +945,7 @@ const DeviceOnboardingWizard = () => {
             </motion.div>
           )}
 
-          {/* ─── Step 5: Review & Confirm ─── */}
+          {/* ─── Step 6: Review & Confirm ─── */}
           {step === 5 && (
             <motion.div key="s5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
               <Card>
