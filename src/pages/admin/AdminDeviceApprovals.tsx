@@ -527,10 +527,13 @@ const AdminDeviceApprovals = () => {
     const sel = devices.filter(d => selectedIds.has(d.id));
 
     const { error } = await supabase.from('customer_devices').update({
-      status: 'active', payment_status: 'confirmed', approved_by: user.id,
-      approved_at: now.toISOString(), subscription_start: now.toISOString().split('T')[0],
+      status: 'active',
+      payment_status: 'confirmed',
+      approved_by: user.id,
+      approved_at: now.toISOString(),
+      subscription_start: now.toISOString().split('T')[0],
       subscription_end: endDate.toISOString().split('T')[0],
-    } as any).in('id', ids);
+    }).in('id', ids);
 
     if (!error) {
       await Promise.all(sel.flatMap(d => [
