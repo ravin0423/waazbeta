@@ -31,10 +31,6 @@ const customerNavFull: NavItem[] = [
   { label: 'Profile', path: '/customer/profile', icon: <User size={20} /> },
 ];
 
-const customerNavMinimal: NavItem[] = [
-  { label: 'Activate Subscription', path: '/customer', icon: <Shield size={20} /> },
-  { label: 'Profile', path: '/customer/profile', icon: <User size={20} /> },
-];
 
 const adminNav: NavItem[] = [
   { label: 'Dashboard', path: '/admin', icon: <LayoutDashboard size={20} /> },
