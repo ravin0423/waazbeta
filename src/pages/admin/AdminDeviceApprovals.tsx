@@ -424,21 +424,26 @@ const AdminDeviceApprovals = () => {
     const endDate = new Date(now);
     endDate.setFullYear(endDate.getFullYear() + 1);
 
-    const { error } = await supabase.from('customer_devices').update({
-      status: 'active', payment_status: 'confirmed', approved_by: user.id,
+    const { error, data } = await supabase.from('customer_devices').update({
+      status: 'active',
+      payment_status: 'confirmed',
+      approved_by: user.id,
       approved_at: now.toISOString(),
       subscription_start: now.toISOString().split('T')[0],
       subscription_end: endDate.toISOString().split('T')[0],
-    } as any).eq('id', selectedDevice.id);
+    }).eq('id', selectedDevice.id).select();
 
-    if (!error) {
+    if (!error && data && data.length > 0) {
       await Promise.all([
         createAuditLog(selectedDevice.id, 'approved', undefined, 'Approved by admin'),
         createNotification(selectedDevice.user_id, 'device_approved', 'Device Approved! 🎉',
           `Your device ${selectedDevice.product_name} has been approved. You can now file claims.`, selectedDevice.id),
       ]);
       toast.success(`Device approved for ${selectedDevice.customer_name}`);
-    } else toast.error('Failed to approve device');
+    } else {
+      console.error('Approve failed:', error, 'Rows:', data?.length);
+      toast.error(error?.message || 'Failed to approve device');
+    }
 
     setProcessing(false); setDrawerOpen(false); fetchDevices(); fetchStats();
   };
