@@ -84,7 +84,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [hasDevices, setHasDevices] = useState<boolean | null>(null);
+  
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   const getNavItems = () => {
