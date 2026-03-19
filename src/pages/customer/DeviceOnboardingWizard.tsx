@@ -426,13 +426,8 @@ const DeviceOnboardingWizard = () => {
       const s3 = form3.getValues();
       const s4 = form4.getValues();
 
-      // Find matching category
-      const mapping: Record<string, string[]> = {
-        mobile_phone: ['mobile', 'smartphone', 'phone', 'mobile phone'],
-        tablet: ['tablet'], laptop: ['laptop'], smartwatch: ['smartwatch', 'smart watch', 'watch'],
-      };
-      const matchNames = mapping[s1.deviceType] || [];
-      const matched = categories.find(c => matchNames.includes(c.name.toLowerCase()));
+      // deviceType is the category ID directly
+      const selectedCategory = categories.find(c => c.id === s1.deviceType);
 
       const { data: device, error: insertError } = await supabase.from('customer_devices').insert({
         user_id: user.id,
