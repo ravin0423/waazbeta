@@ -1,16 +1,29 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { motion } from 'framer-motion';
-import { Loader2, Wrench, Clock, CheckCircle2, Star, AlertTriangle, ClipboardList } from 'lucide-react';
+import { Loader2, Wrench, Clock, CheckCircle2, Star, AlertTriangle, ClipboardList, Camera, Upload, RefreshCw, Image as ImageIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 type ClaimFilter = 'all' | 'pending' | 'active' | 'completed';
+
+const REPAIR_STATUSES = [
+  { value: 'in_progress', label: 'Diagnostics In Progress' },
+  { value: 'parts_ordered', label: 'Parts Ordered' },
+  { value: 'parts_arrived', label: 'Parts Arrived' },
+  { value: 'repair_in_progress', label: 'Repair In Progress' },
+  { value: 'quality_check', label: 'Quality Check' },
+  { value: 'ready_for_delivery', label: 'Ready for Delivery' },
+  { value: 'delivered', label: 'Delivered' },
+  { value: 'resolved', label: 'Completed / Resolved' },
+];
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
@@ -22,6 +35,20 @@ const PartnerDashboard = () => {
   const [showDetail, setShowDetail] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // Status update state
+  const [updateMode, setUpdateMode] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [updateNotes, setUpdateNotes] = useState('');
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  // Photo upload state
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [claimPhotos, setClaimPhotos] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Status history
+  const [statusHistory, setStatusHistory] = useState<any[]>([]);
+
   const fetchAssignments = useCallback(async (partnerId: string) => {
     const { data } = await supabase
       .from('claim_assignments')
@@ -29,6 +56,24 @@ const PartnerDashboard = () => {
       .eq('partner_id', partnerId)
       .order('created_at', { ascending: false });
     setAssignments(data || []);
+  }, []);
+
+  const fetchClaimDetails = useCallback(async (claimId: string) => {
+    // Fetch status history
+    const { data: history } = await supabase
+      .from('claim_status_updates')
+      .select('*')
+      .eq('claim_id', claimId)
+      .order('created_at', { ascending: false });
+    setStatusHistory(history || []);
+
+    // Fetch existing photos from claim's image_urls
+    const { data: claimData } = await supabase
+      .from('service_claims')
+      .select('image_urls')
+      .eq('id', claimId)
+      .single();
+    setClaimPhotos(claimData?.image_urls || []);
   }, []);
 
   useEffect(() => {
@@ -93,12 +138,10 @@ const PartnerDashboard = () => {
         .from('claim_assignments')
         .update({ status: 'accepted', updated_at: new Date().toISOString() })
         .eq('id', assignmentId);
-
       await supabase
         .from('service_claims')
         .update({ status: 'in_progress', updated_at: new Date().toISOString() })
         .eq('id', claimId);
-
       toast.success('Claim accepted!');
       if (partner) await fetchAssignments(partner.id);
       setShowDetail(false);
@@ -117,7 +160,6 @@ const PartnerDashboard = () => {
         .from('claim_assignments')
         .update({ status: 'declined', notes: reason, updated_at: new Date().toISOString() })
         .eq('id', assignmentId);
-
       toast.success('Claim declined');
       if (partner) await fetchAssignments(partner.id);
       setShowDetail(false);
@@ -127,9 +169,144 @@ const PartnerDashboard = () => {
     setActionLoading(null);
   };
 
-  const openDetail = (assignment: any) => {
+  const openDetail = async (assignment: any) => {
     setSelectedAssignment(assignment);
     setShowDetail(true);
+    setUpdateMode(false);
+    setNewStatus('');
+    setUpdateNotes('');
+    if (assignment.service_claims?.id) {
+      await fetchClaimDetails(assignment.service_claims.id);
+    }
+  };
+
+  // === STATUS UPDATE ===
+  const updateClaimStatus = async () => {
+    if (!newStatus) {
+      toast.error('Please select a new status');
+      return;
+    }
+    if (!updateNotes.trim()) {
+      toast.error('Please add notes about this update');
+      return;
+    }
+    const claimId = selectedAssignment?.service_claims?.id;
+    if (!claimId || !user) return;
+
+    setUpdatingStatus(true);
+    try {
+      // Update service_claims status
+      await supabase
+        .from('service_claims')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', claimId);
+
+      // Update assignment status if completing
+      if (newStatus === 'resolved') {
+        await supabase
+          .from('claim_assignments')
+          .update({ status: 'completed', updated_at: new Date().toISOString() })
+          .eq('id', selectedAssignment.id);
+      } else {
+        await supabase
+          .from('claim_assignments')
+          .update({ status: 'in_progress', updated_at: new Date().toISOString() })
+          .eq('id', selectedAssignment.id);
+      }
+
+      // Log the status update
+      await supabase
+        .from('claim_status_updates')
+        .insert({
+          claim_id: claimId,
+          status: newStatus,
+          notes: updateNotes.trim(),
+          updated_by: user.id,
+        });
+
+      // Notify customer
+      const claimData = selectedAssignment.service_claims;
+      if (claimData?.user_id) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: claimData.user_id,
+            type: 'claim_updated',
+            title: 'Repair Status Updated',
+            message: `Your repair for ${claimData.customer_devices?.product_name || 'your device'} is now: ${newStatus.replace(/_/g, ' ')}`,
+            related_id: claimId,
+          });
+      }
+
+      toast.success('Status updated successfully');
+      setUpdateMode(false);
+      setNewStatus('');
+      setUpdateNotes('');
+
+      // Refresh
+      if (partner) await fetchAssignments(partner.id);
+      await fetchClaimDetails(claimId);
+
+      // Update selected assignment locally
+      setSelectedAssignment((prev: any) => ({
+        ...prev,
+        status: newStatus === 'resolved' ? 'completed' : 'in_progress',
+        service_claims: { ...prev.service_claims, status: newStatus },
+      }));
+    } catch {
+      toast.error('Failed to update status');
+    }
+    setUpdatingStatus(false);
+  };
+
+  // === PHOTO UPLOAD ===
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const claimId = selectedAssignment?.service_claims?.id;
+    if (!claimId) return;
+
+    setUploadingPhotos(true);
+    const newUrls: string[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const ext = file.name.split('.').pop();
+        const fileName = `partner-${claimId}-${Date.now()}-${i}.${ext}`;
+
+        const { error } = await supabase.storage
+          .from('claim-images')
+          .upload(fileName, file);
+
+        if (error) {
+          toast.error(`Failed to upload ${file.name}`);
+          continue;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('claim-images')
+          .getPublicUrl(fileName);
+
+        newUrls.push(urlData.publicUrl);
+      }
+
+      if (newUrls.length > 0) {
+        const allPhotos = [...claimPhotos, ...newUrls];
+
+        await supabase
+          .from('service_claims')
+          .update({ image_urls: allPhotos, updated_at: new Date().toISOString() })
+          .eq('id', claimId);
+
+        setClaimPhotos(allPhotos);
+        toast.success(`${newUrls.length} photo(s) uploaded`);
+      }
+    } catch {
+      toast.error('Photo upload failed');
+    }
+    setUploadingPhotos(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   if (loading) {
@@ -157,6 +334,7 @@ const PartnerDashboard = () => {
 
   const claim = selectedAssignment?.service_claims;
   const device = claim?.customer_devices;
+  const isActive = selectedAssignment && ['accepted', 'in_progress'].includes(selectedAssignment.status);
 
   return (
     <DashboardLayout>
@@ -249,7 +427,7 @@ const PartnerDashboard = () => {
                         {isPending && <Badge className="bg-warning text-warning-foreground">Action Required</Badge>}
                       </div>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Issue: {sc?.issue_type} · IMEI: {sc?.imei_number}
+                        Issue: {sc?.issue_type} · IMEI: {sc?.imei_number} · Claim: {sc?.status?.replace(/_/g, ' ')}
                       </p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                         <Clock size={12} />
@@ -262,22 +440,8 @@ const PartnerDashboard = () => {
                     <div className="flex gap-2 shrink-0" onClick={e => e.stopPropagation()}>
                       {isPending && (
                         <>
-                          <Button
-                            size="sm"
-                            className="bg-success hover:bg-success/90 text-success-foreground"
-                            disabled={actionLoading === assignment.id}
-                            onClick={() => acceptClaim(assignment.id, sc?.id)}
-                          >
-                            Accept
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            disabled={actionLoading === assignment.id}
-                            onClick={() => declineClaim(assignment.id)}
-                          >
-                            Decline
-                          </Button>
+                          <Button size="sm" className="bg-success hover:bg-success/90 text-success-foreground" disabled={actionLoading === assignment.id} onClick={() => acceptClaim(assignment.id, sc?.id)}>Accept</Button>
+                          <Button size="sm" variant="destructive" disabled={actionLoading === assignment.id} onClick={() => declineClaim(assignment.id)}>Decline</Button>
                         </>
                       )}
                     </div>
@@ -298,6 +462,7 @@ const PartnerDashboard = () => {
 
             {selectedAssignment && (
               <div className="space-y-6 mt-6">
+                {/* Claim Info */}
                 <Card>
                   <CardHeader><CardTitle className="text-base">Claim Information</CardTitle></CardHeader>
                   <CardContent className="grid grid-cols-2 gap-4 text-sm">
@@ -318,16 +483,17 @@ const PartnerDashboard = () => {
                       <p className="font-medium">{device?.serial_number || '-'}</p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Status</span>
-                      <Badge>{claim?.status}</Badge>
+                      <span className="text-muted-foreground">Claim Status</span>
+                      <Badge>{claim?.status?.replace(/_/g, ' ')}</Badge>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">Assignment Status</span>
+                      <span className="text-muted-foreground">Assignment</span>
                       <Badge variant="outline">{selectedAssignment.status}</Badge>
                     </div>
                   </CardContent>
                 </Card>
 
+                {/* Customer Contact */}
                 <Card>
                   <CardHeader><CardTitle className="text-base">Customer Contact</CardTitle></CardHeader>
                   <CardContent className="space-y-2 text-sm">
@@ -342,6 +508,7 @@ const PartnerDashboard = () => {
                   </CardContent>
                 </Card>
 
+                {/* Description */}
                 <Card>
                   <CardHeader><CardTitle className="text-base">Description</CardTitle></CardHeader>
                   <CardContent>
@@ -349,15 +516,154 @@ const PartnerDashboard = () => {
                   </CardContent>
                 </Card>
 
+                {/* SLA */}
                 {selectedAssignment.sla_deadline && (
                   <Card>
                     <CardHeader><CardTitle className="text-base">SLA</CardTitle></CardHeader>
                     <CardContent className="text-sm">
                       <p>Deadline: <span className="font-medium">{new Date(selectedAssignment.sla_deadline).toLocaleString()}</span></p>
+                      {new Date(selectedAssignment.sla_deadline) < new Date() && (
+                        <Badge variant="destructive" className="mt-1">Overdue</Badge>
+                      )}
                     </CardContent>
                   </Card>
                 )}
 
+                {/* === STATUS UPDATE SECTION === */}
+                {isActive && (
+                  <Card className="border-primary/30">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <RefreshCw size={16} /> Update Progress
+                        </CardTitle>
+                        {!updateMode && (
+                          <Button size="sm" onClick={() => setUpdateMode(true)}>
+                            Update Status
+                          </Button>
+                        )}
+                      </div>
+                    </CardHeader>
+                    {updateMode && (
+                      <CardContent className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-1.5 block">New Status</label>
+                          <Select value={newStatus} onValueChange={setNewStatus}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select new status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {REPAIR_STATUSES.map(s => (
+                                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-1.5 block">Notes</label>
+                          <Textarea
+                            placeholder="Describe what was done, findings, next steps..."
+                            value={updateNotes}
+                            onChange={(e) => setUpdateNotes(e.target.value)}
+                            rows={3}
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            className="bg-success hover:bg-success/90 text-success-foreground"
+                            onClick={updateClaimStatus}
+                            disabled={updatingStatus}
+                          >
+                            {updatingStatus && <Loader2 className="animate-spin mr-2" size={14} />}
+                            Submit Update
+                          </Button>
+                          <Button variant="outline" onClick={() => { setUpdateMode(false); setNewStatus(''); setUpdateNotes(''); }}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                )}
+
+                {/* === PHOTO UPLOAD SECTION === */}
+                {isActive && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Camera size={16} /> Repair Photos
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          className="hidden"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingPhotos}
+                          className="gap-2"
+                        >
+                          {uploadingPhotos ? <Loader2 className="animate-spin" size={14} /> : <Upload size={14} />}
+                          {uploadingPhotos ? 'Uploading...' : 'Upload Photos'}
+                        </Button>
+                      </div>
+                      {claimPhotos.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2">
+                          {claimPhotos.map((url, i) => (
+                            <a key={i} href={url} target="_blank" rel="noopener noreferrer">
+                              <img
+                                src={url}
+                                alt={`Repair photo ${i + 1}`}
+                                className="w-full h-24 object-cover rounded-md border border-border hover:opacity-80 transition"
+                              />
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground flex items-center gap-2">
+                          <ImageIcon size={14} /> No photos uploaded yet
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* === STATUS HISTORY === */}
+                {statusHistory.length > 0 && (
+                  <Card>
+                    <CardHeader><CardTitle className="text-base">Status History</CardTitle></CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {statusHistory.map((update) => (
+                          <div key={update.id} className="flex gap-3 text-sm">
+                            <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className="text-xs">{update.status?.replace(/_/g, ' ')}</Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(update.created_at).toLocaleString()}
+                                </span>
+                              </div>
+                              {update.notes && (
+                                <p className="text-muted-foreground mt-1">{update.notes}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Accept/Decline for pending */}
                 {selectedAssignment.status === 'pending' && (
                   <div className="flex gap-2">
                     <Button
