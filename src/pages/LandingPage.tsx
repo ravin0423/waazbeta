@@ -91,6 +91,17 @@ const LandingPage = () => {
                 {s.subtitle}
               </motion.span>
 
+              {/* Tagline */}
+              <motion.p
+                initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ delay: 0.35, duration: 0.8, ease: 'easeOut' }}
+                className="text-sm sm:text-base font-bold tracking-[0.25em] uppercase mb-4 bg-clip-text text-transparent"
+                style={{ backgroundImage: 'var(--gradient-accent)' }}
+              >
+                Innovating Your Warranty Experience
+              </motion.p>
+
               <h1 className="font-heading text-4xl sm:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-extrabold text-primary-foreground leading-[1.1] mb-6 tracking-tight">
                 Every device
                 <br />
