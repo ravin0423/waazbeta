@@ -204,6 +204,7 @@ const PartnerSettings = () => {
               <TabsTrigger value="profile" className="gap-2"><User size={14} /> Profile</TabsTrigger>
               <TabsTrigger value="account" className="gap-2"><Building2 size={14} /> Account</TabsTrigger>
               <TabsTrigger value="notifications" className="gap-2"><Bell size={14} /> Notifications</TabsTrigger>
+              <TabsTrigger value="danger" className="gap-2 text-destructive"><AlertTriangle size={14} /> Danger Zone</TabsTrigger>
             </TabsList>
 
             {/* === PARTNER PROFILE TAB === */}
