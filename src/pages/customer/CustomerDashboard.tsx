@@ -85,7 +85,16 @@ const CustomerDashboard = () => {
   if (!hasActiveSubscription) {
     return (
       <DashboardLayout>
-        <SubscriptionActivation onActivated={fetchDevices} />
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-lg mx-auto py-20 text-center">
+          <div className="inline-flex items-center justify-center h-20 w-20 rounded-full bg-primary/10 mb-6">
+            <Shield size={36} className="text-primary" />
+          </div>
+          <h1 className="font-heading text-2xl font-bold mb-2">Welcome to WaaZ!</h1>
+          <p className="text-muted-foreground mb-6">Get started by registering your first device to activate warranty protection.</p>
+          <Button size="lg" onClick={() => navigate('/customer/register-device')} className="gap-2">
+            <Smartphone size={18} /> Register Your First Device
+          </Button>
+        </motion.div>
       </DashboardLayout>
     );
   }
