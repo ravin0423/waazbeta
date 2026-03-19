@@ -360,13 +360,19 @@ const DeviceOnboardingWizard = () => {
     return () => clearInterval(interval);
   }, [step]);
 
-  // Restore draft
+  // Restore draft (only if deviceType looks like a UUID - skip stale drafts from old format)
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(DRAFT_KEY);
       if (!raw) return;
       const draft = JSON.parse(raw);
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       if (draft.step1) {
+        // Skip restoring if deviceType is not a valid UUID (stale draft)
+        if (draft.step1.deviceType && !uuidRegex.test(draft.step1.deviceType)) {
+          sessionStorage.removeItem(DRAFT_KEY);
+          return;
+        }
         Object.entries(draft.step1).forEach(([k, v]) => {
           if (k === 'purchaseDate' && v) form1.setValue(k as any, new Date(v as string));
           else if (v) form1.setValue(k as any, v as any);
