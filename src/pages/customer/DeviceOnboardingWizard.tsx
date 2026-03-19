@@ -325,33 +325,20 @@ const DeviceOnboardingWizard = () => {
     });
   }, [user]);
 
-  // Load plans when device type changes
+  // Load plans when device type (category ID) changes
   const deviceType = form1.watch('deviceType');
   useEffect(() => {
     if (!deviceType) return;
-    // Match device type to a gadget category
-    const mapping: Record<string, string[]> = {
-      mobile_phone: ['mobile', 'smartphone', 'phone', 'mobile phone'],
-      tablet: ['tablet'],
-      laptop: ['laptop'],
-      smartwatch: ['smartwatch', 'smart watch', 'watch'],
-    };
-    const matchNames = mapping[deviceType] || [];
-    const matched = categories.find(c => matchNames.includes(c.name.toLowerCase()));
-    if (matched) {
-      supabase.from('subscription_plans').select('*').eq('is_active', true).eq('gadget_category_id', matched.id).order('annual_price')
-        .then(({ data }) => {
-          if (data?.length) { setPlans(data as Plan[]); }
-          else {
-            supabase.from('subscription_plans').select('*').eq('is_active', true).is('gadget_category_id', null).order('annual_price')
-              .then(({ data: fallback }) => setPlans((fallback || []) as Plan[]));
-          }
-        });
-    } else {
-      supabase.from('subscription_plans').select('*').eq('is_active', true).is('gadget_category_id', null).order('annual_price')
-        .then(({ data }) => setPlans((data || []) as Plan[]));
-    }
-  }, [deviceType, categories]);
+    // deviceType is now a category ID directly
+    supabase.from('subscription_plans').select('*').eq('is_active', true).eq('gadget_category_id', deviceType).order('annual_price')
+      .then(({ data }) => {
+        if (data?.length) { setPlans(data as Plan[]); }
+        else {
+          supabase.from('subscription_plans').select('*').eq('is_active', true).is('gadget_category_id', null).order('annual_price')
+            .then(({ data: fallback }) => setPlans((fallback || []) as Plan[]));
+        }
+      });
+  }, [deviceType]);
 
   // Auto-save draft
   useEffect(() => {
