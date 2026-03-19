@@ -257,11 +257,14 @@ const AdminDeviceApprovals = () => {
     setChecklistItems((data as ChecklistItem[]) || []);
   };
 
-  const fetchDevicePhotos = async (deviceId: string) => {
-    const { data } = await supabase.storage.from('device-proofs').list(deviceId);
+  const fetchDevicePhotos = async (deviceId: string, userId?: string) => {
+    // Photos are stored as {userId}/{deviceId}/filename
+    if (!userId) { setDevicePhotos([]); return; }
+    const folderPath = `${userId}/${deviceId}`;
+    const { data } = await supabase.storage.from('device-proofs').list(folderPath);
     if (data && data.length > 0) {
-      setDevicePhotos(data.map(f => {
-        const { data: urlData } = supabase.storage.from('device-proofs').getPublicUrl(`${deviceId}/${f.name}`);
+      setDevicePhotos(data.filter(f => f.name !== '.emptyFolderPlaceholder').map(f => {
+        const { data: urlData } = supabase.storage.from('device-proofs').getPublicUrl(`${folderPath}/${f.name}`);
         return urlData.publicUrl;
       }));
     } else {
@@ -350,7 +353,7 @@ const AdminDeviceApprovals = () => {
     setPhotoQualityChecks(new Set());
     setDuplicates([]);
     setDrawerOpen(true);
-    await Promise.all([fetchDevicePhotos(device.id), fetchDuplicates(device)]);
+    await Promise.all([fetchDevicePhotos(device.id, device.user_id), fetchDuplicates(device)]);
   };
 
   const toggleCheck = (id: string) => {
