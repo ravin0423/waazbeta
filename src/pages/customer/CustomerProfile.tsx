@@ -13,13 +13,16 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 const CustomerProfile = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [name, setName] = useState(user?.fullName || '');
   const [phone, setPhone] = useState(user?.phone || '');
   const [email] = useState(user?.email || '');
   const [company, setCompany] = useState(user?.company || '');
   const [avatar, setAvatar] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
