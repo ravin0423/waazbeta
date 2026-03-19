@@ -43,6 +43,7 @@ const CustomerTickets = () => {
   const [tickets, setTickets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [filter, setFilter] = useState('all');
 
   // Conversation state
   const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
@@ -52,15 +53,53 @@ const CustomerTickets = () => {
   const [sendingMessage, setSendingMessage] = useState(false);
 
   const fetchTickets = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('service_tickets')
       .select('*')
       .order('created_at', { ascending: false });
+
+    if (filter !== 'all') {
+      query = query.eq('status', filter);
+    }
+
+    const { data } = await query;
     setTickets(data || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchTickets(); }, []);
+  useEffect(() => { fetchTickets(); }, [filter]);
+
+  // Real-time subscription for ticket updates and messages
+  useEffect(() => {
+    const channel = supabase
+      .channel('customer-tickets-rt')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'service_tickets',
+      }, () => {
+        fetchTickets();
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'ticket_messages',
+      }, (payload) => {
+        const newMsg = payload.new as TicketMessage;
+        if (selectedTicket && newMsg.ticket_id === selectedTicket.id) {
+          setMessages(prev => {
+            if (prev.some(m => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
+          if (newMsg.sender_role !== 'customer') {
+            toast.info('New reply from support!');
+          }
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [selectedTicket]);
 
   const fetchMessages = async (ticketId: string) => {
     setLoadingMessages(true);
