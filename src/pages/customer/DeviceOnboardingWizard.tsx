@@ -26,7 +26,8 @@ import {
   Shield, ArrowRight, ArrowLeft, CheckCircle2, Loader2,
   Smartphone, Tablet, Laptop, Watch, Upload, X, Image as ImageIcon,
   FileText, RefreshCw, CalendarIcon, Info, ChevronDown, Check,
-  MapPin, CreditCard, Eye, Sparkles
+  MapPin, CreditCard, Eye, Sparkles, Monitor, Camera, Gamepad2,
+  Printer, Projector, Tv, Headphones, Speaker, HardDrive
 } from 'lucide-react';
 
 // ─── Schemas ───────────────────────────────────────────────────
