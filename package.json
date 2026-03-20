@@ -10,7 +10,14 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:e2e:admin": "cypress run --spec 'tests/e2e/admin/**/*.cy.js'",
+    "test:e2e:partner": "cypress run --spec 'tests/e2e/partner/**/*.cy.js'",
+    "test:e2e:customer": "cypress run --spec 'tests/e2e/customer/**/*.cy.js'",
+    "test:e2e:integration": "cypress run --spec 'tests/e2e/integration/**/*.cy.js'",
+    "test:e2e:report": "mochawesome-merge tests/results/mochawesome/*.json -o tests/results/merged.json && marge tests/results/merged.json -o tests/results/html-report --reportTitle 'WaaZ E2E Report'"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
