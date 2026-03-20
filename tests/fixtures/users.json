@@ -1,0 +1,17 @@
+{
+  "admin": {
+    "email": "admin@waaz.test",
+    "password": "Test@1234",
+    "role": "admin"
+  },
+  "partner": {
+    "email": "partner@waaz.test",
+    "password": "Test@1234",
+    "role": "partner"
+  },
+  "customer": {
+    "email": "customer@waaz.test",
+    "password": "Test@1234",
+    "role": "customer"
+  }
+}

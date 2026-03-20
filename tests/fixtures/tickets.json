@@ -1,0 +1,7 @@
+{
+  "supportTicket": {
+    "subject": "Unable to renew subscription",
+    "description": "Getting an error when trying to renew my device subscription via UPI payment.",
+    "priority": "high"
+  }
+}

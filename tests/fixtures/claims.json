@@ -1,0 +1,12 @@
+{
+  "validClaim": {
+    "issueType": "Hardware Failure",
+    "description": "Phone screen is flickering intermittently after a minor drop. Device was in a protective case.",
+    "imeiNumber": "123456789012345"
+  },
+  "accidentalDamage": {
+    "issueType": "Accidental Damage",
+    "description": "Screen cracked after falling from desk onto tile floor.",
+    "imeiNumber": "123456789012345"
+  }
+}
