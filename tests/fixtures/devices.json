@@ -1,0 +1,16 @@
+{
+  "validDevice": {
+    "productName": "Samsung Galaxy S24",
+    "serialNumber": "SN-TEST-001",
+    "imeiNumber": "123456789012345",
+    "whatsappNumber": "9876543210",
+    "address": "123 Test Street, Mumbai, MH 400001"
+  },
+  "invalidDevice": {
+    "productName": "",
+    "serialNumber": "",
+    "imeiNumber": "invalid",
+    "whatsappNumber": "123",
+    "address": ""
+  }
+}
