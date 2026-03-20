@@ -1,0 +1,40 @@
+{
+  "lowRiskDevice": {
+    "productName": "Samsung Galaxy S24 Ultra",
+    "serialNumber": "SN-LOW-RISK-001",
+    "imeiNumber": "352345678901234",
+    "whatsappNumber": "9876543210",
+    "address": "123 MG Road, Bengaluru, KA 560001",
+    "paymentMethod": "upi",
+    "upiTransactionId": "UPI-TXN-TEST-001",
+    "expectedRiskScore": 15,
+    "expectedAction": "auto_approve"
+  },
+  "mediumRiskDevice": {
+    "productName": "iPhone 15 Pro",
+    "serialNumber": "SN-MED-RISK-001",
+    "imeiNumber": "456789012345678",
+    "whatsappNumber": "8765432109",
+    "address": "456 Anna Nagar, Chennai, TN 600040",
+    "paymentMethod": "cash",
+    "expectedRiskScore": 45,
+    "expectedAction": "manual_review"
+  },
+  "highRiskDevice": {
+    "productName": "OnePlus 12",
+    "serialNumber": "SN-HIGH-RISK-001",
+    "imeiNumber": "000000000000000",
+    "whatsappNumber": "7654321098",
+    "address": "789 Unknown Location",
+    "paymentMethod": "cash",
+    "expectedRiskScore": 75,
+    "expectedAction": "fraud_flag"
+  },
+  "checklistItems": [
+    "IMEI verified",
+    "Serial number matches",
+    "Device photos verified",
+    "Purchase proof validated",
+    "Payment confirmed"
+  ]
+}

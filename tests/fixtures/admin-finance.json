@@ -1,0 +1,26 @@
+{
+  "expectedKPIs": [
+    "Total Revenue",
+    "Total Expenses",
+    "Net Profit",
+    "Outstanding"
+  ],
+  "gstConfig": {
+    "cgstRate": 9,
+    "sgstRate": 9,
+    "totalGSTRate": 18,
+    "returnTypes": ["GSTR-1", "GSTR-3B"]
+  },
+  "reportTypes": [
+    { "name": "Monthly Revenue", "format": "csv" },
+    { "name": "Commission Report", "format": "csv" },
+    { "name": "Tax Summary", "format": "csv" }
+  ],
+  "transactionTypes": ["income", "expense"],
+  "complianceInfo": {
+    "pan": "AAACW1234A",
+    "gstin": "29AAACW1234A1ZR",
+    "udyam": "UDYAM-KA-00-0001234"
+  },
+  "trendMonths": 12
+}

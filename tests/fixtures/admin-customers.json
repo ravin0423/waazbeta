@@ -1,0 +1,29 @@
+{
+  "testCustomer": {
+    "name": "Priya Sharma",
+    "email": "priya.sharma@test.com",
+    "phone": "9876543210",
+    "expectedSegment": "Regular",
+    "expectedTabs": ["Overview", "Devices", "Claims", "Subscriptions", "Activity", "Feedback"]
+  },
+  "ltvSegments": {
+    "vip": { "minLTV": 50000, "label": "VIP" },
+    "loyal": { "minLTV": 25000, "label": "Loyal" },
+    "regular": { "minLTV": 10000, "label": "Regular" },
+    "atRisk": { "minLTV": 0, "label": "At-Risk" },
+    "new": { "minLTV": 0, "label": "New" }
+  },
+  "churnRiskLevels": {
+    "healthy": { "maxScore": 25, "label": "Healthy" },
+    "watch": { "maxScore": 50, "label": "Watch" },
+    "atRisk": { "maxScore": 75, "label": "At-Risk" },
+    "critical": { "maxScore": 100, "label": "Critical" }
+  },
+  "churnFactors": [
+    "Subscription expiry proximity",
+    "Support ticket volume",
+    "Claim rejection rate",
+    "Inactivity duration",
+    "Payment failures"
+  ]
+}
