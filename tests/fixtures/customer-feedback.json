@@ -1,0 +1,33 @@
+{
+  "serviceFeedback": {
+    "rating": 4,
+    "text": "Repair was completed within the SLA deadline. Technician was professional and communicative throughout the process. Minor delay in parts procurement but overall great experience."
+  },
+  "negativeFeedback": {
+    "rating": 2,
+    "text": "Repair took much longer than promised. Had to follow up multiple times."
+  },
+  "npsPromoter": {
+    "score": 9,
+    "comment": "Excellent warranty service. Would definitely recommend WaaZ to friends and family."
+  },
+  "npsPassive": {
+    "score": 7,
+    "comment": "Good service but the claim process could be faster."
+  },
+  "npsDetractor": {
+    "score": 4,
+    "comment": "Claim was rejected without clear explanation. Not satisfied."
+  },
+  "npsScale": { "min": 0, "max": 10 },
+  "ratingScale": { "min": 1, "max": 5 },
+  "npsCategories": {
+    "promoter": { "min": 9, "max": 10, "label": "Promoter" },
+    "passive": { "min": 7, "max": 8, "label": "Passive" },
+    "detractor": { "min": 0, "max": 6, "label": "Detractor" }
+  },
+  "notificationPreferences": {
+    "channels": ["Email", "SMS", "In-App"],
+    "digestFrequency": ["Instant", "Daily", "Weekly"]
+  }
+}

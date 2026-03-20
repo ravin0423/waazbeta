@@ -1,0 +1,14 @@
+{
+  "customer": {
+    "email": "customer@waaz.test",
+    "password": "Test@1234",
+    "role": "customer",
+    "name": "Priya Sharma",
+    "phone": "9876543210",
+    "address": "42 MG Road, Bengaluru, KA 560001"
+  },
+  "invalidUser": {
+    "email": "fake-customer@does-not-exist.com",
+    "password": "WrongPassword123!"
+  }
+}

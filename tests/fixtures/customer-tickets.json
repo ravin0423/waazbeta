@@ -1,0 +1,10 @@
+{
+  "newTicket": {
+    "subject": "Unable to renew my device subscription",
+    "description": "When I try to renew my subscription for Samsung Galaxy S24, the payment page shows an error 'Transaction failed'. I have tried both UPI and Cash options. My subscription expires in 3 days.",
+    "priority": "high"
+  },
+  "followUpMessage": "Hi, is there any update? My subscription expires tomorrow and I need to renew urgently.",
+  "resolvedReply": "Thanks for resolving! But I have one more question about the renewal period.",
+  "priorities": ["low", "medium", "high"]
+}
