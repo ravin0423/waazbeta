@@ -1,0 +1,19 @@
+{
+  "slaMetrics": {
+    "targetCompliancePercent": 90,
+    "turnaroundDays": 7,
+    "levels": ["Excellent", "Good", "Needs Improvement", "Critical"]
+  },
+  "ratingScale": {
+    "min": 1,
+    "max": 5,
+    "threshold": 4.0
+  },
+  "completionMetrics": [
+    "Total Assigned",
+    "Completed",
+    "In Progress",
+    "Rejected"
+  ],
+  "trendPeriods": ["Last 30 days", "Last 3 months", "Last 6 months", "Last 12 months"]
+}

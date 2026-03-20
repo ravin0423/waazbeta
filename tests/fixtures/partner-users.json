@@ -1,0 +1,28 @@
+{
+  "partner": {
+    "email": "partner@waaz.test",
+    "password": "Test@1234",
+    "role": "partner",
+    "name": "TechFix Solutions",
+    "type": "technical",
+    "city": "Bengaluru",
+    "state": "Karnataka",
+    "slaTurnaroundDays": 7,
+    "commissionRate": 10,
+    "qualityRating": 4.5,
+    "maxCapacity": 10
+  },
+  "nonTechPartner": {
+    "email": "reseller@waaz.test",
+    "password": "Test@1234",
+    "role": "partner",
+    "name": "Digital Zone Resellers",
+    "type": "non-technical",
+    "city": "Chennai",
+    "state": "Tamil Nadu"
+  },
+  "invalidUser": {
+    "email": "fake-partner@does-not-exist.com",
+    "password": "WrongPassword123!"
+  }
+}
