@@ -1,0 +1,30 @@
+{
+  "commissionRules": {
+    "baseRate": 10,
+    "slaBonusRate": 5,
+    "ratingBonusThreshold": 4.5,
+    "ratingBonusRate": 3,
+    "volumeBonusThreshold": 10,
+    "volumeBonusRate": 2,
+    "latePenaltyRate": 5,
+    "qualityPenaltyThreshold": 3.0,
+    "qualityPenaltyRate": 3
+  },
+  "testCommission": {
+    "claimAmount": 5000,
+    "expectedBase": 500,
+    "expectedSLABonus": 250,
+    "expectedRatingBonus": 150,
+    "expectedVolumeBonus": 100,
+    "expectedPenalty": 0,
+    "expectedTotal": 1000
+  },
+  "penaltyScenario": {
+    "claimAmount": 3000,
+    "expectedBase": 300,
+    "expectedPenalty": 150,
+    "reason": "SLA breach - exceeded turnaround time"
+  },
+  "payoutStatuses": ["calculated", "pending", "approved", "paid"],
+  "tdsRate": 10
+}

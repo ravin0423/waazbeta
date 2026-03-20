@@ -1,0 +1,17 @@
+{
+  "admin": {
+    "email": "ravin.rangaraj@gmail.com",
+    "password": "Test@1234",
+    "role": "admin",
+    "name": "Ravin Rangaraj"
+  },
+  "testAdmin": {
+    "email": "admin-test@waaz.test",
+    "password": "Test@1234",
+    "role": "admin"
+  },
+  "invalidUser": {
+    "email": "invalid@does-not-exist.com",
+    "password": "WrongPassword123!"
+  }
+}

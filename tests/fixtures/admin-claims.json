@@ -1,0 +1,50 @@
+{
+  "hardwareFailureClaim": {
+    "issueType": "Hardware Failure",
+    "description": "Device motherboard malfunction causing random restarts and overheating. Started 3 days ago.",
+    "imeiNumber": "352345678901234",
+    "expectedEligibility": true,
+    "expectedCoverage": "standard"
+  },
+  "accidentalDamageClaim": {
+    "issueType": "Accidental Damage",
+    "description": "Screen cracked after device slipped from desk onto tile floor. Display partially functional.",
+    "imeiNumber": "456789012345678",
+    "expectedEligibility": true,
+    "expectedCoverage": "complete"
+  },
+  "liquidDamageClaim": {
+    "issueType": "Liquid Damage",
+    "description": "Water spilled on device. Touchscreen unresponsive and speaker distorted.",
+    "imeiNumber": "789012345678901",
+    "expectedEligibility": true,
+    "expectedCoverage": "complete"
+  },
+  "batteryReplacementClaim": {
+    "issueType": "Battery",
+    "description": "Battery drains from 100% to 0% within 2 hours. Battery health shows 64%.",
+    "imeiNumber": "352345678901234",
+    "expectedEligibility": true,
+    "expectedCoverage": "standard"
+  },
+  "duplicateClaim": {
+    "issueType": "Hardware Failure",
+    "description": "Duplicate claim for testing fraud detection",
+    "imeiNumber": "352345678901234",
+    "expectedEligibility": false,
+    "expectedFlag": "duplicate"
+  },
+  "statusFlow": [
+    "pending",
+    "under_review",
+    "approved",
+    "assigned",
+    "in_repair",
+    "quality_check",
+    "completed"
+  ],
+  "partnerAssignment": {
+    "preferredPartner": "TechFix Solutions",
+    "slaDeadlineDays": 7
+  }
+}
