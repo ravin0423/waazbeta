@@ -1,0 +1,39 @@
+{
+  "claimAssignment": {
+    "issueType": "Hardware Failure",
+    "description": "Screen flickering and intermittent display issues after drop",
+    "imeiNumber": "352345678901234",
+    "expectedSlaDeadlineDays": 7
+  },
+  "messaging": {
+    "partnerMessage": "Repair update: Component replacement completed successfully.",
+    "customerReply": "Thank you for the update. When can I expect delivery?",
+    "adminNote": "Expediting this claim due to SLA proximity."
+  },
+  "statusWorkflow": [
+    "pending",
+    "in_review",
+    "approved",
+    "assigned",
+    "in_repair",
+    "quality_check",
+    "ready_delivery",
+    "completed"
+  ],
+  "notificationTypes": [
+    "claim_assigned",
+    "claim_updated",
+    "device_decision",
+    "delivery_scheduled"
+  ],
+  "performanceThresholds": {
+    "dashboardLoadMs": 15000,
+    "notificationDeliveryMs": 5000,
+    "messageSyncMs": 3000,
+    "statusUpdateMs": 2000
+  },
+  "concurrentOps": {
+    "adminNoteUpdate1": "Update 1: Initial review complete",
+    "adminNoteUpdate2": "Update 2: Reassigned for priority handling"
+  }
+}
