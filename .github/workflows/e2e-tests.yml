@@ -1,0 +1,68 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  CYPRESS_BASE_URL: http://localhost:8080
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        portal: [admin, partner, customer, integration, auth]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Start server
+        run: npx serve -s dist -l 8080 &
+        
+      - name: Wait for server
+        run: npx wait-on http://localhost:8080 --timeout 60000
+
+      - name: Run ${{ matrix.portal }} tests
+        uses: cypress-io/github-action@v6
+        with:
+          install: false
+          spec: tests/e2e/${{ matrix.portal }}/**/*.cy.js
+          config: video=true
+          browser: chrome
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+
+      - name: Merge Mochawesome reports
+        if: always()
+        run: |
+          npx mochawesome-merge tests/results/mochawesome/*.json -o tests/results/merged-report.json
+          npx marge tests/results/merged-report.json -o tests/results/html-report --reportTitle "WaaZ E2E — ${{ matrix.portal }}"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results-${{ matrix.portal }}
+          path: |
+            tests/results/html-report/
+            tests/results/screenshots/
+            tests/results/videos/
+          retention-days: 14
