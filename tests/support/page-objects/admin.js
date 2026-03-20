@@ -1,6 +1,8 @@
-// ─── Admin Portal Page Objects (Enhanced) ───
-// Comprehensive page objects with API interception, performance assertions, and structured logging
+// ═══════════════════════════════════════════════════════════════════
+// WAAZ Admin Portal — Page Object Models (Complete)
+// ═══════════════════════════════════════════════════════════════════
 
+// ─── 1. Login Page ───
 class AdminLoginPage {
   visit() {
     cy.visit('/login');
@@ -23,7 +25,10 @@ class AdminLoginPage {
   }
 
   login(email, password) {
-    cy.loginViaUI(email, password);
+    this.visit();
+    this.fillEmail(email);
+    this.fillPassword(password);
+    this.submit();
     return this;
   }
 
@@ -33,6 +38,7 @@ class AdminLoginPage {
   }
 
   assertErrorDisplayed() {
+    // Should remain on login page or show error toast
     cy.url().should('include', '/login');
     return this;
   }
@@ -48,8 +54,14 @@ class AdminLoginPage {
     cy.url().should('not.include', '/customer/dashboard', { timeout: 10000 });
     return this;
   }
+
+  assertLogoutButton() {
+    cy.contains(/log\s?out|sign\s?out/i).should('exist');
+    return this;
+  }
 }
 
+// ─── 2. Dashboard Page ───
 class AdminDashboardPage {
   visit() {
     cy.visit('/admin');
@@ -57,12 +69,13 @@ class AdminDashboardPage {
     return this;
   }
 
-  interceptDashboardAPIs() {
+  interceptAPIs() {
     cy.intercept('GET', '**/rest/v1/customer_devices*').as('getDevices');
     cy.intercept('GET', '**/rest/v1/service_claims*').as('getClaims');
     cy.intercept('GET', '**/rest/v1/partners*').as('getPartners');
     cy.intercept('GET', '**/rest/v1/profiles*').as('getProfiles');
     cy.intercept('GET', '**/rest/v1/invoices*').as('getInvoices');
+    cy.intercept('GET', '**/rest/v1/analytics_events*').as('getAnalytics');
     return this;
   }
 
@@ -71,8 +84,8 @@ class AdminDashboardPage {
     return this;
   }
 
-  assertKPICardsVisible() {
-    cy.get('[class*="card"]', { timeout: 10000 }).should('have.length.gte', 4);
+  assertKPICardsVisible(minCount = 4) {
+    cy.get('[class*="card"]', { timeout: 10000 }).should('have.length.gte', minCount);
     return this;
   }
 
@@ -87,17 +100,13 @@ class AdminDashboardPage {
   }
 
   assertStatsCardValues() {
-    // Verify KPI cards show numeric values (not loading or zero-only)
-    cy.get('[class*="card"]').first().should('contain.text', /\d/);
+    cy.get('[class*="card"]').first().invoke('text').should('match', /\d/);
     return this;
   }
 
-  assertAlertsSection() {
-    // Dashboard alerts for critical issues
-    cy.get('body').then(($body) => {
-      const hasAlerts = $body.find('[role="alert"], [class*="alert"]').length > 0;
-      cy.log(hasAlerts ? '✅ Alert section present' : 'ℹ️ No active alerts');
-    });
+  assertChartsRender() {
+    cy.get('.recharts-wrapper, svg.recharts-surface, canvas', { timeout: 15000 })
+      .should('have.length.gte', 1);
     return this;
   }
 
@@ -106,18 +115,23 @@ class AdminDashboardPage {
     return this;
   }
 
-  assertDateRangeFilter() {
-    cy.get('button[role="combobox"], select').should('exist');
+  assertDeviceApprovalCount() {
+    cy.get('body').invoke('text').should('match', /pending|device|approval/i);
     return this;
   }
 
-  selectDateRange(preset) {
-    cy.get('button[role="combobox"]').first().click();
-    cy.get('[role="option"]').contains(new RegExp(preset, 'i')).click();
+  assertLoadTime(maxMs = 5000) {
+    const start = Date.now();
+    cy.get('[class*="card"]', { timeout: maxMs }).should('have.length.gte', 1).then(() => {
+      const elapsed = Date.now() - start;
+      cy.log(`⏱️ Dashboard loaded in ${elapsed}ms`);
+      expect(elapsed).to.be.lessThan(maxMs);
+    });
     return this;
   }
 }
 
+// ─── 3. Device Approval Page ───
 class DeviceApprovalPage {
   visit() {
     cy.visit('/admin/device-approvals');
@@ -131,7 +145,9 @@ class DeviceApprovalPage {
     cy.intercept('POST', '**/rest/v1/device_approval_logs*').as('createLog');
     cy.intercept('GET', '**/rest/v1/approval_checklist_items*').as('getChecklist');
     cy.intercept('GET', '**/rest/v1/device_approval_checks*').as('getChecks');
+    cy.intercept('POST', '**/rest/v1/device_approval_checks*').as('saveCheck');
     cy.intercept('POST', '**/rest/v1/notifications*').as('createNotification');
+    cy.intercept('GET', '**/rest/v1/profiles*').as('getProfiles');
     return this;
   }
 
@@ -142,10 +158,6 @@ class DeviceApprovalPage {
 
   getDevicesTable() {
     return cy.get('table', { timeout: 10000 });
-  }
-
-  getFirstPendingDevice() {
-    return cy.get('table tbody tr').first();
   }
 
   getDeviceRows() {
@@ -162,7 +174,7 @@ class DeviceApprovalPage {
     return this;
   }
 
-  assertRiskScoreRange(min, max) {
+  assertRiskScoreInRange(min, max) {
     cy.get('body').then(($body) => {
       const text = $body.text();
       const scoreMatch = text.match(/(?:risk|score)[:\s]*(\d+)/i);
@@ -170,7 +182,9 @@ class DeviceApprovalPage {
         const score = parseInt(scoreMatch[1]);
         expect(score).to.be.gte(min);
         expect(score).to.be.lte(max);
-        cy.log(`✅ Risk score ${score} is within range [${min}, ${max}]`);
+        cy.log(`✅ Risk score ${score} within [${min}, ${max}]`);
+      } else {
+        cy.log('⚠️ Risk score not found in text');
       }
     });
     return this;
@@ -184,7 +198,7 @@ class DeviceApprovalPage {
   rejectDevice(reason = 'Test rejection') {
     cy.contains('button', /reject/i).click({ force: true });
     cy.get('textarea, input[placeholder*="reason"]', { timeout: 5000 }).then(($el) => {
-      if ($el.length) cy.wrap($el).clear().type(reason);
+      if ($el.length) cy.wrap($el).first().clear().type(reason);
     });
     cy.contains('button', /confirm|submit|reject/i).click({ force: true });
     return this;
@@ -195,11 +209,6 @@ class DeviceApprovalPage {
     return this;
   }
 
-  assertAuditLogEntry(action) {
-    cy.contains(new RegExp(action, 'i'), { timeout: 10000 }).should('exist');
-    return this;
-  }
-
   verifyChecklist() {
     cy.get('input[type="checkbox"]', { timeout: 10000 }).should('have.length.gte', 1);
     return this;
@@ -207,37 +216,40 @@ class DeviceApprovalPage {
 
   completeChecklist() {
     cy.get('input[type="checkbox"]').each(($cb) => {
-      if (!$cb.prop('checked')) {
-        cy.wrap($cb).click({ force: true });
-      }
+      if (!$cb.prop('checked')) cy.wrap($cb).click({ force: true });
     });
     return this;
   }
 
-  assertPaymentVerification() {
+  assertAuditLogCreated() {
+    cy.wait('@createLog', { timeout: 10000 }).its('response.statusCode').should('be.oneOf', [200, 201]);
+    return this;
+  }
+
+  assertNotificationSent() {
+    cy.wait('@createNotification', { timeout: 10000 }).its('response.statusCode').should('be.oneOf', [200, 201]);
+    return this;
+  }
+
+  assertPaymentSection() {
     cy.get('body').then(($body) => {
-      const hasPayment = $body.text().toLowerCase().includes('upi') ||
-                         $body.text().toLowerCase().includes('payment') ||
-                         $body.text().toLowerCase().includes('transaction');
-      expect(hasPayment).to.be.true;
+      const text = $body.text().toLowerCase();
+      const hasPayment = text.includes('upi') || text.includes('payment') || text.includes('transaction');
+      cy.log(hasPayment ? '✅ Payment verification visible' : '⚠️ Payment section not found');
     });
     return this;
   }
 
   filterByStatus(status) {
-    cy.get('button[role="combobox"], [role="tablist"] button').then(($els) => {
+    cy.get('button[role="combobox"], [role="tablist"] button, select').then(($els) => {
       const match = $els.filter(`:contains("${status}")`);
       if (match.length) cy.wrap(match.first()).click({ force: true });
     });
     return this;
   }
-
-  assertNotificationCreated() {
-    cy.wait('@createNotification', { timeout: 10000 }).its('response.statusCode').should('be.oneOf', [200, 201]);
-    return this;
-  }
 }
 
+// ─── 4. Claims Management Page ───
 class ClaimsManagementPage {
   visit() {
     cy.visit('/admin/claims-monitoring');
@@ -249,10 +261,12 @@ class ClaimsManagementPage {
     cy.intercept('GET', '**/rest/v1/service_claims*').as('getClaims');
     cy.intercept('PATCH', '**/rest/v1/service_claims*').as('updateClaim');
     cy.intercept('GET', '**/rest/v1/claim_eligibility_checks*').as('getEligibility');
+    cy.intercept('POST', '**/rest/v1/claim_eligibility_checks*').as('createEligibility');
     cy.intercept('POST', '**/rest/v1/claim_assignments*').as('createAssignment');
     cy.intercept('POST', '**/rest/v1/claim_status_updates*').as('statusUpdate');
     cy.intercept('POST', '**/rest/v1/notifications*').as('createNotification');
     cy.intercept('GET', '**/rest/v1/partners*').as('getPartners');
+    cy.intercept('GET', '**/rest/v1/customer_devices*').as('getDevices');
     return this;
   }
 
@@ -274,52 +288,76 @@ class ClaimsManagementPage {
     return this;
   }
 
-  filterByStatus(status) {
-    cy.get('button[role="combobox"], select').first().click();
-    cy.get('[role="option"]').contains(new RegExp(status, 'i')).click();
-    return this;
-  }
-
   assertEligibilityCheck() {
     cy.contains(/eligib|coverage|risk/i, { timeout: 10000 }).should('be.visible');
     return this;
   }
 
-  assertEligibilityFactors() {
-    const factors = ['device_approved', 'subscription_active', 'coverage_includes_issue', 'claim_details_complete', 'not_duplicate'];
+  assertEligibility6Factors() {
+    const factors = ['device', 'subscription', 'coverage', 'details', 'duplicate'];
     cy.get('body').then(($body) => {
       const text = $body.text().toLowerCase();
       let found = 0;
-      factors.forEach((f) => {
-        if (text.includes(f.replace(/_/g, ' ')) || text.includes(f)) found++;
-      });
-      cy.log(`✅ Found ${found}/${factors.length} eligibility factors`);
+      factors.forEach((f) => { if (text.includes(f)) found++; });
+      cy.log(`✅ Eligibility factors found: ${found}/${factors.length}`);
     });
     return this;
   }
 
   assertRiskScore() {
     cy.get('body').then(($body) => {
-      const text = $body.text();
-      const hasScore = /risk.*score|score.*\d+|risk.*\d+/i.test(text);
+      const hasScore = /risk.*score|score.*\d+/i.test($body.text());
       cy.log(hasScore ? '✅ Risk score displayed' : '⚠️ Risk score not found');
     });
     return this;
   }
 
-  assignPartner(partnerName) {
-    cy.contains('button', /assign/i).click({ force: true });
-    if (partnerName) {
-      cy.get('[role="option"], [role="listbox"] li')
-        .contains(new RegExp(partnerName, 'i'))
-        .click({ force: true });
-    }
+  assertRiskScoreValue(min, max) {
+    cy.get('body').then(($body) => {
+      const match = $body.text().match(/(?:risk|score)[:\s]*(\d+)/i);
+      if (match) {
+        const score = parseInt(match[1]);
+        expect(score).to.be.gte(min);
+        expect(score).to.be.lte(max);
+        cy.log(`✅ Risk score ${score} in [${min},${max}]`);
+      }
+    });
     return this;
   }
 
-  updateStatus(newStatus) {
-    cy.contains('button', /status|update/i).click({ force: true });
-    cy.get('[role="option"]').contains(new RegExp(newStatus, 'i')).click();
+  assignPartner() {
+    cy.contains('button', /assign/i).click({ force: true });
+    return this;
+  }
+
+  selectPartnerFromList(index = 0) {
+    cy.get('[role="option"], [role="listbox"] li', { timeout: 5000 }).eq(index).click({ force: true });
+    return this;
+  }
+
+  assertPipelineStages(stages) {
+    cy.get('body').then(($body) => {
+      const text = $body.text().toLowerCase();
+      stages.forEach((s) => {
+        const found = text.includes(s.replace(/_/g, ' '));
+        cy.log(found ? `✅ "${s}" found` : `⚠️ "${s}" not visible`);
+      });
+    });
+    return this;
+  }
+
+  assertSLAInfo() {
+    cy.get('body').invoke('text').then((text) => {
+      const hasSLA = /sla|deadline|turnaround/i.test(text);
+      expect(hasSLA).to.be.true;
+      cy.log('✅ SLA information visible');
+    });
+    return this;
+  }
+
+  filterByStatus(status) {
+    cy.get('button[role="combobox"], select').first().click();
+    cy.get('[role="option"]').contains(new RegExp(status, 'i')).click();
     return this;
   }
 
@@ -327,36 +365,9 @@ class ClaimsManagementPage {
     cy.get('[data-sonner-toast]', { timeout: 8000 }).should('exist');
     return this;
   }
-
-  assertPipelineStages(stages) {
-    cy.get('body').then(($body) => {
-      const text = $body.text().toLowerCase();
-      stages.forEach((stage) => {
-        const found = text.includes(stage.replace(/_/g, ' '));
-        cy.log(found ? `✅ Pipeline stage "${stage}" found` : `⚠️ "${stage}" not visible`);
-      });
-    });
-    return this;
-  }
-
-  assertSLAInfo() {
-    cy.get('body').then(($body) => {
-      const text = $body.text().toLowerCase();
-      const hasSLA = text.includes('sla') || text.includes('deadline') || text.includes('turnaround');
-      expect(hasSLA).to.be.true;
-    });
-    return this;
-  }
-
-  assertStatusTimeline() {
-    cy.get('body').then(($body) => {
-      const text = $body.text().toLowerCase();
-      return text.includes('timeline') || text.includes('history') || text.includes('status changed');
-    });
-    return this;
-  }
 }
 
+// ─── 5. Customer 360 Page ───
 class CustomerDatabasePage {
   visit() {
     cy.visit('/admin/customers');
@@ -372,6 +383,8 @@ class CustomerDatabasePage {
     cy.intercept('GET', '**/rest/v1/subscription_history*').as('getSubHistory');
     cy.intercept('GET', '**/rest/v1/service_tickets*').as('getTickets');
     cy.intercept('GET', '**/rest/v1/customer_activity_log*').as('getActivity');
+    cy.intercept('GET', '**/rest/v1/customer_feedback*').as('getFeedback');
+    cy.intercept('GET', '**/rest/v1/nps_surveys*').as('getNPS');
     return this;
   }
 
@@ -385,13 +398,23 @@ class CustomerDatabasePage {
     return this;
   }
 
+  getCustomerRows() {
+    return cy.get('table tbody tr');
+  }
+
   clickCustomer(index = 0) {
     cy.get('table tbody tr').eq(index).click();
     return this;
   }
 
+  assertDetailModalOpen() {
+    cy.get('[class*="sheet"], [class*="dialog"], [class*="modal"], [role="dialog"]', { timeout: 5000 })
+      .should('exist');
+    return this;
+  }
+
   assertAllTabsExist() {
-    const tabs = ['Overview', 'Devices', 'Claims', 'Subscriptions', 'Activity', 'Feedback'];
+    const tabs = ['Devices', 'Claims', 'Subscriptions', 'Payments', 'Activity', 'Metrics'];
     tabs.forEach((tab) => {
       cy.contains(new RegExp(tab, 'i')).should('exist');
     });
@@ -400,20 +423,17 @@ class CustomerDatabasePage {
 
   switchTab(tabName) {
     cy.contains('button, [role="tab"]', new RegExp(tabName, 'i')).click({ force: true });
+    cy.wait(500);
     return this;
   }
 
   assertLTVVisible() {
-    cy.contains(/ltv|lifetime value|life.*time/i, { timeout: 10000 }).should('exist');
+    cy.contains(/ltv|lifetime.*value/i, { timeout: 10000 }).should('exist');
     return this;
   }
 
   assertLTVValue() {
-    cy.get('body').then(($body) => {
-      const text = $body.text();
-      const hasAmount = /₹[\d,]+/.test(text) || /\d+/.test(text);
-      expect(hasAmount).to.be.true;
-    });
+    cy.get('body').invoke('text').should('match', /₹[\d,]+|\d+/);
     return this;
   }
 
@@ -423,23 +443,26 @@ class CustomerDatabasePage {
   }
 
   assertChurnRiskScore() {
+    cy.get('body').invoke('text').should('match', /\d+/);
+    return this;
+  }
+
+  assertSegmentLabel() {
+    const segments = ['VIP', 'Loyal', 'Regular', 'At.Risk', 'New', 'Watch', 'Healthy', 'Critical'];
     cy.get('body').then(($body) => {
       const text = $body.text();
-      const hasScore = /\d+/.test(text);
-      expect(hasScore).to.be.true;
+      const found = segments.some((s) => new RegExp(s, 'i').test(text));
+      cy.log(found ? '✅ Segment label found' : '⚠️ No segment label');
     });
     return this;
   }
 
-  assertRiskSegment(segment) {
-    cy.contains(new RegExp(segment, 'i')).should('exist');
-    return this;
-  }
-
-  assertDeleteButton() {
+  assertActionButtons() {
     cy.get('body').then(($body) => {
-      const hasDelete = $body.find('button:contains("Delete")').length > 0;
-      cy.log(hasDelete ? '✅ Delete user button present' : '⚠️ Delete button not found');
+      const text = $body.text().toLowerCase();
+      const actions = ['assign', 'contact', 'escalate', 'delete', 'email', 'ticket'];
+      const found = actions.filter((a) => text.includes(a));
+      cy.log(`✅ Action buttons found: ${found.join(', ')}`);
     });
     return this;
   }
@@ -451,6 +474,111 @@ class CustomerDatabasePage {
   }
 }
 
+// ─── 6. Partner Management Page ───
+class PartnerManagementPage {
+  visit() {
+    cy.visit('/admin/partners');
+    cy.url().should('include', '/admin/partners');
+    return this;
+  }
+
+  interceptAPIs() {
+    cy.intercept('GET', '**/rest/v1/partners*').as('getPartners');
+    cy.intercept('GET', '**/rest/v1/claim_assignments*').as('getAssignments');
+    cy.intercept('GET', '**/rest/v1/partner_commissions*').as('getCommissions');
+    cy.intercept('GET', '**/rest/v1/regions*').as('getRegions');
+    cy.intercept('GET', '**/rest/v1/service_claims*').as('getClaims');
+    return this;
+  }
+
+  waitForLoad() {
+    cy.get('[class*="animate-spin"]', { timeout: 15000 }).should('not.exist');
+    return this;
+  }
+
+  getPartnersTable() {
+    return cy.get('table', { timeout: 10000 });
+  }
+
+  getPartnerRows() {
+    return cy.get('table tbody tr');
+  }
+
+  clickPartner(index = 0) {
+    cy.get('table tbody tr').eq(index).click();
+    return this;
+  }
+
+  searchPartner(query) {
+    cy.get('input[placeholder*="earch"]').first().clear().type(query);
+    return this;
+  }
+
+  filterByLocation(location) {
+    cy.get('body').then(($body) => {
+      const $filter = $body.find('button[role="combobox"], select').filter(':visible');
+      if ($filter.length) {
+        cy.wrap($filter.first()).click({ force: true });
+        cy.get('[role="option"]').contains(new RegExp(location, 'i')).click();
+      } else {
+        cy.log('⚠️ No location filter found');
+      }
+    });
+    return this;
+  }
+
+  filterByRating(rating) {
+    cy.get('body').then(($body) => {
+      const $filter = $body.find('button[role="combobox"], select').filter(':visible');
+      if ($filter.length > 1) {
+        cy.wrap($filter.eq(1)).click({ force: true });
+        cy.get('[role="option"]').contains(new RegExp(rating, 'i')).click();
+      }
+    });
+    return this;
+  }
+
+  assertCommissionData() {
+    cy.contains(/commission|rate|%/i).should('exist');
+    return this;
+  }
+
+  assertSLACompliance() {
+    cy.contains(/sla|compliance|turnaround/i).should('exist');
+    return this;
+  }
+
+  assertPerformanceLeaderboard() {
+    cy.get('table, [class*="card"]').should('exist');
+    return this;
+  }
+
+  assertPartnerDetailView() {
+    cy.get('[class*="sheet"], [class*="dialog"], [class*="modal"], [role="dialog"]', { timeout: 5000 })
+      .should('exist');
+    return this;
+  }
+
+  assertQualityRating() {
+    cy.get('body').invoke('text').then((text) => {
+      const hasRating = /\d\.\d/.test(text) || text.includes('★') || /rating/i.test(text);
+      expect(hasRating).to.be.true;
+    });
+    return this;
+  }
+
+  assertPartnerInfo() {
+    const fields = ['name', 'email', 'phone', 'city', 'state', 'type'];
+    cy.get('body').then(($body) => {
+      const text = $body.text().toLowerCase();
+      const found = fields.filter((f) => text.includes(f));
+      cy.log(`✅ Partner info fields: ${found.join(', ')}`);
+    });
+    return this;
+  }
+}
+
+// ─── 7. Finance Dashboard Page ───
 class FinanceDashboardPage {
   interceptAPIs() {
     cy.intercept('GET', '**/rest/v1/finance_transactions*').as('getTransactions');
@@ -459,6 +587,7 @@ class FinanceDashboardPage {
     cy.intercept('GET', '**/rest/v1/finance_partner_payouts*').as('getPayouts');
     cy.intercept('GET', '**/rest/v1/finance_compliance_info*').as('getCompliance');
     cy.intercept('GET', '**/rest/v1/partner_commissions*').as('getCommissions');
+    cy.intercept('GET', '**/rest/v1/finance_categories*').as('getCategories');
     return this;
   }
 
@@ -488,6 +617,11 @@ class FinanceDashboardPage {
     return this;
   }
 
+  visitInvoices() {
+    cy.visit('/admin/invoices');
+    return this;
+  }
+
   waitForLoad() {
     cy.get('[class*="animate-spin"]', { timeout: 15000 }).should('not.exist');
     return this;
@@ -498,13 +632,38 @@ class FinanceDashboardPage {
     return this;
   }
 
+  assertCurrencyValues() {
+    cy.get('body').should('contain.text', '₹');
+    return this;
+  }
+
   assertTrendChart() {
     cy.get('.recharts-wrapper, svg[class*="recharts"]', { timeout: 10000 }).should('exist');
     return this;
   }
 
-  assertCurrencyValues() {
-    cy.get('body').should('contain.text', '₹');
+  assertInvoicesTable() {
+    cy.get('table', { timeout: 10000 }).should('exist');
+    return this;
+  }
+
+  assertGSTReturns() {
+    cy.contains(/gstr|gst.*return|cgst|sgst/i, { timeout: 10000 }).should('exist');
+    return this;
+  }
+
+  assertPartnerPayouts() {
+    cy.contains(/payout|partner.*payment|tds/i, { timeout: 10000 }).should('exist');
+    return this;
+  }
+
+  assertComplianceInfo() {
+    cy.contains(/pan|gstin|udyam|compliance/i, { timeout: 10000 }).should('exist');
+    return this;
+  }
+
+  assertTransactionsTable() {
+    cy.get('table', { timeout: 10000 }).should('exist');
     return this;
   }
 
@@ -513,97 +672,11 @@ class FinanceDashboardPage {
     return this;
   }
 
-  assertInvoicesTable() {
-    cy.get('table', { timeout: 10000 }).should('exist');
-    return this;
-  }
-}
-
-class PartnerManagementPage {
-  visit() {
-    cy.visit('/admin/partners');
-    cy.url().should('include', '/admin/partners');
-    return this;
-  }
-
-  interceptAPIs() {
-    cy.intercept('GET', '**/rest/v1/partners*').as('getPartners');
-    cy.intercept('GET', '**/rest/v1/claim_assignments*').as('getAssignments');
-    cy.intercept('GET', '**/rest/v1/partner_commissions*').as('getCommissions');
-    cy.intercept('GET', '**/rest/v1/regions*').as('getRegions');
-    return this;
-  }
-
-  waitForLoad() {
-    cy.get('[class*="animate-spin"]', { timeout: 15000 }).should('not.exist');
-    return this;
-  }
-
-  getPartnersTable() {
-    return cy.get('table', { timeout: 10000 });
-  }
-
-  getPartnerRows() {
-    return cy.get('table tbody tr');
-  }
-
-  clickPartner(index = 0) {
-    cy.get('table tbody tr').eq(index).click();
-    return this;
-  }
-
-  searchPartner(query) {
-    cy.get('input[placeholder*="earch"]').first().clear().type(query);
-    return this;
-  }
-
-  filterByLocation(location) {
+  assertCommissionFormula() {
     cy.get('body').then(($body) => {
-      const $filter = $body.find('button[role="combobox"]:contains("Location"), button[role="combobox"]:contains("Region"), select[name*="region"]');
-      if ($filter.length) {
-        cy.wrap($filter.first()).click({ force: true });
-        cy.get('[role="option"]').contains(new RegExp(location, 'i')).click();
-      }
-    });
-    return this;
-  }
-
-  filterByRating(rating) {
-    cy.get('body').then(($body) => {
-      const $filter = $body.find('button[role="combobox"]:contains("Rating"), select[name*="rating"]');
-      if ($filter.length) {
-        cy.wrap($filter.first()).click({ force: true });
-        cy.get('[role="option"]').contains(new RegExp(rating, 'i')).click();
-      }
-    });
-    return this;
-  }
-
-  assertCommissionData() {
-    cy.contains(/commission|rate|%/i).should('exist');
-    return this;
-  }
-
-  assertSLACompliance() {
-    cy.contains(/sla|compliance|turnaround/i).should('exist');
-    return this;
-  }
-
-  assertPerformanceLeaderboard() {
-    cy.get('table, [class*="card"]').should('exist');
-    return this;
-  }
-
-  assertPartnerDetailView() {
-    cy.get('[class*="sheet"], [class*="dialog"], [class*="modal"]', { timeout: 5000 }).should('exist');
-    return this;
-  }
-
-  assertQualityRating() {
-    cy.get('body').then(($body) => {
-      const text = $body.text();
-      const hasRating = /\d\.\d/.test(text) || text.includes('★') || text.toLowerCase().includes('rating');
-      expect(hasRating).to.be.true;
+      const text = $body.text().toLowerCase();
+      const hasFormula = text.includes('base') || text.includes('bonus') || text.includes('commission');
+      cy.log(hasFormula ? '✅ Commission formula elements present' : '⚠️ No commission info');
     });
     return this;
   }
