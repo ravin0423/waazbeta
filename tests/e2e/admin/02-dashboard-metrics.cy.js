@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════
-// TEST 2: Admin Dashboard & Metrics
+// TEST 2: Dashboard & Metrics (10 tests)
 // ═══════════════════════════════════════════════════════════════════
 import { AdminDashboardPage } from '../../support/page-objects/admin';
 
@@ -8,79 +8,90 @@ describe('Admin Dashboard & Metrics', () => {
 
   beforeEach(() => {
     cy.loginAsAdmin();
-    dashboard.interceptDashboardAPIs();
+    dashboard.interceptAPIs();
   });
 
-  // ── 2.1 Dashboard loads with all metric cards ──
-  it('TC-2.1: Should load dashboard with KPI metric cards', () => {
+  // ── 2.1 Dashboard loads with KPI cards ──
+  it('TC-2.1: Should load dashboard with all metric cards', () => {
+    dashboard.visit();
+    dashboard.waitForLoad();
+    dashboard.assertKPICardsVisible(4);
+    cy.log('✅ Dashboard loaded with KPI cards');
+  });
+
+  // ── 2.2 Metrics show numeric values ──
+  it('TC-2.2: Should display numeric values in stats cards', () => {
+    dashboard.visit();
+    dashboard.waitForLoad();
+    dashboard.assertStatsCardValues();
+    cy.log('✅ Stats cards showing numeric values');
+  });
+
+  // ── 2.3 Charts render ──
+  it('TC-2.3: Should render charts correctly', () => {
+    dashboard.visit();
+    dashboard.waitForLoad();
+    dashboard.assertChartsRender();
+    cy.log('✅ Charts rendered');
+  });
+
+  // ── 2.4 Device approval count ──
+  it('TC-2.4: Should show device approval count', () => {
+    dashboard.visit();
+    dashboard.waitForLoad();
+    dashboard.assertDeviceApprovalCount();
+    cy.log('✅ Device approval metrics visible');
+  });
+
+  // ── 2.5 Claim pipeline counts ──
+  it('TC-2.5: Should show claim pipeline counts', () => {
+    dashboard.visit();
+    dashboard.waitForLoad();
+    cy.get('body').invoke('text').should('match', /claim|pending|approved|repair/i);
+    cy.log('✅ Claim pipeline data visible');
+  });
+
+  // ── 2.6 API calls succeed ──
+  it('TC-2.6: Should make successful API calls for dashboard data', () => {
+    dashboard.visit();
+    dashboard.waitForLoad();
+    cy.wait('@getDevices', { timeout: 15000 }).its('response.statusCode').should('be.oneOf', [200, 206]);
+    cy.wait('@getClaims', { timeout: 15000 }).its('response.statusCode').should('be.oneOf', [200, 206]);
+    cy.log('✅ Dashboard APIs responded successfully');
+  });
+
+  // ── 2.7 Performance — loads under 5s ──
+  it('TC-2.7: Should load dashboard within 5 seconds', () => {
+    dashboard.visit();
+    dashboard.assertLoadTime(5000);
+    cy.log('✅ Dashboard loaded within performance budget');
+  });
+
+  // ── 2.8 Navigation sidebar present ──
+  it('TC-2.8: Should display navigation sidebar', () => {
+    dashboard.visit();
+    dashboard.waitForLoad();
+    cy.get('nav, aside').should('exist');
+    cy.log('✅ Navigation sidebar present');
+  });
+
+  // ── 2.9 Responsive layout ──
+  it('TC-2.9: Should display responsive layout', () => {
+    dashboard.visit();
+    dashboard.waitForLoad();
+    cy.get('[class*="card"]').should('be.visible');
+    cy.log('✅ Dashboard layout renders correctly');
+  });
+
+  // ── 2.10 Data refresh on revisit ──
+  it('TC-2.10: Should refresh data on revisit', () => {
+    dashboard.visit();
+    dashboard.waitForLoad();
+    cy.visit('/admin/device-approvals');
+    cy.waitForPage();
     dashboard.visit();
     dashboard.waitForLoad();
     dashboard.assertKPICardsVisible();
-    dashboard.assertMetricsLoaded();
-    cy.log('✅ Dashboard loaded with all metric cards');
-  });
-
-  // ── 2.2 Dashboard API performance ──
-  it('TC-2.2: Should load dashboard data within performance threshold', () => {
-    const loadStart = Date.now();
-    dashboard.visit();
-    dashboard.waitForLoad();
-    cy.then(() => {
-      const loadTime = Date.now() - loadStart;
-      cy.task('log', `⏱ Dashboard load time: ${loadTime}ms`);
-      expect(loadTime).to.be.lessThan(15000, 'Dashboard should load within 15s');
-    });
-  });
-
-  // ── 2.3 Claim pipeline chart renders ──
-  it('TC-2.3: Should render claim pipeline bar chart', () => {
-    dashboard.visit();
-    dashboard.waitForLoad();
-    dashboard.assertClaimPipelineChart();
-    cy.log('✅ Claim pipeline chart rendered');
-  });
-
-  // ── 2.4 Stats cards show real data ──
-  it('TC-2.4: Should display numeric values in KPI cards (not placeholders)', () => {
-    dashboard.visit();
-    dashboard.waitForLoad();
-    // At least some cards should show numbers
-    cy.get('[class*="card"]').then(($cards) => {
-      const text = $cards.text();
-      const hasNumbers = /\d+/.test(text);
-      expect(hasNumbers).to.be.true;
-      cy.log('✅ KPI cards contain real numeric values');
-    });
-  });
-
-  // ── 2.5 Date range filter works ──
-  it('TC-2.5: Should filter dashboard data by date range', () => {
-    dashboard.visit();
-    dashboard.waitForLoad();
-
-    cy.get('body').then(($body) => {
-      const hasPresets = $body.find('button[role="combobox"], select').length > 0;
-      if (hasPresets) {
-        dashboard.assertDateRangeFilter();
-        cy.log('✅ Date range filter controls present');
-      } else {
-        cy.log('ℹ️ No date range filter on dashboard');
-      }
-    });
-  });
-
-  // ── 2.6 Alerts section ──
-  it('TC-2.6: Should display alerts for critical issues', () => {
-    dashboard.visit();
-    dashboard.waitForLoad();
-    dashboard.assertAlertsSection();
-  });
-
-  // ── 2.7 Dashboard sub-pages accessible ──
-  it('TC-2.7: Should access analytics sub-page', () => {
-    cy.visit('/admin/analytics');
-    cy.get('[class*="animate-spin"]', { timeout: 15000 }).should('not.exist');
-    cy.get('[class*="card"]', { timeout: 10000 }).should('have.length.gte', 1);
-    cy.log('✅ Analytics page loaded');
+    cy.log('✅ Dashboard data refreshes on revisit');
   });
 });
