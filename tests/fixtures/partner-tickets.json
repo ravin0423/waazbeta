@@ -1,0 +1,10 @@
+{
+  "newTicket": {
+    "subject": "Parts supply delay for Samsung motherboard",
+    "description": "Ordered replacement motherboard 5 days ago via vendor portal. Tracking shows stuck in transit. Customer SLA deadline is in 2 days. Need expedited shipping or alternative vendor.",
+    "priority": "high"
+  },
+  "followUpMessage": "Any update on the parts shipment? Customer is following up daily.",
+  "categories": ["Parts Supply", "Technical Query", "Payment Issue", "Account Problem", "Other"],
+  "priorities": ["low", "medium", "high"]
+}

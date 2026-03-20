@@ -1,0 +1,31 @@
+{
+  "assignedClaim": {
+    "issueType": "Hardware Failure",
+    "description": "Motherboard overheating causing random shutdowns",
+    "imeiNumber": "352345678901234",
+    "customerName": "Priya Sharma"
+  },
+  "statusWorkflow": [
+    "assigned",
+    "accepted",
+    "in_repair",
+    "quality_check",
+    "completed"
+  ],
+  "rejectionReasons": [
+    "Cannot service this device model",
+    "Exceeds current capacity",
+    "Outside service area",
+    "Requires specialized tools not available"
+  ],
+  "repairNotes": [
+    "Initial diagnostic: motherboard IC damaged. Replacement ordered.",
+    "IC replaced and tested. Device running stable for 2 hours.",
+    "Quality check passed. Ready for customer pickup."
+  ],
+  "photoDescriptions": [
+    "Before repair - visible damage",
+    "During repair - IC replacement",
+    "After repair - device functional"
+  ]
+}

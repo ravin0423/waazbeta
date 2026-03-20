@@ -1,0 +1,18 @@
+{
+  "expectedMetrics": {
+    "baseCommissionRate": 10,
+    "slaBonusRate": 5,
+    "ratingBonusRate": 3,
+    "volumeBonusRate": 2,
+    "tdsRate": 10
+  },
+  "sampleCommission": {
+    "claimAmount": 5000,
+    "expectedBase": 500,
+    "expectedSLABonus": 250,
+    "expectedRatingBonus": 150,
+    "expectedTotal": 900
+  },
+  "payoutStatuses": ["calculated", "pending", "approved", "paid"],
+  "monthLabels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+}

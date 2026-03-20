@@ -1,0 +1,2 @@
+// Dummy file for Cypress file upload tests
+This is a test image placeholder for Cypress upload tests.
