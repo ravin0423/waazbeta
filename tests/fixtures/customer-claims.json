@@ -1,0 +1,31 @@
+{
+  "newClaim": {
+    "issueType": "Hardware Failure",
+    "description": "Phone screen flickering intermittently after normal use. No physical damage visible. Started 2 days ago and getting worse.",
+    "imeiNumber": "352345678901234"
+  },
+  "batteryReplacement": {
+    "issueType": "Battery",
+    "description": "Battery drains from 100% to 0% in under 3 hours. Battery health report shows 58% capacity.",
+    "imeiNumber": "352345678901234"
+  },
+  "timelineStages": [
+    "Submitted",
+    "In Review",
+    "Approved",
+    "Assigned to Partner",
+    "In Repair",
+    "Quality Check",
+    "Ready for Delivery",
+    "Completed"
+  ],
+  "stageColors": {
+    "Submitted": "blue",
+    "Approved": "green",
+    "In Repair": "orange",
+    "Completed": "green"
+  },
+  "partnerMessage": "Hi, could you share an estimated completion date? My work depends on this device.",
+  "feedbackRating": 4,
+  "feedbackText": "Repair was quick and professional. Device working perfectly now."
+}

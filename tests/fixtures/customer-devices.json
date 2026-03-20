@@ -1,0 +1,22 @@
+{
+  "newDevice": {
+    "productName": "Samsung Galaxy S24 Ultra",
+    "serialNumber": "SN-CUST-TEST-001",
+    "imeiNumber": "352345678901234",
+    "category": "Smartphone",
+    "paymentMethod": "upi",
+    "upiTransactionId": "UPI-CUST-TXN-001",
+    "whatsappNumber": "9876543210",
+    "address": "42 MG Road, Bengaluru, KA 560001"
+  },
+  "wizardSteps": [
+    "Device Information",
+    "Proof & Documentation",
+    "Plan Selection",
+    "Payment",
+    "Delivery Address",
+    "Review & Confirm"
+  ],
+  "deviceStatuses": ["pending", "active", "expired", "rejected"],
+  "coverageTypes": ["Hardware Failure", "Battery", "Motherboard", "Accidental Damage", "Liquid Damage"]
+}
